@@ -1,0 +1,16 @@
+﻿{
+  "name": "findit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser-only Spot It (Dobble) explainer and custom deck builder.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "clean": "node scripts/clean.mjs",
+    "test": "node --test",
+    "test:watch": "node --test --watch"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

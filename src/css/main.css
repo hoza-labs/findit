@@ -1,0 +1,32 @@
+﻿:root {
+  --page-bg: #f6f8fa;
+  --card-border: #d0d7de;
+}
+
+body {
+  background: linear-gradient(180deg, #ffffff 0%, var(--page-bg) 100%);
+  min-height: 100vh;
+}
+
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.deck-card {
+  background: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.deck-card h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.symbol-list {
+  margin: 0;
+  padding-left: 1rem;
+}
