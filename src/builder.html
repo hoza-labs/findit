@@ -33,12 +33,54 @@
             </div>
             <div class="col-sm-6 col-lg-8 d-flex gap-2 flex-wrap">
               <button type="submit" class="btn btn-primary">Generate Deck</button>
-              <button id="save-button" type="button" class="btn btn-outline-primary">Save to Browser</button>
-              <button id="load-button" type="button" class="btn btn-outline-secondary">Load Saved</button>
+              <button id="save-button" type="button" class="btn btn-outline-primary" disabled>Save</button>
+              <button id="save-as-button" type="button" class="btn btn-outline-secondary">Save as...</button>
               <button id="export-button" type="button" class="btn btn-outline-dark">Export JSON</button>
               <button id="print-button" type="button" class="btn btn-outline-success">Print</button>
             </div>
           </form>
+        </div>
+      </section>
+
+      <section class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h2 class="h5">Image library</h2>
+          <p class="text-muted">Add standard images, uploaded user images, and web images to this deck.</p>
+
+          <div class="row g-4">
+            <div class="col-12 col-xl-4">
+              <h3 class="h6">Standard images</h3>
+              <div id="standard-images" class="image-library-grid"></div>
+            </div>
+
+            <div class="col-12 col-xl-4">
+              <h3 class="h6">User images (IndexedDB)</h3>
+              <form id="upload-images-form" class="mb-2">
+                <label for="image-upload-input" class="form-label">Upload image files</label>
+                <input id="image-upload-input" type="file" accept="image/*" class="form-control" multiple />
+              </form>
+              <div id="user-images" class="image-library-grid"></div>
+            </div>
+
+            <div class="col-12 col-xl-4">
+              <h3 class="h6">Web images (IndexedDB URLs)</h3>
+              <form id="web-image-form" class="row g-2 mb-2">
+                <div class="col-9">
+                  <label for="web-image-url" class="form-label">Image URL</label>
+                  <input id="web-image-url" type="url" class="form-control" placeholder="https://example.com/image.png" required />
+                </div>
+                <div class="col-3 d-flex align-items-end">
+                  <button type="submit" class="btn btn-outline-primary w-100">Add</button>
+                </div>
+              </form>
+              <div id="web-images" class="image-library-grid"></div>
+            </div>
+          </div>
+
+          <hr />
+          <h3 class="h6">Selected images for this deck</h3>
+          <p id="deck-name-display" class="mb-2 text-muted">Current deck name: (unsaved)</p>
+          <div id="selected-images" class="selected-images-list"></div>
         </div>
       </section>
 
@@ -60,7 +102,20 @@
       <section id="deck-output" class="deck-grid" aria-live="polite"></section>
     </main>
 
+    <dialog id="save-as-dialog" class="save-as-dialog">
+      <form method="dialog" id="save-as-form">
+        <h2 class="h5 mb-2">Save deck as...</h2>
+        <label for="save-as-name" class="form-label">Deck name</label>
+        <input id="save-as-name" class="form-control mb-2" type="text" required />
+        <p class="mb-2 text-muted">Existing deck names (click to replace):</p>
+        <div id="existing-deck-names" class="existing-decks mb-3"></div>
+        <div class="d-flex gap-2 justify-content-end">
+          <button type="button" id="save-as-cancel" class="btn btn-outline-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </dialog>
+
     <script type="module" src="./js/app/builder.js"></script>
   </body>
 </html>
-

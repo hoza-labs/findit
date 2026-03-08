@@ -1,0 +1,106 @@
+const DATABASE_NAME = 'findit-db';
+const DATABASE_VERSION = 1;
+
+const STORE_USER_IMAGES = 'user images';
+const STORE_WEB_IMAGES = 'web images';
+const STORE_DECKS = 'decks';
+
+export function createIndexedDbRepository() {
+  const dbPromise = openDatabase();
+
+  return {
+    async listUserImages() {
+      return getAllRecords(await dbPromise, STORE_USER_IMAGES);
+    },
+    async addUserImage(file) {
+      const now = new Date().toISOString();
+      const record = {
+        id: createId('user'),
+        fileName: file.name,
+        mimeType: file.type || 'application/octet-stream',
+        blob: file,
+        createdAt: now
+      };
+      await putRecord(await dbPromise, STORE_USER_IMAGES, record);
+      return record;
+    },
+    async listWebImages() {
+      return getAllRecords(await dbPromise, STORE_WEB_IMAGES);
+    },
+    async addWebImage(url) {
+      const now = new Date().toISOString();
+      const record = {
+        id: createId('web'),
+        url,
+        createdAt: now
+      };
+      await putRecord(await dbPromise, STORE_WEB_IMAGES, record);
+      return record;
+    },
+    async listDecks() {
+      return getAllRecords(await dbPromise, STORE_DECKS);
+    },
+    async getDeck(name) {
+      return getRecord(await dbPromise, STORE_DECKS, name);
+    },
+    async saveDeck(deck) {
+      await putRecord(await dbPromise, STORE_DECKS, deck);
+    }
+  };
+}
+
+function openDatabase() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE_USER_IMAGES)) {
+        db.createObjectStore(STORE_USER_IMAGES, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(STORE_WEB_IMAGES)) {
+        db.createObjectStore(STORE_WEB_IMAGES, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(STORE_DECKS)) {
+        db.createObjectStore(STORE_DECKS, { keyPath: 'name' });
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function getAllRecords(db, storeName) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, 'readonly');
+    const request = transaction.objectStore(storeName).getAll();
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function getRecord(db, storeName, key) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, 'readonly');
+    const request = transaction.objectStore(storeName).get(key);
+    request.onsuccess = () => resolve(request.result ?? null);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function putRecord(db, storeName, record) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, 'readwrite');
+    const request = transaction.objectStore(storeName).put(record);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function createId(prefix) {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
+}
