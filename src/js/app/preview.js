@@ -1,5 +1,5 @@
 ﻿import { createEmptyTempDeck, createTempDeckFromSavedDeck, markDirty, markSaved } from '../modules/deckSession.js';
-import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { describeImageRef, removeImageRefAtIndex } from '../modules/imageRefs.js';
 
 const selectedImagesElement = document.querySelector('#selected-images');
@@ -7,6 +7,7 @@ const deckSummary = document.querySelector('#deck-summary');
 const saveButton = document.querySelector('#save-button');
 const saveAsButton = document.querySelector('#save-as-button');
 const deckStatusLine = document.querySelector('#deck-status-line');
+const pageHeading = document.querySelector('header h1');
 
 const saveAsDialog = document.querySelector('#save-as-dialog');
 const saveAsForm = document.querySelector('#save-as-form');
@@ -34,6 +35,7 @@ function clearObjectUrls() {
 function updateHeader() {
   deckSummary.textContent = `n=${tempDeck.symbolsPerCard}, selected images=${tempDeck.selectedImageRefs.length}`;
   renderDeckStatusLine(deckStatusLine, tempDeck);
+  renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Preview', tempDeck });
   saveButton.disabled = !tempDeck.deckName;
 }
 

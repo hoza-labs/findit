@@ -1,14 +1,16 @@
 ﻿import { addImageRef, createImageRef, hasImageRef, removeImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
-import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 
 const webImageForm = document.querySelector('#web-image-form');
 const webImageUrlInput = document.querySelector('#web-image-url');
 const webImagesElement = document.querySelector('#web-images');
 const deckStatusLine = document.querySelector('#deck-status-line');
+const pageHeading = document.querySelector('header h1');
 
 let tempDeck = await loadTempDeckOrDefault();
 renderDeckStatusLine(deckStatusLine, tempDeck);
+renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Web Images', tempDeck });
 
 async function renderWebImages() {
   webImagesElement.innerHTML = '';
@@ -29,6 +31,7 @@ async function renderWebImages() {
           tempDeck = markDirty(isSelected ? removeImageRef(tempDeck, imageRef) : addImageRef(tempDeck, imageRef));
           await saveTempDeck(tempDeck);
           renderDeckStatusLine(deckStatusLine, tempDeck);
+          renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Web Images', tempDeck });
           await renderWebImages();
         }
       })
@@ -60,6 +63,7 @@ webImageForm.addEventListener('submit', async (event) => {
   tempDeck = markDirty(addImageRef(tempDeck, createImageRef('web', saved.id)));
   await saveTempDeck(tempDeck);
   renderDeckStatusLine(deckStatusLine, tempDeck);
+  renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Web Images', tempDeck });
   webImageUrlInput.value = '';
   await renderWebImages();
 });

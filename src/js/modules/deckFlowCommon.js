@@ -34,6 +34,17 @@ export function renderDeckStatusLine(targetElement, tempDeck) {
   targetElement.textContent = `Current deck: ${deckName} ${status}`;
 }
 
+export function renderDeckHeaderAndTitle({ headingElement, pageLabel, tempDeck }) {
+  const deckName = tempDeck.deckName ? tempDeck.deckName : '(unsaved)';
+  const dirtyMarker = tempDeck.dirty ? '*' : '';
+
+  if (headingElement) {
+    headingElement.textContent = `${pageLabel} - ${deckName}${dirtyMarker}`;
+  }
+
+  document.title = `FindIt | ${pageLabel} | ${deckName}${dirtyMarker}`;
+}
+
 export function createImageTile({ src, label, buttonText, onClick, buttonVariant = 'outline-primary', isSelected = false }) {
   const tile = document.createElement('article');
   tile.className = 'image-tile';

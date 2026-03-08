@@ -1,15 +1,17 @@
 ﻿import { addImageRef, createImageRef, hasImageRef, removeImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
-import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 
 const uploadImagesForm = document.querySelector('#upload-images-form');
 const imageUploadInput = document.querySelector('#image-upload-input');
 const userImagesElement = document.querySelector('#user-images');
 const deckStatusLine = document.querySelector('#deck-status-line');
+const pageHeading = document.querySelector('header h1');
 
 let tempDeck = await loadTempDeckOrDefault();
 let objectUrls = [];
 renderDeckStatusLine(deckStatusLine, tempDeck);
+renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'User Images', tempDeck });
 
 function clearObjectUrls() {
   for (const url of objectUrls) {
@@ -40,6 +42,7 @@ async function renderUserImages() {
           tempDeck = markDirty(isSelected ? removeImageRef(tempDeck, imageRef) : addImageRef(tempDeck, imageRef));
           await saveTempDeck(tempDeck);
           renderDeckStatusLine(deckStatusLine, tempDeck);
+          renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'User Images', tempDeck });
           await renderUserImages();
         }
       })
@@ -65,6 +68,7 @@ imageUploadInput.addEventListener('change', async () => {
   if (files.length > 0) {
     await saveTempDeck(tempDeck);
     renderDeckStatusLine(deckStatusLine, tempDeck);
+    renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'User Images', tempDeck });
   }
 
   imageUploadInput.value = '';

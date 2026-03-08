@@ -1,11 +1,12 @@
 ﻿import { createEmptyTempDeck, createTempDeckFromSavedDeck } from '../modules/deckSession.js';
 import { createIndexedDbRepository } from '../modules/indexedDbRepository.js';
-import { renderDeckStatusLine } from '../modules/deckFlowCommon.js';
+import { renderDeckHeaderAndTitle, renderDeckStatusLine } from '../modules/deckFlowCommon.js';
 
 const repository = createIndexedDbRepository();
 const existingDecksElement = document.querySelector('#existing-decks');
 const newDeckButton = document.querySelector('#new-deck-button');
 const deckStatusLine = document.querySelector('#deck-status-line');
+const pageHeading = document.querySelector('header h1');
 
 const saveChangesDialog = document.querySelector('#save-changes-dialog');
 const saveChangesYesButton = document.querySelector('#save-changes-yes');
@@ -166,5 +167,7 @@ newDeckButton.addEventListener('click', () => {
 });
 
 const tempDeck = await repository.getTempDeck();
-renderDeckStatusLine(deckStatusLine, tempDeck ?? createEmptyTempDeck());
+const normalizedTempDeck = tempDeck ?? createEmptyTempDeck();
+renderDeckStatusLine(deckStatusLine, normalizedTempDeck);
+renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Guide', tempDeck: normalizedTempDeck });
 await renderExistingDecks();

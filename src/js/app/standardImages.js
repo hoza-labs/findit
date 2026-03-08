@@ -1,11 +1,13 @@
 ﻿import { addImageRef, createImageRef, hasImageRef, removeImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
-import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, saveTempDeck } from '../modules/deckFlowCommon.js';
 
 const standardImagesElement = document.querySelector('#standard-images');
 const deckStatusLine = document.querySelector('#deck-status-line');
+const pageHeading = document.querySelector('header h1');
 let tempDeck = await loadTempDeckOrDefault();
 renderDeckStatusLine(deckStatusLine, tempDeck);
+renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Standard Images', tempDeck });
 
 async function loadStandardImageNames() {
   const response = await fetch('./assets/deck-images/manifest.json', { cache: 'no-store' });
@@ -34,6 +36,7 @@ function renderStandardImages(fileNames) {
           tempDeck = markDirty(isSelected ? removeImageRef(tempDeck, imageRef) : addImageRef(tempDeck, imageRef));
           await saveTempDeck(tempDeck);
           renderDeckStatusLine(deckStatusLine, tempDeck);
+          renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Standard Images', tempDeck });
           renderStandardImages(fileNames);
         }
       })
