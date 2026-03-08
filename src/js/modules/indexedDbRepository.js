@@ -1,9 +1,11 @@
 const DATABASE_NAME = 'findit-db';
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
 
 const STORE_USER_IMAGES = 'user images';
 const STORE_WEB_IMAGES = 'web images';
 const STORE_DECKS = 'decks';
+const STORE_TEMP = 'temp';
+const TEMP_KEY = 'current';
 
 export function createIndexedDbRepository() {
   const dbPromise = openDatabase();
@@ -45,6 +47,15 @@ export function createIndexedDbRepository() {
     },
     async saveDeck(deck) {
       await putRecord(await dbPromise, STORE_DECKS, deck);
+    },
+    async getTempDeck() {
+      return getRecord(await dbPromise, STORE_TEMP, TEMP_KEY);
+    },
+    async saveTempDeck(tempDeck) {
+      await putRecord(await dbPromise, STORE_TEMP, { ...tempDeck, id: TEMP_KEY });
+    },
+    async clearTempDeck() {
+      await deleteRecord(await dbPromise, STORE_TEMP, TEMP_KEY);
     }
   };
 }
@@ -63,6 +74,9 @@ function openDatabase() {
       }
       if (!db.objectStoreNames.contains(STORE_DECKS)) {
         db.createObjectStore(STORE_DECKS, { keyPath: 'name' });
+      }
+      if (!db.objectStoreNames.contains(STORE_TEMP)) {
+        db.createObjectStore(STORE_TEMP, { keyPath: 'id' });
       }
     };
 
@@ -94,6 +108,15 @@ function putRecord(db, storeName, record) {
     const transaction = db.transaction(storeName, 'readwrite');
     const request = transaction.objectStore(storeName).put(record);
     request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function deleteRecord(db, storeName, key) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, 'readwrite');
+    const request = transaction.objectStore(storeName).delete(key);
+    request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
   });
 }
