@@ -1,3 +1,5 @@
+import { getDefaultWebImageName, normalizeWebContentType, trimWebImageName } from './webImageMetadata.js';
+
 const DATABASE_NAME = 'findit-db';
 const DATABASE_VERSION = 2;
 
@@ -27,13 +29,20 @@ export function createIndexedDbRepository() {
       return record;
     },
     async listWebImages() {
-      return getAllRecords(await dbPromise, STORE_WEB_IMAGES);
+      const records = await getAllRecords(await dbPromise, STORE_WEB_IMAGES);
+      return records.map((record) => ({
+        ...record,
+        name: trimWebImageName(record.name) || getDefaultWebImageName(record.url),
+        contentType: normalizeWebContentType(record.contentType)
+      }));
     },
-    async addWebImage(url) {
+    async addWebImage({ url, name, contentType }) {
       const now = new Date().toISOString();
       const record = {
         id: createId('web'),
         url,
+        name: trimWebImageName(name) || getDefaultWebImageName(url),
+        contentType: normalizeWebContentType(contentType),
         createdAt: now
       };
       await putRecord(await dbPromise, STORE_WEB_IMAGES, record);

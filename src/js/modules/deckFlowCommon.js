@@ -45,21 +45,38 @@ export function renderDeckHeaderAndTitle({ headingElement, pageLabel, tempDeck }
   document.title = `FindIt | ${pageLabel} | ${deckName}${dirtyMarker}`;
 }
 
-export function createImageTile({ src, label, buttonText, onClick, buttonVariant = 'outline-primary', isSelected = false }) {
+export function createImageTile({
+  src,
+  label,
+  buttonText,
+  onClick,
+  buttonVariant = 'outline-primary',
+  isSelected = false,
+  tooltipText = ''
+}) {
   const tile = document.createElement('article');
   tile.className = 'image-tile';
   if (isSelected) {
     tile.classList.add('in-deck');
+  }
+  if (tooltipText) {
+    tile.title = tooltipText;
   }
 
   const image = document.createElement('img');
   image.className = 'image-preview';
   image.src = src;
   image.alt = label;
+  if (tooltipText) {
+    image.title = tooltipText;
+  }
 
   const meta = document.createElement('div');
   meta.className = 'image-meta';
   meta.textContent = label;
+  if (tooltipText) {
+    meta.title = tooltipText;
+  }
 
   const button = document.createElement('button');
   button.type = 'button';

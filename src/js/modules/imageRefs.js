@@ -1,3 +1,5 @@
+import { getWebImageCaption } from './webImageMetadata.js';
+
 export function createImageRef(source, id) {
   return { source, id };
 }
@@ -47,5 +49,5 @@ export function describeImageRef(imageRef, userImages, webImages) {
   }
 
   const web = webImages.find((item) => item.id === imageRef.id);
-  return web ? `web:${web.url}` : `web:${imageRef.id}`;
+  return web ? getWebImageCaption(web) : `web:${imageRef.id}`;
 }

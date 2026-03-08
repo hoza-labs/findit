@@ -73,11 +73,13 @@ async function renderSelectedImages() {
     const ref = tempDeck.selectedImageRefs[i];
     const label = describeImageRef(ref, userImages, webImages);
     const src = resolveImageSrc(ref);
+    const tooltipText = ref.source === 'web' ? (webImages.find((item) => item.id === ref.id)?.url ?? '') : '';
 
     selectedImagesElement.appendChild(
       createImageTile({
         src,
         label,
+        tooltipText,
         buttonText: 'Remove',
         onClick: async () => {
           tempDeck = markDirty(removeImageRefAtIndex(tempDeck, i));
