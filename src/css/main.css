@@ -8,6 +8,28 @@ body {
   min-height: 100vh;
 }
 
+body.has-top-bar {
+  padding-top: 2rem;
+}
+
+.top-next-bar {
+  --bs-navbar-padding-y: 0;
+  min-height: 2rem;
+}
+
+.top-next-bar .nav-link {
+  color: #fff;
+  line-height: 1.2;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.top-next-bar .nav-link:hover,
+.top-next-bar .nav-link:focus {
+  color: #fff;
+  text-decoration: underline;
+}
+
 .deck-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -67,4 +89,144 @@ body {
   margin-top: 0.25rem;
   text-align: center;
   font-size: 0.875rem;
+}
+
+.image-library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+  max-height: 420px;
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
+.image-library-grid--page {
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.image-tile {
+  border: 1px solid var(--card-border);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  background: #fff;
+  position: relative;
+}
+
+.image-tile.in-deck {
+  background: #f1f3f5;
+  border-color: #adb5bd;
+}
+
+.image-tile.in-deck .image-preview {
+  filter: grayscale(100%);
+  opacity: 0.7;
+}
+
+.image-menu {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 30;
+}
+
+.image-menu-trigger {
+  list-style: none;
+  border: 1px solid #adb5bd;
+  border-radius: 0.25rem;
+  background: #fff;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.image-menu-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.image-menu-list {
+  position: absolute;
+  right: 0;
+  margin-top: 0.25rem;
+  background: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 0.4rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  padding: 0.25rem;
+  min-width: 8.5rem;
+  z-index: 20;
+}
+
+.image-menu-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0.35rem 0.45rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.image-menu-item:hover {
+  background: #f1f3f5;
+}
+
+.image-preview {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  background: #f8f9fa;
+  border-radius: 0.25rem;
+  border: 1px solid #e9ecef;
+}
+
+.image-meta {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  word-break: break-word;
+  min-height: 2.2rem;
+}
+
+.selected-images-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.5rem;
+}
+
+.selected-ref {
+  border: 1px solid var(--card-border);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  background: #fff;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.save-as-dialog {
+  width: min(560px, 90vw);
+  border: 1px solid var(--card-border);
+  border-radius: 0.5rem;
+  padding: 0;
+}
+
+.save-as-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.save-as-dialog form {
+  padding: 1rem;
+}
+
+.existing-decks {
+  max-height: 180px;
+  overflow: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
