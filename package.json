@@ -5,6 +5,7 @@
   "description": "Browser-only Spot It (Dobble) explainer and custom deck builder.",
   "type": "module",
   "scripts": {
+    "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
     "clean": "node scripts/clean.mjs",
     "test": "node --test --test-isolation=none \"tests/**/*.spec.mjs\"",
