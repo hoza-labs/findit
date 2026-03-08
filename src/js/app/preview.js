@@ -1,18 +1,23 @@
-﻿import { markDirty, markSaved } from '../modules/deckSession.js';
-import { addUnsavedChangesPrompt, createImageTile, loadTempDeckOrDefault, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
+﻿import { createEmptyTempDeck, createTempDeckFromSavedDeck, markDirty, markSaved } from '../modules/deckSession.js';
+import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { describeImageRef, removeImageRefAtIndex } from '../modules/imageRefs.js';
 
 const selectedImagesElement = document.querySelector('#selected-images');
 const deckSummary = document.querySelector('#deck-summary');
-const deckNameDisplay = document.querySelector('#deck-name-display');
 const saveButton = document.querySelector('#save-button');
 const saveAsButton = document.querySelector('#save-as-button');
+const deckStatusLine = document.querySelector('#deck-status-line');
 
 const saveAsDialog = document.querySelector('#save-as-dialog');
 const saveAsForm = document.querySelector('#save-as-form');
 const saveAsNameInput = document.querySelector('#save-as-name');
 const saveAsCancelButton = document.querySelector('#save-as-cancel');
 const existingDeckNamesElement = document.querySelector('#existing-deck-names');
+
+const urlParams = new URLSearchParams(window.location.search);
+const saveFirstMode = urlParams.get('saveFirst') === '1';
+const afterAction = urlParams.get('after');
+const afterName = urlParams.get('name') ?? '';
 
 let tempDeck = await loadTempDeckOrDefault();
 let objectUrls = [];
@@ -28,7 +33,7 @@ function clearObjectUrls() {
 
 function updateHeader() {
   deckSummary.textContent = `n=${tempDeck.symbolsPerCard}, selected images=${tempDeck.selectedImageRefs.length}`;
-  deckNameDisplay.textContent = `Current deck name: ${tempDeck.deckName || '(unsaved)'}${tempDeck.dirty ? ' (unsaved changes)' : ''}`;
+  renderDeckStatusLine(deckStatusLine, tempDeck);
   saveButton.disabled = !tempDeck.deckName;
 }
 
@@ -86,6 +91,29 @@ async function renderSelectedImages() {
 
 function normalizeDeckName(name) {
   return name.trim();
+}
+
+async function continueAfterSaveIntent() {
+  if (!saveFirstMode) {
+    return;
+  }
+
+  if (afterAction === 'new') {
+    await repository.saveTempDeck(createEmptyTempDeck());
+    window.location.href = './basic-info.html';
+    return;
+  }
+
+  if (afterAction === 'open' && afterName) {
+    const deck = await repository.getDeck(afterName);
+    if (deck) {
+      await repository.saveTempDeck(createTempDeckFromSavedDeck(deck));
+      window.location.href = './basic-info.html';
+      return;
+    }
+  }
+
+  window.location.href = './index.html';
 }
 
 async function saveDeckWithName(name, confirmReplace) {
@@ -151,6 +179,7 @@ saveAsForm.addEventListener('submit', async (event) => {
   const saved = await saveDeckWithName(name, true);
   if (saved) {
     saveAsDialog.close();
+    await continueAfterSaveIntent();
   }
 });
 
@@ -160,10 +189,23 @@ saveButton.addEventListener('click', async () => {
     return;
   }
 
-  await saveDeckWithName(tempDeck.deckName, false);
+  const saved = await saveDeckWithName(tempDeck.deckName, false);
+  if (saved) {
+    await continueAfterSaveIntent();
+  }
 });
 
 userImages = await repository.listUserImages();
 webImages = await repository.listWebImages();
 await renderSelectedImages();
-addUnsavedChangesPrompt(() => tempDeck.dirty);
+
+if (saveFirstMode) {
+  if (tempDeck.deckName) {
+    const saved = await saveDeckWithName(tempDeck.deckName, false);
+    if (saved) {
+      await continueAfterSaveIntent();
+    }
+  } else {
+    await openSaveAsDialog();
+  }
+}

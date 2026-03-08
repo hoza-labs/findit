@@ -24,15 +24,14 @@ export async function resetTempDeck() {
   return empty;
 }
 
-export function addUnsavedChangesPrompt(getIsDirty) {
-  window.addEventListener('beforeunload', (event) => {
-    if (!getIsDirty()) {
-      return;
-    }
+export function renderDeckStatusLine(targetElement, tempDeck) {
+  if (!targetElement) {
+    return;
+  }
 
-    event.preventDefault();
-    event.returnValue = 'You have unsaved changes. Are you sure you want to leave this page?';
-  });
+  const deckName = tempDeck.deckName ? tempDeck.deckName : '(unsaved)';
+  const status = tempDeck.dirty ? '(unsaved changes)' : '(no changes yet)';
+  targetElement.textContent = `Current deck: ${deckName} ${status}`;
 }
 
 export function createImageTile({ src, label, buttonText, onClick }) {

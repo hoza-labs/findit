@@ -1,13 +1,15 @@
 ﻿import { addImageRef, createImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
-import { addUnsavedChangesPrompt, createImageTile, loadTempDeckOrDefault, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 
 const uploadImagesForm = document.querySelector('#upload-images-form');
 const imageUploadInput = document.querySelector('#image-upload-input');
 const userImagesElement = document.querySelector('#user-images');
+const deckStatusLine = document.querySelector('#deck-status-line');
 
 let tempDeck = await loadTempDeckOrDefault();
 let objectUrls = [];
+renderDeckStatusLine(deckStatusLine, tempDeck);
 
 function clearObjectUrls() {
   for (const url of objectUrls) {
@@ -33,6 +35,7 @@ async function renderUserImages() {
         onClick: async () => {
           tempDeck = markDirty(addImageRef(tempDeck, createImageRef('user', image.id)));
           await saveTempDeck(tempDeck);
+          renderDeckStatusLine(deckStatusLine, tempDeck);
         }
       })
     );
@@ -56,6 +59,7 @@ imageUploadInput.addEventListener('change', async () => {
 
   if (files.length > 0) {
     await saveTempDeck(tempDeck);
+    renderDeckStatusLine(deckStatusLine, tempDeck);
   }
 
   imageUploadInput.value = '';
@@ -63,4 +67,3 @@ imageUploadInput.addEventListener('change', async () => {
 });
 
 await renderUserImages();
-addUnsavedChangesPrompt(() => tempDeck.dirty);

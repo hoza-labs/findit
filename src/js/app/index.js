@@ -1,9 +1,11 @@
 ﻿import { createEmptyTempDeck, createTempDeckFromSavedDeck } from '../modules/deckSession.js';
 import { createIndexedDbRepository } from '../modules/indexedDbRepository.js';
+import { renderDeckStatusLine } from '../modules/deckFlowCommon.js';
 
 const repository = createIndexedDbRepository();
 const existingDecksElement = document.querySelector('#existing-decks');
 const newDeckButton = document.querySelector('#new-deck-button');
+const deckStatusLine = document.querySelector('#deck-status-line');
 
 async function openNewDeck() {
   await repository.saveTempDeck(createEmptyTempDeck());
@@ -18,6 +20,30 @@ async function openExistingDeck(name) {
 
   await repository.saveTempDeck(createTempDeckFromSavedDeck(deck));
   window.location.href = './basic-info.html';
+}
+
+async function maybeSaveBeforeNavigate(nextAction, deckName = '') {
+  const currentTempDeck = await repository.getTempDeck();
+  if (!currentTempDeck?.dirty) {
+    return false;
+  }
+
+  const shouldSaveFirst = window.confirm('Do you want to save changes first?');
+  if (!shouldSaveFirst) {
+    return false;
+  }
+
+  const params = new URLSearchParams({
+    saveFirst: '1',
+    after: nextAction
+  });
+
+  if (deckName) {
+    params.set('name', deckName);
+  }
+
+  window.location.href = `./preview.html?${params.toString()}`;
+  return true;
 }
 
 async function renderExistingDecks() {
@@ -41,7 +67,12 @@ async function renderExistingDecks() {
     button.type = 'button';
     button.textContent = 'Open';
     button.addEventListener('click', () => {
-      void openExistingDeck(deck.name);
+      void (async () => {
+        const redirectedForSave = await maybeSaveBeforeNavigate('open', deck.name);
+        if (!redirectedForSave) {
+          await openExistingDeck(deck.name);
+        }
+      })();
     });
 
     row.append(text, button);
@@ -50,7 +81,14 @@ async function renderExistingDecks() {
 }
 
 newDeckButton.addEventListener('click', () => {
-  void openNewDeck();
+  void (async () => {
+    const redirectedForSave = await maybeSaveBeforeNavigate('new');
+    if (!redirectedForSave) {
+      await openNewDeck();
+    }
+  })();
 });
 
+const tempDeck = await repository.getTempDeck();
+renderDeckStatusLine(deckStatusLine, tempDeck ?? createEmptyTempDeck());
 await renderExistingDecks();

@@ -1,9 +1,11 @@
 ﻿import { addImageRef, createImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
-import { addUnsavedChangesPrompt, createImageTile, loadTempDeckOrDefault, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, saveTempDeck } from '../modules/deckFlowCommon.js';
 
 const standardImagesElement = document.querySelector('#standard-images');
+const deckStatusLine = document.querySelector('#deck-status-line');
 let tempDeck = await loadTempDeckOrDefault();
+renderDeckStatusLine(deckStatusLine, tempDeck);
 
 async function loadStandardImageNames() {
   const response = await fetch('./assets/deck-images/manifest.json', { cache: 'no-store' });
@@ -26,6 +28,7 @@ function renderStandardImages(fileNames) {
         onClick: async () => {
           tempDeck = markDirty(addImageRef(tempDeck, createImageRef('standard', fileName)));
           await saveTempDeck(tempDeck);
+          renderDeckStatusLine(deckStatusLine, tempDeck);
         }
       })
     );
@@ -37,5 +40,3 @@ try {
 } catch {
   standardImagesElement.textContent = 'Could not load standard images.';
 }
-
-addUnsavedChangesPrompt(() => tempDeck.dirty);

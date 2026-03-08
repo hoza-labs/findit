@@ -1,12 +1,14 @@
 ﻿import { addImageRef, createImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
-import { addUnsavedChangesPrompt, createImageTile, loadTempDeckOrDefault, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 
 const webImageForm = document.querySelector('#web-image-form');
 const webImageUrlInput = document.querySelector('#web-image-url');
 const webImagesElement = document.querySelector('#web-images');
+const deckStatusLine = document.querySelector('#deck-status-line');
 
 let tempDeck = await loadTempDeckOrDefault();
+renderDeckStatusLine(deckStatusLine, tempDeck);
 
 async function renderWebImages() {
   webImagesElement.innerHTML = '';
@@ -21,6 +23,7 @@ async function renderWebImages() {
         onClick: async () => {
           tempDeck = markDirty(addImageRef(tempDeck, createImageRef('web', image.id)));
           await saveTempDeck(tempDeck);
+          renderDeckStatusLine(deckStatusLine, tempDeck);
         }
       })
     );
@@ -50,9 +53,9 @@ webImageForm.addEventListener('submit', async (event) => {
   const saved = await repository.addWebImage(url);
   tempDeck = markDirty(addImageRef(tempDeck, createImageRef('web', saved.id)));
   await saveTempDeck(tempDeck);
+  renderDeckStatusLine(deckStatusLine, tempDeck);
   webImageUrlInput.value = '';
   await renderWebImages();
 });
 
 await renderWebImages();
-addUnsavedChangesPrompt(() => tempDeck.dirty);

@@ -1,14 +1,16 @@
 ﻿import { markDirty } from '../modules/deckSession.js';
-import { addUnsavedChangesPrompt, loadTempDeckOrDefault, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { loadTempDeckOrDefault, renderDeckStatusLine, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { getAllowedSymbolsPerCard, renderStepOnePreview } from '../modules/stepOnePreview.js';
 
 const symbolsSelect = document.querySelector('#symbols-select');
 const preview = document.querySelector('#step-one-preview');
+const deckStatusLine = document.querySelector('#deck-status-line');
 
 let tempDeck = await loadTempDeckOrDefault();
 
 symbolsSelect.value = String(tempDeck.symbolsPerCard);
 renderStepOnePreview(preview, tempDeck.symbolsPerCard);
+renderDeckStatusLine(deckStatusLine, tempDeck);
 
 symbolsSelect.addEventListener('change', async () => {
   const nextValue = Number.parseInt(symbolsSelect.value, 10);
@@ -19,6 +21,5 @@ symbolsSelect.addEventListener('change', async () => {
   tempDeck = markDirty({ ...tempDeck, symbolsPerCard: nextValue });
   await saveTempDeck(tempDeck);
   renderStepOnePreview(preview, nextValue);
+  renderDeckStatusLine(deckStatusLine, tempDeck);
 });
-
-addUnsavedChangesPrompt(() => tempDeck.dirty);
