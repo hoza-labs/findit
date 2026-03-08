@@ -52,7 +52,8 @@ export function createImageTile({
   onClick,
   buttonVariant = 'outline-primary',
   isSelected = false,
-  tooltipText = ''
+  tooltipText = '',
+  menuActions = []
 }) {
   const tile = document.createElement('article');
   tile.className = 'image-tile';
@@ -83,6 +84,37 @@ export function createImageTile({
   button.className = `btn btn-sm btn-${buttonVariant} w-100`;
   button.textContent = buttonText;
   button.addEventListener('click', onClick);
+
+  if (menuActions.length > 0) {
+    const menu = document.createElement('details');
+    menu.className = 'image-menu';
+
+    const summary = document.createElement('summary');
+    summary.className = 'image-menu-trigger';
+    summary.textContent = '⋮';
+    summary.title = 'Image options';
+    summary.setAttribute('aria-label', 'Image options');
+
+    const list = document.createElement('div');
+    list.className = 'image-menu-list';
+
+    for (const action of menuActions) {
+      const actionButton = document.createElement('button');
+      actionButton.type = 'button';
+      actionButton.className = 'image-menu-item';
+      actionButton.textContent = action.label;
+      actionButton.addEventListener('click', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        menu.open = false;
+        await action.onClick();
+      });
+      list.appendChild(actionButton);
+    }
+
+    menu.append(summary, list);
+    tile.appendChild(menu);
+  }
 
   tile.append(image, meta, button);
   return tile;

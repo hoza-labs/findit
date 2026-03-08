@@ -31,6 +31,15 @@ export function removeImageRef(tempDeck, imageRef) {
   };
 }
 
+export function removeAllImageRefs(tempDeck, imageRef) {
+  return {
+    ...tempDeck,
+    selectedImageRefs: tempDeck.selectedImageRefs.filter(
+      (candidate) => !(candidate.source === imageRef.source && candidate.id === imageRef.id)
+    )
+  };
+}
+
 export function removeImageRefAtIndex(tempDeck, index) {
   return {
     ...tempDeck,
@@ -45,7 +54,7 @@ export function describeImageRef(imageRef, userImages, webImages) {
 
   if (imageRef.source === 'user') {
     const user = userImages.find((item) => item.id === imageRef.id);
-    return user ? `user:${user.fileName}` : `user:${imageRef.id}`;
+    return user ? `user:${user.name || user.fileName}` : `user:${imageRef.id}`;
   }
 
   const web = webImages.find((item) => item.id === imageRef.id);

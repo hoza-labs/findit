@@ -46,6 +46,29 @@
       </div>
     </main>
 
+    <dialog id="rename-image-dialog" class="save-as-dialog">
+      <form method="dialog" id="rename-image-form">
+        <h2 class="h5 mb-2">Rename image</h2>
+        <label for="rename-image-input" class="form-label">New name</label>
+        <input id="rename-image-input" class="form-control mb-3" type="text" required />
+        <div class="d-flex gap-2 justify-content-end">
+          <button id="rename-image-cancel" type="button" class="btn btn-outline-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">OK</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="delete-image-dialog" class="save-as-dialog">
+      <form method="dialog" id="delete-image-form">
+        <h2 class="h5 mb-2">Delete image</h2>
+        <p class="mb-3">Are you sure you want to remove this image from FindIt? This action cannot be undone.</p>
+        <div class="d-flex gap-2 justify-content-end">
+          <button id="delete-image-cancel" type="button" class="btn btn-outline-secondary">Cancel</button>
+          <button type="submit" class="btn btn-danger">OK</button>
+        </div>
+      </form>
+    </dialog>
+
     <script type="module" src="./js/app/webImages.js"></script>
   </body>
 </html>

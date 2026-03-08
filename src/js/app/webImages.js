@@ -1,4 +1,4 @@
-﻿import { addImageRef, createImageRef, hasImageRef, removeImageRef } from '../modules/imageRefs.js';
+﻿import { addImageRef, createImageRef, hasImageRef, removeAllImageRefs, removeImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
 import {
   createImageTile,
@@ -8,13 +8,7 @@ import {
   repository,
   saveTempDeck
 } from '../modules/deckFlowCommon.js';
-import {
-  getDefaultWebImageName,
-  getWebImageCaption,
-  inferWebContentTypeFromUrl,
-  normalizeWebContentType,
-  trimWebImageName
-} from '../modules/webImageMetadata.js';
+import { getDefaultWebImageName, getWebImageCaption, inferWebContentTypeFromUrl, normalizeWebContentType, trimWebImageName } from '../modules/webImageMetadata.js';
 
 const webImageForm = document.querySelector('#web-image-form');
 const webImageUrlInput = document.querySelector('#web-image-url');
@@ -23,7 +17,19 @@ const webImagesElement = document.querySelector('#web-images');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
 
+const renameDialog = document.querySelector('#rename-image-dialog');
+const renameForm = document.querySelector('#rename-image-form');
+const renameInput = document.querySelector('#rename-image-input');
+const renameCancelButton = document.querySelector('#rename-image-cancel');
+
+const deleteDialog = document.querySelector('#delete-image-dialog');
+const deleteForm = document.querySelector('#delete-image-form');
+const deleteCancelButton = document.querySelector('#delete-image-cancel');
+
 let tempDeck = await loadTempDeckOrDefault();
+let renameTarget = null;
+let deleteTarget = null;
+
 renderDeckStatusLine(deckStatusLine, tempDeck);
 renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Web Images', tempDeck });
 
@@ -82,7 +88,24 @@ async function renderWebImages() {
           renderDeckStatusLine(deckStatusLine, tempDeck);
           renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Web Images', tempDeck });
           await renderWebImages();
-        }
+        },
+        menuActions: [
+          {
+            label: 'Rename...',
+            onClick: async () => {
+              renameTarget = image;
+              renameInput.value = image.name || getDefaultWebImageName(image.url);
+              renameDialog.showModal();
+            }
+          },
+          {
+            label: 'Delete...',
+            onClick: async () => {
+              deleteTarget = image;
+              deleteDialog.showModal();
+            }
+          }
+        ]
       })
     );
   }
@@ -122,6 +145,49 @@ webImageForm.addEventListener('submit', async (event) => {
 
   webImageUrlInput.value = '';
   webImageNameInput.value = '';
+  await renderWebImages();
+});
+
+renameCancelButton.addEventListener('click', () => {
+  renameDialog.close();
+  renameTarget = null;
+});
+
+renameForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!renameTarget) {
+    return;
+  }
+
+  await repository.renameWebImage(renameTarget.id, renameInput.value);
+  renameDialog.close();
+  renameTarget = null;
+  await renderWebImages();
+});
+
+deleteCancelButton.addEventListener('click', () => {
+  deleteDialog.close();
+  deleteTarget = null;
+});
+
+deleteForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!deleteTarget) {
+    return;
+  }
+
+  await repository.deleteWebImage(deleteTarget.id);
+  const beforeCount = tempDeck.selectedImageRefs.length;
+  tempDeck = removeAllImageRefs(tempDeck, createImageRef('web', deleteTarget.id));
+  if (tempDeck.selectedImageRefs.length !== beforeCount) {
+    tempDeck = markDirty(tempDeck);
+    await saveTempDeck(tempDeck);
+    renderDeckStatusLine(deckStatusLine, tempDeck);
+    renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Web Images', tempDeck });
+  }
+
+  deleteDialog.close();
+  deleteTarget = null;
   await renderWebImages();
 });
 

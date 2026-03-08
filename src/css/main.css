@@ -83,6 +83,7 @@ body {
   border-radius: 0.5rem;
   padding: 0.5rem;
   background: #fff;
+  position: relative;
 }
 
 .image-tile.in-deck {
@@ -93,6 +94,56 @@ body {
 .image-tile.in-deck .image-preview {
   filter: grayscale(100%);
   opacity: 0.7;
+}
+
+.image-menu {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+}
+
+.image-menu-trigger {
+  list-style: none;
+  border: 1px solid #adb5bd;
+  border-radius: 0.25rem;
+  background: #fff;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.image-menu-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.image-menu-list {
+  position: absolute;
+  right: 0;
+  margin-top: 0.25rem;
+  background: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 0.4rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  padding: 0.25rem;
+  min-width: 8.5rem;
+  z-index: 20;
+}
+
+.image-menu-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0.35rem 0.45rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.image-menu-item:hover {
+  background: #f1f3f5;
 }
 
 .image-preview {

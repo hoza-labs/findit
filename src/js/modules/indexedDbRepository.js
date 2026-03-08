@@ -14,19 +14,33 @@ export function createIndexedDbRepository() {
 
   return {
     async listUserImages() {
-      return getAllRecords(await dbPromise, STORE_USER_IMAGES);
+      const records = await getAllRecords(await dbPromise, STORE_USER_IMAGES);
+      return records.map((record) => ({
+        ...record,
+        name: trimWebImageName(record.name) || record.fileName
+      }));
     },
     async addUserImage(file) {
       const now = new Date().toISOString();
       const record = {
         id: createId('user'),
         fileName: file.name,
+        name: file.name,
         mimeType: file.type || 'application/octet-stream',
         blob: file,
         createdAt: now
       };
       await putRecord(await dbPromise, STORE_USER_IMAGES, record);
       return record;
+    },
+    async renameUserImage(id, name) {
+      await patchRecord(await dbPromise, STORE_USER_IMAGES, id, (record) => ({
+        ...record,
+        name: trimWebImageName(name) || record.fileName
+      }));
+    },
+    async deleteUserImage(id) {
+      await deleteRecord(await dbPromise, STORE_USER_IMAGES, id);
     },
     async listWebImages() {
       const records = await getAllRecords(await dbPromise, STORE_WEB_IMAGES);
@@ -47,6 +61,15 @@ export function createIndexedDbRepository() {
       };
       await putRecord(await dbPromise, STORE_WEB_IMAGES, record);
       return record;
+    },
+    async renameWebImage(id, name) {
+      await patchRecord(await dbPromise, STORE_WEB_IMAGES, id, (record) => ({
+        ...record,
+        name: trimWebImageName(name) || getDefaultWebImageName(record.url)
+      }));
+    },
+    async deleteWebImage(id) {
+      await deleteRecord(await dbPromise, STORE_WEB_IMAGES, id);
     },
     async listDecks() {
       return getAllRecords(await dbPromise, STORE_DECKS);
@@ -128,6 +151,14 @@ function deleteRecord(db, storeName, key) {
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);
   });
+}
+
+async function patchRecord(db, storeName, key, updateFn) {
+  const existing = await getRecord(db, storeName, key);
+  if (!existing) {
+    return;
+  }
+  await putRecord(db, storeName, updateFn(existing));
 }
 
 function createId(prefix) {
