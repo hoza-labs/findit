@@ -1,4 +1,4 @@
-﻿import { addImageRef, createImageRef } from '../modules/imageRefs.js';
+﻿import { addImageRef, createImageRef, hasImageRef, removeImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
 import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 
@@ -15,15 +15,21 @@ async function renderWebImages() {
   const webImages = await repository.listWebImages();
 
   for (const image of webImages) {
+    const imageRef = createImageRef('web', image.id);
+    const isSelected = hasImageRef(tempDeck, imageRef);
+
     webImagesElement.appendChild(
       createImageTile({
         src: image.url,
         label: image.url,
-        buttonText: 'Add to deck',
+        buttonText: isSelected ? 'Remove from deck' : 'Add to deck',
+        buttonVariant: isSelected ? 'outline-danger' : 'outline-primary',
+        isSelected,
         onClick: async () => {
-          tempDeck = markDirty(addImageRef(tempDeck, createImageRef('web', image.id)));
+          tempDeck = markDirty(isSelected ? removeImageRef(tempDeck, imageRef) : addImageRef(tempDeck, imageRef));
           await saveTempDeck(tempDeck);
           renderDeckStatusLine(deckStatusLine, tempDeck);
+          await renderWebImages();
         }
       })
     );

@@ -1,4 +1,4 @@
-﻿import { addImageRef, createImageRef } from '../modules/imageRefs.js';
+﻿import { addImageRef, createImageRef, hasImageRef, removeImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
 import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 
@@ -24,6 +24,8 @@ async function renderUserImages() {
 
   const userImages = await repository.listUserImages();
   for (const image of userImages) {
+    const imageRef = createImageRef('user', image.id);
+    const isSelected = hasImageRef(tempDeck, imageRef);
     const src = URL.createObjectURL(image.blob);
     objectUrls.push(src);
 
@@ -31,11 +33,14 @@ async function renderUserImages() {
       createImageTile({
         src,
         label: image.fileName,
-        buttonText: 'Add to deck',
+        buttonText: isSelected ? 'Remove from deck' : 'Add to deck',
+        buttonVariant: isSelected ? 'outline-danger' : 'outline-primary',
+        isSelected,
         onClick: async () => {
-          tempDeck = markDirty(addImageRef(tempDeck, createImageRef('user', image.id)));
+          tempDeck = markDirty(isSelected ? removeImageRef(tempDeck, imageRef) : addImageRef(tempDeck, imageRef));
           await saveTempDeck(tempDeck);
           renderDeckStatusLine(deckStatusLine, tempDeck);
+          await renderUserImages();
         }
       })
     );

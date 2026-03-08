@@ -85,6 +85,16 @@ body {
   background: #fff;
 }
 
+.image-tile.in-deck {
+  background: #f1f3f5;
+  border-color: #adb5bd;
+}
+
+.image-tile.in-deck .image-preview {
+  filter: grayscale(100%);
+  opacity: 0.7;
+}
+
 .image-preview {
   width: 100%;
   aspect-ratio: 1 / 1;

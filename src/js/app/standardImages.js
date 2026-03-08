@@ -1,4 +1,4 @@
-﻿import { addImageRef, createImageRef } from '../modules/imageRefs.js';
+﻿import { addImageRef, createImageRef, hasImageRef, removeImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
 import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, saveTempDeck } from '../modules/deckFlowCommon.js';
 
@@ -19,16 +19,22 @@ function renderStandardImages(fileNames) {
   standardImagesElement.innerHTML = '';
 
   for (const fileName of fileNames) {
+    const imageRef = createImageRef('standard', fileName);
+    const isSelected = hasImageRef(tempDeck, imageRef);
     const src = `./assets/deck-images/${fileName}`;
+
     standardImagesElement.appendChild(
       createImageTile({
         src,
         label: fileName,
-        buttonText: 'Add to deck',
+        buttonText: isSelected ? 'Remove from deck' : 'Add to deck',
+        buttonVariant: isSelected ? 'outline-danger' : 'outline-primary',
+        isSelected,
         onClick: async () => {
-          tempDeck = markDirty(addImageRef(tempDeck, createImageRef('standard', fileName)));
+          tempDeck = markDirty(isSelected ? removeImageRef(tempDeck, imageRef) : addImageRef(tempDeck, imageRef));
           await saveTempDeck(tempDeck);
           renderDeckStatusLine(deckStatusLine, tempDeck);
+          renderStandardImages(fileNames);
         }
       })
     );

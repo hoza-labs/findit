@@ -34,9 +34,12 @@ export function renderDeckStatusLine(targetElement, tempDeck) {
   targetElement.textContent = `Current deck: ${deckName} ${status}`;
 }
 
-export function createImageTile({ src, label, buttonText, onClick }) {
+export function createImageTile({ src, label, buttonText, onClick, buttonVariant = 'outline-primary', isSelected = false }) {
   const tile = document.createElement('article');
   tile.className = 'image-tile';
+  if (isSelected) {
+    tile.classList.add('in-deck');
+  }
 
   const image = document.createElement('img');
   image.className = 'image-preview';
@@ -49,7 +52,7 @@ export function createImageTile({ src, label, buttonText, onClick }) {
 
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'btn btn-sm btn-outline-primary w-100';
+  button.className = `btn btn-sm btn-${buttonVariant} w-100`;
   button.textContent = buttonText;
   button.addEventListener('click', onClick);
 

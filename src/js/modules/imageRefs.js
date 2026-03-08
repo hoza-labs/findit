@@ -9,6 +9,26 @@ export function addImageRef(tempDeck, imageRef) {
   };
 }
 
+export function hasImageRef(tempDeck, imageRef) {
+  return tempDeck.selectedImageRefs.some(
+    (candidate) => candidate.source === imageRef.source && candidate.id === imageRef.id
+  );
+}
+
+export function removeImageRef(tempDeck, imageRef) {
+  let removed = false;
+  return {
+    ...tempDeck,
+    selectedImageRefs: tempDeck.selectedImageRefs.filter((candidate) => {
+      if (!removed && candidate.source === imageRef.source && candidate.id === imageRef.id) {
+        removed = true;
+        return false;
+      }
+      return true;
+    })
+  };
+}
+
 export function removeImageRefAtIndex(tempDeck, index) {
   return {
     ...tempDeck,
