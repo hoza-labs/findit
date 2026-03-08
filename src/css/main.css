@@ -30,3 +30,41 @@ body {
   margin: 0;
   padding-left: 1rem;
 }
+
+.step-one-preview {
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.step-one-canvas {
+  width: max-content;
+}
+
+.step-one-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5in;
+  margin-bottom: 0.5in;
+}
+
+.step-one-row.slope-row {
+  margin-top: 0.5in;
+}
+
+.placeholder-item {
+  width: 1in;
+}
+
+.placeholder-box {
+  width: 1in;
+  height: 1in;
+  background: #fff;
+  border: 1px solid #adb5bd;
+  border-radius: 0.25rem;
+}
+
+.placeholder-label {
+  margin-top: 0.25rem;
+  text-align: center;
+  font-size: 0.875rem;
+}

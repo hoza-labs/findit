@@ -21,9 +21,15 @@
         <div class="card-body">
           <form id="builder-form" class="row g-3 align-items-end">
             <div class="col-sm-6 col-lg-4">
-              <label for="symbols-input" class="form-label">Symbols per card (n)</label>
-              <input id="symbols-input" name="symbols" type="number" min="3" max="9" step="1" class="form-control" value="4" required />
-              <div class="form-text">Deck size will be n² - n + 1 cards.</div>
+              <label for="symbols-select" class="form-label">Step 1: Pictures per card (n)</label>
+              <select id="symbols-select" name="symbols" class="form-select" required>
+                <option value="3">3</option>
+                <option value="4" selected>4</option>
+                <option value="6">6</option>
+                <option value="8">8</option>
+                <option value="12">12</option>
+              </select>
+              <div class="form-text">Allowed values satisfy n-1 = p, where p is prime.</div>
             </div>
             <div class="col-sm-6 col-lg-8 d-flex gap-2 flex-wrap">
               <button type="submit" class="btn btn-primary">Generate Deck</button>
@@ -33,6 +39,14 @@
               <button id="print-button" type="button" class="btn btn-outline-success">Print</button>
             </div>
           </form>
+        </div>
+      </section>
+
+      <section class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h2 class="h5">Step 1 preview</h2>
+          <p class="text-muted mb-3">The layout below shows required image slots for the selected n.</p>
+          <div id="step-one-preview" class="step-one-preview" aria-live="polite"></div>
         </div>
       </section>
 

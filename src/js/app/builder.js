@@ -1,9 +1,11 @@
 ﻿import { buildDeckModel } from '../modules/deckBuilder.js';
 import { createDeckStorage } from '../modules/storage.js';
+import { getAllowedSymbolsPerCard, renderStepOnePreview } from '../modules/stepOnePreview.js';
 import { renderDeck, updateSummary } from '../modules/ui.js';
 
 const form = document.querySelector('#builder-form');
-const symbolsInput = document.querySelector('#symbols-input');
+const symbolsSelect = document.querySelector('#symbols-select');
+const stepOnePreview = document.querySelector('#step-one-preview');
 const output = document.querySelector('#deck-output');
 const summary = document.querySelector('#deck-summary');
 
@@ -16,7 +18,11 @@ const deckStorage = createDeckStorage(window.localStorage);
 let currentDeck = null;
 
 function parseSymbolsInput() {
-  return Number.parseInt(symbolsInput.value, 10);
+  const selectedValue = Number.parseInt(symbolsSelect.value, 10);
+  if (!getAllowedSymbolsPerCard().includes(selectedValue)) {
+    throw new Error('Please select a supported symbols-per-card value.');
+  }
+  return selectedValue;
 }
 
 function renderCurrentDeck() {
@@ -82,3 +88,9 @@ printButton.addEventListener('click', () => {
   }
   window.print();
 });
+
+symbolsSelect.addEventListener('change', () => {
+  renderStepOnePreview(stepOnePreview, parseSymbolsInput());
+});
+
+renderStepOnePreview(stepOnePreview, parseSymbolsInput());
