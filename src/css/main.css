@@ -8,6 +8,28 @@ body {
   min-height: 100vh;
 }
 
+body.has-top-bar {
+  padding-top: 2rem;
+}
+
+.top-next-bar {
+  --bs-navbar-padding-y: 0;
+  min-height: 2rem;
+}
+
+.top-next-bar .nav-link {
+  color: #fff;
+  line-height: 1.2;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.top-next-bar .nav-link:hover,
+.top-next-bar .nav-link:focus {
+  color: #fff;
+  text-decoration: underline;
+}
+
 .deck-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
