@@ -8,7 +8,13 @@ import {
   repository,
   saveTempDeck
 } from '../modules/deckFlowCommon.js';
-import { getDefaultWebImageName, getWebImageCaption, normalizeWebContentType, trimWebImageName } from '../modules/webImageMetadata.js';
+import {
+  getDefaultWebImageName,
+  getWebImageCaption,
+  inferWebContentTypeFromUrl,
+  normalizeWebContentType,
+  trimWebImageName
+} from '../modules/webImageMetadata.js';
 
 const webImageForm = document.querySelector('#web-image-form');
 const webImageUrlInput = document.querySelector('#web-image-url');
@@ -22,14 +28,28 @@ renderDeckStatusLine(deckStatusLine, tempDeck);
 renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Web Images', tempDeck });
 
 async function fetchRemoteContentType(url) {
-  const methods = ['HEAD', 'GET'];
-  for (const method of methods) {
+  const attempts = [
+    { method: 'HEAD' },
+    { method: 'GET' }
+  ];
+
+  for (const attempt of attempts) {
     try {
-      const response = await fetch(url, { method });
-      if (response.ok) {
-        const contentType = response.headers.get('content-type');
-        if (contentType) {
-          return normalizeWebContentType(contentType);
+      const response = await fetch(url, {
+        method: attempt.method,
+        cache: 'no-store'
+      });
+
+      const headerType = normalizeWebContentType(response.headers.get('content-type'));
+      if (headerType !== 'unknown') {
+        return headerType;
+      }
+
+      if (attempt.method === 'GET' && response.type !== 'opaque') {
+        const blob = await response.blob();
+        const blobType = normalizeWebContentType(blob.type);
+        if (blobType !== 'unknown') {
+          return blobType;
         }
       }
     } catch {
@@ -37,7 +57,7 @@ async function fetchRemoteContentType(url) {
     }
   }
 
-  return 'unknown';
+  return inferWebContentTypeFromUrl(url);
 }
 
 async function renderWebImages() {

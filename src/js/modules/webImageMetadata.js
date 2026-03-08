@@ -25,6 +25,30 @@ export function normalizeWebContentType(rawContentType) {
   return mediaType;
 }
 
+export function inferWebContentTypeFromUrl(url) {
+  try {
+    const parsed = new URL(url);
+    const path = parsed.pathname.toLowerCase();
+    const extension = path.includes('.') ? path.slice(path.lastIndexOf('.') + 1) : '';
+
+    const extensionMap = {
+      png: 'png',
+      jpg: 'jpeg',
+      jpeg: 'jpeg',
+      webp: 'webp',
+      gif: 'gif',
+      avif: 'avif',
+      svg: 'svg+xml',
+      bmp: 'bmp',
+      ico: 'x-icon'
+    };
+
+    return extensionMap[extension] ?? 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
 export function getDefaultWebImageName(url) {
   const rootDomain = getRootDomain(url);
   const shortHash = getShortUrlHash(url);

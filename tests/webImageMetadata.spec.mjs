@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   getDefaultWebImageName,
   getWebImageCaption,
+  inferWebContentTypeFromUrl,
   normalizeWebContentType,
   trimWebImageName
 } from '../src/js/modules/webImageMetadata.js';
@@ -28,4 +29,8 @@ test('getWebImageCaption returns name/content-type', () => {
     contentType: 'image/webp'
   });
   assert.equal(caption, 'sample/webp');
+});
+
+test('inferWebContentTypeFromUrl infers subtype from extension', () => {
+  assert.equal(inferWebContentTypeFromUrl('https://example.com/assets/photo.jpg?x=1'), 'jpeg');
 });
