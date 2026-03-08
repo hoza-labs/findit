@@ -64,6 +64,8 @@ async function renderUserImages() {
               renameTarget = image;
               renameInput.value = image.name || image.fileName;
               renameDialog.showModal();
+              renameInput.focus();
+              renameInput.select();
             }
           },
           {

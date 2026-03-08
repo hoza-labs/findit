@@ -96,6 +96,8 @@ async function renderWebImages() {
               renameTarget = image;
               renameInput.value = image.name || getDefaultWebImageName(image.url);
               renameDialog.showModal();
+              renameInput.focus();
+              renameInput.select();
             }
           },
           {

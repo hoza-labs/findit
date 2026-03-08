@@ -117,5 +117,10 @@ export function createImageTile({
   }
 
   tile.append(image, meta, button);
+  // Keep menu as top-most clickable overlay.
+  const menu = tile.querySelector('.image-menu');
+  if (menu) {
+    tile.appendChild(menu);
+  }
   return tile;
 }
