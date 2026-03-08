@@ -22,23 +22,21 @@
     </header>
 
     <main class="container pb-5">
-      <section class="card shadow-sm mb-3">
-        <div class="card-body">
-          <form id="web-image-form" class="row g-2 mb-3">
-            <div class="col-sm-6">
-              <label for="web-image-url" class="form-label">Image URL</label>
-              <input id="web-image-url" type="url" class="form-control" placeholder="https://example.com/image.png" required />
-            </div>
-            <div class="col-sm-4">
-              <label for="web-image-name" class="form-label">Name (optional)</label>
-              <input id="web-image-name" type="text" class="form-control" placeholder="My image name" />
-            </div>
-            <div class="col-sm-2 d-flex align-items-end">
-              <button type="submit" class="btn btn-outline-primary w-100">Add</button>
-            </div>
-          </form>
-          <div id="web-images" class="image-library-grid"></div>
-        </div>
+      <section class="mb-3">
+        <form id="web-image-form" class="row g-2 mb-3">
+          <div class="col-sm-6">
+            <label for="web-image-url" class="form-label">Image URL</label>
+            <input id="web-image-url" type="url" class="form-control" placeholder="https://example.com/image.png" required />
+          </div>
+          <div class="col-sm-4">
+            <label for="web-image-name" class="form-label">Name (optional)</label>
+            <input id="web-image-name" type="text" class="form-control" placeholder="My image name" />
+          </div>
+          <div class="col-sm-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-outline-primary w-100">Add</button>
+          </div>
+        </form>
+        <div id="web-images" class="image-library-grid image-library-grid--page"></div>
       </section>
 
       <div class="d-flex justify-content-end">

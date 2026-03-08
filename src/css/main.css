@@ -78,6 +78,12 @@ body {
   padding-right: 0.25rem;
 }
 
+.image-library-grid--page {
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+}
+
 .image-tile {
   border: 1px solid var(--card-border);
   border-radius: 0.5rem;

@@ -22,14 +22,12 @@
     </header>
 
     <main class="container pb-5">
-      <section class="card shadow-sm mb-3">
-        <div class="card-body">
-          <form id="upload-images-form" class="mb-3">
-            <label for="image-upload-input" class="form-label">Upload image files</label>
-            <input id="image-upload-input" type="file" accept="image/*" class="form-control" multiple />
-          </form>
-          <div id="user-images" class="image-library-grid"></div>
-        </div>
+      <section class="mb-3">
+        <form id="upload-images-form" class="mb-3">
+          <label for="image-upload-input" class="form-label">Upload image files</label>
+          <input id="image-upload-input" type="file" accept="image/*" class="form-control" multiple />
+        </form>
+        <div id="user-images" class="image-library-grid image-library-grid--page"></div>
       </section>
 
       <div class="d-flex justify-content-end">
