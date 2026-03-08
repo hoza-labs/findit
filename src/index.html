@@ -41,6 +41,18 @@
       </section>
     </main>
 
+    <dialog id="save-changes-dialog" class="save-as-dialog">
+      <form method="dialog" class="p-3">
+        <h2 class="h5 mb-2">Unsaved changes</h2>
+        <p class="mb-3">Do you want to save changes first?</p>
+        <div class="d-flex gap-2 justify-content-end">
+          <button id="save-changes-cancel" type="button" class="btn btn-outline-secondary">Cancel</button>
+          <button id="save-changes-no" type="button" class="btn btn-outline-dark">No</button>
+          <button id="save-changes-yes" type="button" class="btn btn-primary">Yes</button>
+        </div>
+      </form>
+    </dialog>
+
     <script type="module" src="./js/app/index.js"></script>
   </body>
 </html>

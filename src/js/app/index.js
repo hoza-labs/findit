@@ -7,6 +7,11 @@ const existingDecksElement = document.querySelector('#existing-decks');
 const newDeckButton = document.querySelector('#new-deck-button');
 const deckStatusLine = document.querySelector('#deck-status-line');
 
+const saveChangesDialog = document.querySelector('#save-changes-dialog');
+const saveChangesYesButton = document.querySelector('#save-changes-yes');
+const saveChangesNoButton = document.querySelector('#save-changes-no');
+const saveChangesCancelButton = document.querySelector('#save-changes-cancel');
+
 async function openNewDeck() {
   await repository.saveTempDeck(createEmptyTempDeck());
   window.location.href = './basic-info.html';
@@ -22,28 +27,97 @@ async function openExistingDeck(name) {
   window.location.href = './basic-info.html';
 }
 
+async function promptSaveChoice() {
+  if (typeof saveChangesDialog.showModal !== 'function') {
+    const response = (window.prompt('Do you want to save changes first? (yes/no/cancel)', 'yes') ?? 'cancel').trim().toLowerCase();
+    if (response === 'yes' || response === 'y') {
+      return 'yes';
+    }
+    if (response === 'no' || response === 'n') {
+      return 'no';
+    }
+    return 'cancel';
+  }
+
+  return new Promise((resolve) => {
+    let resolved = false;
+
+    function cleanup() {
+      saveChangesYesButton.removeEventListener('click', onYes);
+      saveChangesNoButton.removeEventListener('click', onNo);
+      saveChangesCancelButton.removeEventListener('click', onCancel);
+      saveChangesDialog.removeEventListener('cancel', onDialogCancel);
+      saveChangesDialog.removeEventListener('close', onDialogClose);
+    }
+
+    function finish(value) {
+      if (resolved) {
+        return;
+      }
+      resolved = true;
+      cleanup();
+      if (saveChangesDialog.open) {
+        saveChangesDialog.close();
+      }
+      resolve(value);
+    }
+
+    function onYes() {
+      finish('yes');
+    }
+
+    function onNo() {
+      finish('no');
+    }
+
+    function onCancel() {
+      finish('cancel');
+    }
+
+    function onDialogCancel(event) {
+      event.preventDefault();
+      finish('cancel');
+    }
+
+    function onDialogClose() {
+      finish('cancel');
+    }
+
+    saveChangesYesButton.addEventListener('click', onYes);
+    saveChangesNoButton.addEventListener('click', onNo);
+    saveChangesCancelButton.addEventListener('click', onCancel);
+    saveChangesDialog.addEventListener('cancel', onDialogCancel);
+    saveChangesDialog.addEventListener('close', onDialogClose);
+
+    saveChangesDialog.showModal();
+  });
+}
+
 async function maybeSaveBeforeNavigate(nextAction, deckName = '') {
   const currentTempDeck = await repository.getTempDeck();
   if (!currentTempDeck?.dirty) {
-    return false;
+    return 'no';
   }
 
-  const shouldSaveFirst = window.confirm('Do you want to save changes first?');
-  if (!shouldSaveFirst) {
-    return false;
+  const choice = await promptSaveChoice();
+  if (choice === 'cancel') {
+    return 'cancel';
   }
 
-  const params = new URLSearchParams({
-    saveFirst: '1',
-    after: nextAction
-  });
+  if (choice === 'yes') {
+    const params = new URLSearchParams({
+      saveFirst: '1',
+      after: nextAction
+    });
 
-  if (deckName) {
-    params.set('name', deckName);
+    if (deckName) {
+      params.set('name', deckName);
+    }
+
+    window.location.href = `./preview.html?${params.toString()}`;
   }
 
-  window.location.href = `./preview.html?${params.toString()}`;
-  return true;
+  return choice;
 }
 
 async function renderExistingDecks() {
@@ -68,10 +142,11 @@ async function renderExistingDecks() {
     button.textContent = 'Open';
     button.addEventListener('click', () => {
       void (async () => {
-        const redirectedForSave = await maybeSaveBeforeNavigate('open', deck.name);
-        if (!redirectedForSave) {
-          await openExistingDeck(deck.name);
+        const choice = await maybeSaveBeforeNavigate('open', deck.name);
+        if (choice === 'yes' || choice === 'cancel') {
+          return;
         }
+        await openExistingDeck(deck.name);
       })();
     });
 
@@ -82,10 +157,11 @@ async function renderExistingDecks() {
 
 newDeckButton.addEventListener('click', () => {
   void (async () => {
-    const redirectedForSave = await maybeSaveBeforeNavigate('new');
-    if (!redirectedForSave) {
-      await openNewDeck();
+    const choice = await maybeSaveBeforeNavigate('new');
+    if (choice === 'yes' || choice === 'cancel') {
+      return;
     }
+    await openNewDeck();
   })();
 });
 
