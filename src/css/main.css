@@ -82,6 +82,7 @@ body.has-top-bar {
 
 .deck-pattern-item {
   width: var(--pattern-item-size);
+  position: relative;
 }
 
 .deck-pattern-image {
@@ -100,6 +101,19 @@ body.has-top-bar {
   min-height: 1.2rem;
   text-align: center;
   overflow-wrap: anywhere;
+}
+
+.preview-remove-button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 0.25rem;
+  line-height: 1;
+  padding: 0.1rem 0.2rem;
+  font-size: 0.85rem;
+  cursor: pointer;
 }
 
 .step-one-row {

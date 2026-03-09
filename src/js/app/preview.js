@@ -46,10 +46,6 @@ function updateHeader() {
   saveButton.disabled = !tempDeck.deckName;
 }
 
-function getWebRecordForRef(ref) {
-  return webImages.find((item) => item.id === ref.id) ?? null;
-}
-
 function resolveImageSrc(ref, placeholderNumber) {
   if (ref.source === 'standard') {
     return `./assets/deck-images/${ref.id}`;
@@ -66,16 +62,8 @@ function resolveImageSrc(ref, placeholderNumber) {
     return url;
   }
 
-  const webImage = getWebRecordForRef(ref);
+  const webImage = webImages.find((item) => item.id === ref.id);
   return webImage ? webImage.url : `./assets/placeholder-images/${placeholderNumber}.png`;
-}
-
-function resolveTooltip(ref, slotTitle) {
-  if (ref?.source === 'web') {
-    return getWebRecordForRef(ref)?.url ?? '';
-  }
-
-  return slotTitle;
 }
 
 function applyPatternScale() {
@@ -92,38 +80,29 @@ function applyPatternScale() {
 function createPatternItem({ slotIndex, slotTitle = '', refIndex = null }) {
   const item = document.createElement('article');
   item.className = 'deck-pattern-item';
-  if (slotTitle) {
-    item.title = slotTitle;
-  }
 
   const selectedRef = refIndex !== null ? tempDeck.selectedImageRefs[refIndex] : null;
   const fallbackNumber = slotIndex + 1;
   const src = selectedRef ? resolveImageSrc(selectedRef, fallbackNumber) : `./assets/placeholder-images/${fallbackNumber}.png`;
   const label = selectedRef ? describeImageRef(selectedRef, userImages, webImages) : `placeholder ${fallbackNumber}`;
-  const tooltipText = resolveTooltip(selectedRef, slotTitle);
+  const tooltipText = slotTitle ? `${label} | slot ${slotTitle}` : label;
 
   const image = document.createElement('img');
   image.className = 'deck-pattern-image';
   image.src = src;
   image.alt = label;
-  if (tooltipText) {
-    image.title = tooltipText;
-  }
+  image.title = tooltipText;
+  item.title = tooltipText;
 
-  const meta = document.createElement('div');
-  meta.className = 'deck-pattern-label';
-  meta.textContent = label;
-  if (tooltipText) {
-    meta.title = tooltipText;
-  }
-
-  item.append(image, meta);
+  item.append(image);
 
   if (selectedRef) {
     const removeButton = document.createElement('button');
     removeButton.type = 'button';
-    removeButton.className = 'btn btn-sm btn-outline-danger w-100 mt-1';
-    removeButton.textContent = 'Remove';
+    removeButton.className = 'preview-remove-button';
+    removeButton.textContent = '❌';
+    removeButton.title = `Remove ${label}`;
+    removeButton.setAttribute('aria-label', `Remove ${label}`);
     removeButton.addEventListener('click', async () => {
       tempDeck = markDirty(removeImageRefAtIndex(tempDeck, refIndex));
       await saveTempDeck(tempDeck);
@@ -199,13 +178,11 @@ async function renderSelectedImages() {
       const ref = extraRefs[index];
       const label = describeImageRef(ref, userImages, webImages);
       const src = resolveImageSrc(ref, ((refIndex % 133) + 1));
-      const tooltipText = ref.source === 'web' ? (getWebRecordForRef(ref)?.url ?? '') : '';
-
       selectedImagesElement.appendChild(
         createImageTile({
           src,
-          label,
-          tooltipText,
+          label: '',
+          tooltipText: label,
           buttonText: 'Remove',
           buttonVariant: 'outline-danger',
           onClick: async () => {
