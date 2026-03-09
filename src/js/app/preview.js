@@ -2,7 +2,9 @@
 import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { describeImageRef, removeImageRefAtIndex } from '../modules/imageRefs.js';
 
+const deckPatternElement = document.querySelector('#deck-pattern');
 const selectedImagesElement = document.querySelector('#selected-images');
+const extraImagesSection = document.querySelector('#extra-images-section');
 const deckSummary = document.querySelector('#deck-summary');
 const saveButton = document.querySelector('#save-button');
 const saveAsButton = document.querySelector('#save-as-button');
@@ -32,14 +34,23 @@ function clearObjectUrls() {
   objectUrls = [];
 }
 
+function getRequiredImageCount() {
+  return tempDeck.symbolsPerCard * (tempDeck.symbolsPerCard - 1) + 1;
+}
+
 function updateHeader() {
-  deckSummary.textContent = `n=${tempDeck.symbolsPerCard}, selected images=${tempDeck.selectedImageRefs.length}`;
+  const requiredCount = getRequiredImageCount();
+  deckSummary.textContent = `n=${tempDeck.symbolsPerCard}, selected images=${tempDeck.selectedImageRefs.length}, required=${requiredCount}`;
   renderDeckStatusLine(deckStatusLine, tempDeck);
   renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Preview', tempDeck });
   saveButton.disabled = !tempDeck.deckName;
 }
 
-function resolveImageSrc(ref) {
+function getWebRecordForRef(ref) {
+  return webImages.find((item) => item.id === ref.id) ?? null;
+}
+
+function resolveImageSrc(ref, placeholderNumber) {
   if (ref.source === 'standard') {
     return `./assets/deck-images/${ref.id}`;
   }
@@ -47,7 +58,7 @@ function resolveImageSrc(ref) {
   if (ref.source === 'user') {
     const userImage = userImages.find((item) => item.id === ref.id);
     if (!userImage) {
-      return '';
+      return `./assets/placeholder-images/${placeholderNumber}.png`;
     }
 
     const url = URL.createObjectURL(userImage.blob);
@@ -55,39 +66,156 @@ function resolveImageSrc(ref) {
     return url;
   }
 
-  const webImage = webImages.find((item) => item.id === ref.id);
-  return webImage ? webImage.url : '';
+  const webImage = getWebRecordForRef(ref);
+  return webImage ? webImage.url : `./assets/placeholder-images/${placeholderNumber}.png`;
+}
+
+function resolveTooltip(ref, slotTitle) {
+  if (ref?.source === 'web') {
+    return getWebRecordForRef(ref)?.url ?? '';
+  }
+
+  return slotTitle;
+}
+
+function applyPatternScale() {
+  const columns = tempDeck.symbolsPerCard;
+  const gap = 8;
+  const availableWidth = deckPatternElement.clientWidth || 960;
+  const rawSize = Math.floor((availableWidth - (columns - 1) * gap) / columns);
+  const imageSize = Math.max(24, Math.min(96, rawSize));
+
+  deckPatternElement.style.setProperty('--pattern-item-size', `${imageSize}px`);
+  deckPatternElement.style.setProperty('--pattern-gap', `${gap}px`);
+}
+
+function createPatternItem({ slotIndex, slotTitle = '', refIndex = null }) {
+  const item = document.createElement('article');
+  item.className = 'deck-pattern-item';
+  if (slotTitle) {
+    item.title = slotTitle;
+  }
+
+  const selectedRef = refIndex !== null ? tempDeck.selectedImageRefs[refIndex] : null;
+  const fallbackNumber = slotIndex + 1;
+  const src = selectedRef ? resolveImageSrc(selectedRef, fallbackNumber) : `./assets/placeholder-images/${fallbackNumber}.png`;
+  const label = selectedRef ? describeImageRef(selectedRef, userImages, webImages) : `placeholder ${fallbackNumber}`;
+  const tooltipText = resolveTooltip(selectedRef, slotTitle);
+
+  const image = document.createElement('img');
+  image.className = 'deck-pattern-image';
+  image.src = src;
+  image.alt = label;
+  if (tooltipText) {
+    image.title = tooltipText;
+  }
+
+  const meta = document.createElement('div');
+  meta.className = 'deck-pattern-label';
+  meta.textContent = label;
+  if (tooltipText) {
+    meta.title = tooltipText;
+  }
+
+  item.append(image, meta);
+
+  if (selectedRef) {
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'btn btn-sm btn-outline-danger w-100 mt-1';
+    removeButton.textContent = 'Remove';
+    removeButton.addEventListener('click', async () => {
+      tempDeck = markDirty(removeImageRefAtIndex(tempDeck, refIndex));
+      await saveTempDeck(tempDeck);
+      await renderSelectedImages();
+    });
+    item.appendChild(removeButton);
+  }
+
+  return item;
 }
 
 async function renderSelectedImages() {
   clearObjectUrls();
+  deckPatternElement.innerHTML = '';
   selectedImagesElement.innerHTML = '';
+  extraImagesSection.hidden = true;
 
-  if (tempDeck.selectedImageRefs.length === 0) {
-    selectedImagesElement.textContent = 'No images selected yet.';
-    updateHeader();
-    return;
-  }
+  const n = tempDeck.symbolsPerCard;
+  const p = n - 1;
+  const requiredCount = getRequiredImageCount();
 
-  for (let i = 0; i < tempDeck.selectedImageRefs.length; i += 1) {
-    const ref = tempDeck.selectedImageRefs[i];
-    const label = describeImageRef(ref, userImages, webImages);
-    const src = resolveImageSrc(ref);
-    const tooltipText = ref.source === 'web' ? (webImages.find((item) => item.id === ref.id)?.url ?? '') : '';
+  applyPatternScale();
 
-    selectedImagesElement.appendChild(
-      createImageTile({
-        src,
-        label,
-        tooltipText,
-        buttonText: 'Remove',
-        onClick: async () => {
-          tempDeck = markDirty(removeImageRefAtIndex(tempDeck, i));
-          await saveTempDeck(tempDeck);
-          await renderSelectedImages();
-        }
+  const canvas = document.createElement('div');
+  canvas.className = 'deck-pattern-canvas';
+
+  const slopeLabel = document.createElement('h3');
+  slopeLabel.className = 'h6 mb-2';
+  slopeLabel.textContent = 'Slope Items';
+  canvas.appendChild(slopeLabel);
+
+  const slopeRow = document.createElement('div');
+  slopeRow.className = 'deck-pattern-row';
+  for (let slot = 0; slot < n; slot += 1) {
+    const slotTitle = slot < p ? String(slot) : 'infinity';
+    const hasSelected = slot < tempDeck.selectedImageRefs.length;
+    slopeRow.appendChild(
+      createPatternItem({
+        slotIndex: slot,
+        slotTitle,
+        refIndex: hasSelected ? slot : null
       })
     );
+  }
+  canvas.appendChild(slopeRow);
+
+  canvas.appendChild(document.createElement('hr'));
+
+  for (let row = 0; row < p; row += 1) {
+    const rowElement = document.createElement('div');
+    rowElement.className = 'deck-pattern-row';
+    for (let col = 0; col < p; col += 1) {
+      const slotIndex = n + row * p + col;
+      const hasSelected = slotIndex < tempDeck.selectedImageRefs.length;
+      rowElement.appendChild(
+        createPatternItem({
+          slotIndex,
+          refIndex: hasSelected ? slotIndex : null
+        })
+      );
+    }
+    canvas.appendChild(rowElement);
+  }
+
+  deckPatternElement.appendChild(canvas);
+
+  const extraRefs = tempDeck.selectedImageRefs.slice(requiredCount);
+  if (extraRefs.length > 0) {
+    extraImagesSection.hidden = false;
+
+    for (let index = 0; index < extraRefs.length; index += 1) {
+      const refIndex = requiredCount + index;
+      const ref = extraRefs[index];
+      const label = describeImageRef(ref, userImages, webImages);
+      const src = resolveImageSrc(ref, ((refIndex % 133) + 1));
+      const tooltipText = ref.source === 'web' ? (getWebRecordForRef(ref)?.url ?? '') : '';
+
+      selectedImagesElement.appendChild(
+        createImageTile({
+          src,
+          label,
+          tooltipText,
+          buttonText: 'Remove',
+          buttonVariant: 'outline-danger',
+          onClick: async () => {
+            tempDeck = markDirty(removeImageRefAtIndex(tempDeck, refIndex));
+            await saveTempDeck(tempDeck);
+            await renderSelectedImages();
+          }
+        })
+      );
+    }
   }
 
   updateHeader();
@@ -197,6 +325,10 @@ saveButton.addEventListener('click', async () => {
   if (saved) {
     await continueAfterSaveIntent();
   }
+});
+
+window.addEventListener('resize', () => {
+  applyPatternScale();
 });
 
 userImages = await repository.listUserImages();
