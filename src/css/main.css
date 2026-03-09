@@ -85,6 +85,17 @@ body.has-top-bar {
   position: relative;
 }
 
+.deck-pattern-image-wrap {
+  position: relative;
+}
+
+.deck-pattern-top-label {
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.1;
+  margin-bottom: 0.2rem;
+}
+
 .deck-pattern-image {
   width: var(--pattern-item-size);
   height: var(--pattern-item-size);

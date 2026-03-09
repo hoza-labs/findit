@@ -77,7 +77,7 @@ function applyPatternScale() {
   deckPatternElement.style.setProperty('--pattern-gap', `${gap}px`);
 }
 
-function createPatternItem({ slotIndex, slotTitle = '', refIndex = null }) {
+function createPatternItem({ slotIndex, slotTitle = '', topLabel = '', refIndex = null }) {
   const item = document.createElement('article');
   item.className = 'deck-pattern-item';
 
@@ -87,14 +87,24 @@ function createPatternItem({ slotIndex, slotTitle = '', refIndex = null }) {
   const label = selectedRef ? describeImageRef(selectedRef, userImages, webImages) : `placeholder ${fallbackNumber}`;
   const tooltipText = slotTitle ? `${label} | slot ${slotTitle}` : label;
 
+  if (topLabel) {
+    const topLabelElement = document.createElement('div');
+    topLabelElement.className = 'deck-pattern-top-label';
+    topLabelElement.textContent = topLabel;
+    item.appendChild(topLabelElement);
+  }
+
   const image = document.createElement('img');
   image.className = 'deck-pattern-image';
   image.src = src;
   image.alt = label;
   image.title = tooltipText;
-  item.title = tooltipText;
 
-  item.append(image);
+  const imageWrap = document.createElement('div');
+  imageWrap.className = 'deck-pattern-image-wrap';
+  imageWrap.title = tooltipText;
+  imageWrap.append(image);
+  item.append(imageWrap);
 
   if (selectedRef) {
     const removeButton = document.createElement('button');
@@ -108,7 +118,7 @@ function createPatternItem({ slotIndex, slotTitle = '', refIndex = null }) {
       await saveTempDeck(tempDeck);
       await renderSelectedImages();
     });
-    item.appendChild(removeButton);
+    imageWrap.appendChild(removeButton);
   }
 
   return item;
@@ -131,18 +141,20 @@ async function renderSelectedImages() {
 
   const slopeLabel = document.createElement('h3');
   slopeLabel.className = 'h6 mb-2';
-  slopeLabel.textContent = 'Slope Items';
+  slopeLabel.textContent = 'Slope Items (over x, down y)';
   canvas.appendChild(slopeLabel);
 
   const slopeRow = document.createElement('div');
   slopeRow.className = 'deck-pattern-row';
   for (let slot = 0; slot < n; slot += 1) {
     const slotTitle = slot < p ? String(slot) : 'infinity';
+    const topLabel = slot < p ? `(1,${slot})` : '(0,1)';
     const hasSelected = slot < tempDeck.selectedImageRefs.length;
     slopeRow.appendChild(
       createPatternItem({
         slotIndex: slot,
         slotTitle,
+        topLabel,
         refIndex: hasSelected ? slot : null
       })
     );
