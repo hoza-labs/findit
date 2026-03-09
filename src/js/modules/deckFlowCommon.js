@@ -29,13 +29,13 @@ export function renderDeckStatusLine(targetElement, tempDeck) {
     return;
   }
 
-  const deckName = tempDeck.deckName ? tempDeck.deckName : '(unsaved)';
+  const deckName = tempDeck.deckName ? tempDeck.deckName : '(new untitled deck)';
   const status = tempDeck.dirty ? '(unsaved changes)' : '(no changes yet)';
   targetElement.textContent = `Current deck: ${deckName} ${status}`;
 }
 
 export function renderDeckHeaderAndTitle({ headingElement, pageLabel, tempDeck }) {
-  const deckName = tempDeck.deckName ? tempDeck.deckName : '(unsaved)';
+  const deckName = tempDeck.deckName ? tempDeck.deckName : '(new untitled deck)';
   const dirtyMarker = tempDeck.dirty ? '*' : '';
 
   if (headingElement) {
