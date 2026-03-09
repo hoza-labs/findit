@@ -1,10 +1,13 @@
 ﻿import { createEmptyTempDeck, createTempDeckFromSavedDeck, markDirty, markSaved } from '../modules/deckSession.js';
 import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { describeImageRef, removeImageRefAtIndex } from '../modules/imageRefs.js';
 
 const deckPatternElement = document.querySelector('#deck-pattern');
 const selectedImagesElement = document.querySelector('#selected-images');
 const extraImagesSection = document.querySelector('#extra-images-section');
+const previewSampleCardTarget = document.querySelector('#preview-sample-card-target');
+const refreshSampleButton = document.querySelector('#refresh-sample-button');
 const deckSummary = document.querySelector('#deck-summary');
 const saveButton = document.querySelector('#save-button');
 const saveAsButton = document.querySelector('#save-as-button');
@@ -24,14 +27,23 @@ const afterName = urlParams.get('name') ?? '';
 
 let tempDeck = await loadTempDeckOrDefault();
 let objectUrls = [];
+let sampleObjectUrls = [];
 let userImages = [];
 let webImages = [];
+let currentSampleSources = [];
 
 function clearObjectUrls() {
   for (const url of objectUrls) {
     URL.revokeObjectURL(url);
   }
   objectUrls = [];
+}
+
+function clearSampleObjectUrls() {
+  for (const url of sampleObjectUrls) {
+    URL.revokeObjectURL(url);
+  }
+  sampleObjectUrls = [];
 }
 
 function getRequiredImageCount() {
@@ -64,6 +76,26 @@ function resolveImageSrc(ref, placeholderNumber) {
 
   const webImage = webImages.find((item) => item.id === ref.id);
   return webImage ? webImage.url : `./assets/placeholder-images/${placeholderNumber}.png`;
+}
+
+function resolveSampleImageSrc(ref, fallbackNumber) {
+  if (ref.source === 'standard') {
+    return `./assets/deck-images/${ref.id}`;
+  }
+
+  if (ref.source === 'user') {
+    const userImage = userImages.find((item) => item.id === ref.id);
+    if (!userImage) {
+      return `./assets/placeholder-images/${fallbackNumber}.png`;
+    }
+
+    const url = URL.createObjectURL(userImage.blob);
+    sampleObjectUrls.push(url);
+    return url;
+  }
+
+  const webImage = webImages.find((item) => item.id === ref.id);
+  return webImage ? webImage.url : `./assets/placeholder-images/${fallbackNumber}.png`;
 }
 
 function applyPatternScale() {
@@ -122,6 +154,38 @@ function createPatternItem({ slotIndex, slotTitle = '', topLabel = '', refIndex 
   }
 
   return item;
+}
+
+function pickRandomImageRefs(count) {
+  const poolSize = getRequiredImageCount();
+  const refs = [...tempDeck.selectedImageRefs.slice(0, poolSize)];
+  for (let i = refs.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [refs[i], refs[j]] = [refs[j], refs[i]];
+  }
+  return refs.slice(0, count);
+}
+
+async function renderSampleCard(useNewRandomSelection = true) {
+  clearSampleObjectUrls();
+
+  if (useNewRandomSelection || currentSampleSources.length === 0) {
+    const n = tempDeck.symbolsPerCard;
+    const selected = pickRandomImageRefs(n);
+    const sources = [];
+
+    for (let i = 0; i < n; i += 1) {
+      if (i < selected.length) {
+        sources.push(resolveSampleImageSrc(selected[i], i + 1));
+      } else {
+        sources.push(`./assets/placeholder-images/${i + 1}.png`);
+      }
+    }
+
+    currentSampleSources = sources;
+  }
+
+  await drawImagesOnSquareTarget(previewSampleCardTarget, currentSampleSources);
 }
 
 async function renderSelectedImages() {
@@ -207,6 +271,7 @@ async function renderSelectedImages() {
     }
   }
 
+  await renderSampleCard(true);
   updateHeader();
 }
 
@@ -318,6 +383,11 @@ saveButton.addEventListener('click', async () => {
 
 window.addEventListener('resize', () => {
   applyPatternScale();
+  void renderSampleCard(false);
+});
+
+refreshSampleButton.addEventListener('click', () => {
+  void renderSampleCard(true);
 });
 
 userImages = await repository.listUserImages();

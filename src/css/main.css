@@ -77,6 +77,19 @@ body.has-top-bar {
   padding-bottom: 0.25rem;
 }
 
+.preview-main-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 400px);
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .preview-main-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .deck-pattern-canvas {
   width: max-content;
 }

@@ -48,7 +48,18 @@
 
       <section class="card shadow-sm mb-3">
         <div class="card-body">
-          <div id="deck-pattern" class="deck-pattern"></div>
+          <div class="preview-main-layout">
+            <section>
+              <div id="deck-pattern" class="deck-pattern"></div>
+            </section>
+            <section>
+              <h3 class="h6 mb-2">Sample Card</h3>
+              <div id="preview-sample-card-target" class="sample-card-target"></div>
+              <div class="mt-2">
+                <button id="refresh-sample-button" type="button" class="btn btn-outline-primary btn-sm">Refresh</button>
+              </div>
+            </section>
+          </div>
           <section id="extra-images-section" class="mt-4" hidden>
             <h3 class="h6 mb-2">Extra images not included in the deck</h3>
             <div id="selected-images" class="image-library-grid image-library-grid--page"></div>
