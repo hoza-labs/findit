@@ -58,8 +58,94 @@ body.has-top-bar {
   padding-bottom: 0.5rem;
 }
 
+.sample-card-target {
+  width: min(100%, 400px);
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--card-border);
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
 .step-one-canvas {
   width: max-content;
+}
+
+.deck-pattern {
+  --pattern-item-size: 96px;
+  --pattern-gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.preview-main-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 400px);
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .preview-main-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.deck-pattern-canvas {
+  width: max-content;
+}
+
+.deck-pattern-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--pattern-gap);
+  margin-bottom: var(--pattern-gap);
+}
+
+.deck-pattern-item {
+  width: var(--pattern-item-size);
+  position: relative;
+}
+
+.deck-pattern-image-wrap {
+  position: relative;
+}
+
+.deck-pattern-top-label {
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.1;
+  margin-bottom: 0.2rem;
+}
+
+.deck-pattern-image {
+  width: var(--pattern-item-size);
+  height: var(--pattern-item-size);
+  object-fit: contain;
+  border: 1px solid #d0d7de;
+  background: #fff;
+  border-radius: 0.3rem;
+}
+
+.deck-pattern-label {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1.1;
+  min-height: 1.2rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.preview-remove-button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 0.25rem;
+  line-height: 1;
+  padding: 0.1rem 0.2rem;
+  font-size: 0.85rem;
+  cursor: pointer;
 }
 
 .step-one-row {

@@ -22,7 +22,7 @@
     <header class="container py-4">
       <h1 class="display-6 mb-2">Preview</h1>
       <nav class="d-flex flex-wrap gap-3">
-        <a href="./index.html" class="link-body-emphasis fw-semibold">Guide</a>
+        <a href="./index.html" class="link-body-emphasis fw-semibold">Home</a>
         <a href="./basic-info.html" class="link-body-emphasis fw-semibold">Basic Info</a>
         <a href="./standard-images.html" class="link-body-emphasis fw-semibold">Standard Images</a>
         <a href="./user-images.html" class="link-body-emphasis fw-semibold">User Images</a>
@@ -48,7 +48,22 @@
 
       <section class="card shadow-sm mb-3">
         <div class="card-body">
-          <div id="selected-images" class="image-library-grid image-library-grid--page"></div>
+          <div class="preview-main-layout">
+            <section>
+              <div id="deck-pattern" class="deck-pattern"></div>
+            </section>
+            <section>
+              <h3 class="h6 mb-2">Sample Card</h3>
+              <div id="preview-sample-card-target" class="sample-card-target"></div>
+              <div class="mt-2">
+                <button id="refresh-sample-button" type="button" class="btn btn-outline-primary btn-sm">Refresh</button>
+              </div>
+            </section>
+          </div>
+          <section id="extra-images-section" class="mt-4" hidden>
+            <h3 class="h6 mb-2">Extra images not included in the deck</h3>
+            <div id="selected-images" class="image-library-grid image-library-grid--page"></div>
+          </section>
         </div>
       </section>
     </main>
@@ -70,3 +85,4 @@
     <script type="module" src="./js/app/preview.js"></script>
   </body>
 </html>
+

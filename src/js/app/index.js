@@ -169,5 +169,6 @@ newDeckButton.addEventListener('click', () => {
 const tempDeck = await repository.getTempDeck();
 const normalizedTempDeck = tempDeck ?? createEmptyTempDeck();
 renderDeckStatusLine(deckStatusLine, normalizedTempDeck);
-renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Guide', tempDeck: normalizedTempDeck });
+renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Home', tempDeck: normalizedTempDeck });
 await renderExistingDecks();
+
