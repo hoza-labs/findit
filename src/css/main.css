@@ -58,6 +58,14 @@ body.has-top-bar {
   padding-bottom: 0.5rem;
 }
 
+.sample-card-target {
+  width: min(100%, 400px);
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--card-border);
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
 .step-one-canvas {
   width: max-content;
 }
