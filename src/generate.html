@@ -56,8 +56,16 @@
               <input id="countdown-seconds" name="countdownSeconds" type="number" class="form-control" min="1" inputmode="numeric" />
             </div>
             <div class="col-md-3">
-              <label for="hands-to-play" class="form-label">Number of hands to play (blank for infinite)</label>
-              <input id="hands-to-play" name="handsToPlay" type="number" class="form-control" min="1" inputmode="numeric" />
+              <label for="length-of-play" class="form-label">Length of play (blank for no limit)</label>
+              <input id="length-of-play" name="lengthOfPlay" type="number" class="form-control" min="1" inputmode="numeric" />
+            </div>
+            <div class="col-md-3">
+              <label for="length-of-play-units" class="form-label">Units</label>
+              <select id="length-of-play-units" name="lengthOfPlayUnits" class="form-select">
+                <option value="hands">hands</option>
+                <option value="decks">decks</option>
+                <option value="minutes">minutes</option>
+              </select>
             </div>
             <div class="col-12">
               <label for="player-names" class="form-label">Player Names (comma separated)</label>

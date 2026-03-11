@@ -1,9 +1,10 @@
 const DEFAULT_SYMBOLS_PER_CARD = 4;
 const DEFAULT_PLAY_OPTIONS = Object.freeze({
-  cardsToShowMin: '',
-  cardsToShowMax: '',
+  cardsToShowMin: '2',
+  cardsToShowMax: '2',
   countdownSeconds: '',
-  handsToPlay: '',
+  lengthOfPlay: '',
+  lengthOfPlayUnits: 'hands',
   playerNames: ''
 });
 
@@ -69,7 +70,8 @@ export function normalizePlayOptions(playOptions) {
     cardsToShowMin: normalizeOptionalPositiveInteger(playOptions.cardsToShowMin),
     cardsToShowMax: normalizeOptionalPositiveInteger(playOptions.cardsToShowMax),
     countdownSeconds: normalizeOptionalPositiveInteger(playOptions.countdownSeconds),
-    handsToPlay: normalizeOptionalPositiveInteger(playOptions.handsToPlay),
+    lengthOfPlay: normalizeOptionalPositiveInteger(playOptions.lengthOfPlay ?? playOptions.handsToPlay),
+    lengthOfPlayUnits: normalizeLengthOfPlayUnits(playOptions.lengthOfPlayUnits),
     playerNames: normalizePlayerNames(playOptions.playerNames)
   };
 }
@@ -117,4 +119,8 @@ function normalizePlayerNames(value) {
     .map((item) => item.trim())
     .filter(Boolean)
     .join(', ');
+}
+
+function normalizeLengthOfPlayUnits(value) {
+  return value === 'decks' || value === 'minutes' ? value : 'hands';
 }

@@ -17,7 +17,7 @@ function updateHeader() {
 
 function renderPlayOptions() {
   for (const element of playOptionsForm.elements) {
-    if (!(element instanceof HTMLInputElement)) {
+    if (!(element instanceof HTMLInputElement) && !(element instanceof HTMLSelectElement)) {
       continue;
     }
 
@@ -36,7 +36,8 @@ function getPlayOptionsFromForm() {
     cardsToShowMin: formData.get('cardsToShowMin'),
     cardsToShowMax: formData.get('cardsToShowMax'),
     countdownSeconds: formData.get('countdownSeconds'),
-    handsToPlay: formData.get('handsToPlay'),
+    lengthOfPlay: formData.get('lengthOfPlay'),
+    lengthOfPlayUnits: formData.get('lengthOfPlayUnits'),
     playerNames: formData.get('playerNames')
   });
 }
