@@ -8,6 +8,9 @@ const deckPatternElement = document.querySelector('#deck-pattern');
 const selectedImagesElement = document.querySelector('#selected-images');
 const extraImagesSection = document.querySelector('#extra-images-section');
 const previewSampleCardTarget = document.querySelector('#preview-sample-card-target');
+const deckPlayerPanel = document.querySelector('#deck-player-panel');
+const deckPlayerToggle = document.querySelector('#deck-player-toggle');
+const deckPlayerSummary = document.querySelector('#deck-player-summary');
 const deckPlayerSlider = document.querySelector('#deck-player-slider');
 const deckPlayerRewindButton = document.querySelector('#deck-player-rewind-button');
 const deckPlayerBackButton = document.querySelector('#deck-player-back-button');
@@ -40,6 +43,7 @@ let slopePatternItems = [];
 let gridPatternItems = [];
 let deckPlayerIndex = 0;
 let deckPlayerTimerId = null;
+let deckPlayerExpanded = false;
 const patternActiveOutlineBuffer = 6;
 
 function clearObjectUrls() {
@@ -163,6 +167,29 @@ function stopDeckPlayer() {
   deckPlayerPlayButton.setAttribute('aria-label', 'Play deck');
 }
 
+function updateDeckPlayerSummary() {
+  if (!deckPlayerExpanded) {
+    deckPlayerSummary.textContent = 'Deck Player is off.';
+    return;
+  }
+
+  deckPlayerSummary.textContent = deckPlayerStatus.textContent || 'Deck Player is on.';
+}
+
+function setDeckPlayerExpanded(expanded) {
+  deckPlayerExpanded = expanded;
+  deckPlayerPanel.hidden = !expanded;
+  deckPlayerToggle.setAttribute('aria-expanded', String(expanded));
+  deckPlayerToggle.setAttribute('aria-label', expanded ? 'Turn Deck Player off' : 'Turn Deck Player on');
+
+  if (!expanded) {
+    stopDeckPlayer();
+    clearActivePatternItems();
+  }
+
+  updateDeckPlayerSummary();
+}
+
 function startDeckPlayer() {
   if (deckPlayerTimerId !== null) {
     return;
@@ -244,10 +271,17 @@ async function renderDeckPlayerAt(index) {
   deckPlayerIndex = Math.max(0, Math.min(index, cardCount - 1));
   deckPlayerSlider.value = String(deckPlayerIndex + 1);
 
+  if (!deckPlayerExpanded) {
+    clearActivePatternItems();
+    updateDeckPlayerSummary();
+    return;
+  }
+
   const step = getDeckPlayerStepAt(tempDeck.symbolsPerCard, deckPlayerIndex);
   const { slopeItems, grid } = getDeckPlayerPatternItems();
   await renderDeckPlayerCard(slopeItems, grid, step.s, step.r);
   deckPlayerStatus.textContent = getDeckPlayerStatusText(step, deckPlayerIndex + 1, cardCount);
+  updateDeckPlayerSummary();
 }
 
 async function stepDeckPlayer(delta) {
@@ -464,7 +498,9 @@ saveButton.addEventListener('click', async () => {
 
 window.addEventListener('resize', () => {
   applyPatternScale();
-  void renderDeckPlayerAt(deckPlayerIndex);
+  if (deckPlayerExpanded) {
+    void renderDeckPlayerAt(deckPlayerIndex);
+  }
 });
 
 deckPlayerSlider.addEventListener('input', () => {
@@ -501,8 +537,17 @@ deckPlayerEndButton.addEventListener('click', () => {
   void renderDeckPlayerAt(getDeckPlayerCardCount(tempDeck.symbolsPerCard) - 1);
 });
 
+deckPlayerToggle.addEventListener('click', () => {
+  const nextExpanded = !deckPlayerExpanded;
+  setDeckPlayerExpanded(nextExpanded);
+  if (nextExpanded) {
+    void renderDeckPlayerAt(deckPlayerIndex);
+  }
+});
+
 userImages = await repository.listUserImages();
 webImages = await repository.listWebImages();
+setDeckPlayerExpanded(false);
 await renderSelectedImages();
 
 if (saveFirstMode) {

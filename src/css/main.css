@@ -177,6 +177,37 @@ body.has-top-bar {
   padding: 0.9rem;
 }
 
+.deck-player-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.75rem;
+}
+
+.deck-player-summary {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-player-toggle {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: #fff;
+  background: #6c757d;
+}
+
+.deck-player-toggle[aria-expanded='true'] {
+  background: #0d6efd;
+}
+
 .deck-player-controls {
   display: flex;
   gap: 0.5rem;

@@ -53,8 +53,12 @@
               <div id="deck-pattern" class="deck-pattern"></div>
             </section>
             <section>
-              <h3 class="h6 mb-2">Deck Player</h3>
-              <div class="deck-player">
+              <div class="deck-player-toggle-row">
+                <h3 class="h6 mb-0">Deck Player</h3>
+                <p id="deck-player-summary" class="deck-player-summary text-muted mb-0">Deck Player is off.</p>
+                <button id="deck-player-toggle" type="button" class="deck-player-toggle" aria-controls="deck-player-panel" aria-expanded="false" aria-label="Turn Deck Player on">⏻</button>
+              </div>
+              <div id="deck-player-panel" class="deck-player" hidden>
                 <label for="deck-player-slider" class="form-label mb-1">Card</label>
                 <input id="deck-player-slider" class="form-range" type="range" min="1" max="1" value="1" />
                 <div class="deck-player-controls" role="group" aria-label="Deck player controls">
