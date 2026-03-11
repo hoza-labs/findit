@@ -1,6 +1,7 @@
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { loadTempDeckOrDefault, repository } from '../modules/deckFlowCommon.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
+import { createPlayHatState, drawNextHand } from '../modules/playHat.js';
 
 const playSubtitle = document.querySelector('#play-subtitle');
 const handStatus = document.querySelector('#hand-status');
@@ -20,9 +21,7 @@ let countdownTimerId = null;
 const state = {
   handNumber: 0,
   startedAtMs: 0,
-  hatCardIndices: [],
-  discardCardIndices: [],
-  displayedCardIndices: []
+  hatState: null
 };
 
 function clearObjectUrls() {
@@ -128,73 +127,6 @@ function getRandomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function createShuffledCardIndices(cardCount) {
-  const indices = Array.from({ length: cardCount }, (_, index) => index);
-
-  for (let i = indices.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [indices[i], indices[j]] = [indices[j], indices[i]];
-  }
-
-  return indices;
-}
-
-function drawCardIndicesFromHat(cardCount, cardsToShow) {
-  const selected = [];
-  state.displayedCardIndices = [];
-
-  while (selected.length < cardsToShow) {
-    if (state.hatCardIndices.length === 0) {
-      if (state.discardCardIndices.length === 0 && state.displayedCardIndices.length === 0) {
-        state.hatCardIndices = createShuffledCardIndices(cardCount);
-      } else {
-      refillHatFromDiscard();
-      }
-    }
-
-    if (state.hatCardIndices.length === 0) {
-      break;
-    }
-
-    selected.push(state.hatCardIndices.pop());
-    state.displayedCardIndices = [...selected];
-  }
-
-  return selected;
-}
-
-function moveDisplayedCardsToDiscard() {
-  if (state.displayedCardIndices.length === 0) {
-    return;
-  }
-
-  state.discardCardIndices.push(...state.displayedCardIndices);
-  state.displayedCardIndices = [];
-}
-
-function refillHatFromDiscard() {
-  if (state.discardCardIndices.length === 0) {
-    return;
-  }
-
-  const displayedSet = new Set(state.displayedCardIndices);
-  const refillableDiscard = state.discardCardIndices.filter((cardIndex) => !displayedSet.has(cardIndex));
-
-  state.hatCardIndices = shuffleCardIndices(refillableDiscard);
-  state.discardCardIndices = state.discardCardIndices.filter((cardIndex) => displayedSet.has(cardIndex));
-}
-
-function shuffleCardIndices(indices) {
-  const shuffled = [...indices];
-
-  for (let i = shuffled.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-
-  return shuffled;
-}
-
 function updateHeader(players, settings) {
   const deckName = tempDeck.deckName || '(new untitled deck)';
   const limitText = describePlayLimit(settings);
@@ -206,7 +138,12 @@ function updateHeader(players, settings) {
 function renderCompletion(settings, players) {
   stopCountdown();
   nextHandButton.disabled = true;
-  moveDisplayedCardsToDiscard();
+  if (state.hatState) {
+    state.hatState = {
+      ...state.hatState,
+      displayedCardIndices: []
+    };
+  }
   playCardGrid.innerHTML = '';
   clearObjectUrls();
   playBoardEmpty.hidden = false;
@@ -321,13 +258,16 @@ async function renderHand() {
     return;
   }
 
-  moveDisplayedCardsToDiscard();
   state.handNumber += 1;
   playCardGrid.innerHTML = '';
   playBoardEmpty.hidden = true;
 
   const cardsToShow = getRandomInteger(settings.minCardsToShow, settings.maxCardsToShow);
-  const cardIndices = drawCardIndicesFromHat(settings.cardCount, cardsToShow);
+  if (!state.hatState || state.hatState.cardCount !== settings.cardCount) {
+    state.hatState = createPlayHatState(settings.cardCount);
+  }
+  state.hatState = drawNextHand(state.hatState, cardsToShow);
+  const cardIndices = state.hatState.displayedCardIndices;
   const pattern = getPatternSources();
   const currentPlayer = players.length > 0 ? players[(state.handNumber - 1) % players.length] : '';
 
@@ -405,9 +345,7 @@ restartButton.addEventListener('click', () => {
   stopCountdown();
   state.handNumber = 0;
   state.startedAtMs = 0;
-  state.hatCardIndices = [];
-  state.discardCardIndices = [];
-  state.displayedCardIndices = [];
+  state.hatState = null;
   nextHandButton.disabled = false;
   void renderHand();
 });
