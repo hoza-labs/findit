@@ -19,7 +19,8 @@ let objectUrls = [];
 let countdownTimerId = null;
 const state = {
   handNumber: 0,
-  startedAtMs: 0
+  startedAtMs: 0,
+  hatCardIndices: []
 };
 
 function clearObjectUrls() {
@@ -125,7 +126,7 @@ function getRandomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function pickUniqueCardIndices(cardCount, cardsToShow) {
+function createShuffledCardIndices(cardCount) {
   const indices = Array.from({ length: cardCount }, (_, index) => index);
 
   for (let i = indices.length - 1; i > 0; i -= 1) {
@@ -133,7 +134,21 @@ function pickUniqueCardIndices(cardCount, cardsToShow) {
     [indices[i], indices[j]] = [indices[j], indices[i]];
   }
 
-  return indices.slice(0, cardsToShow);
+  return indices;
+}
+
+function drawCardIndicesFromHat(cardCount, cardsToShow) {
+  const selected = [];
+
+  while (selected.length < cardsToShow) {
+    if (state.hatCardIndices.length === 0) {
+      state.hatCardIndices = createShuffledCardIndices(cardCount);
+    }
+
+    selected.push(state.hatCardIndices.pop());
+  }
+
+  return selected;
 }
 
 function updateHeader(players, settings) {
@@ -267,7 +282,7 @@ async function renderHand() {
 
   const cardsToShow = getRandomInteger(settings.minCardsToShow, settings.maxCardsToShow);
   const pattern = getPatternSources();
-  const cardIndices = pickUniqueCardIndices(settings.cardCount, cardsToShow);
+  const cardIndices = drawCardIndicesFromHat(settings.cardCount, cardsToShow);
   const currentPlayer = players.length > 0 ? players[(state.handNumber - 1) % players.length] : '';
 
   handStatus.textContent = getCurrentHandStatus(settings, cardsToShow);
@@ -344,6 +359,7 @@ restartButton.addEventListener('click', () => {
   stopCountdown();
   state.handNumber = 0;
   state.startedAtMs = 0;
+  state.hatCardIndices = [];
   nextHandButton.disabled = false;
   void renderHand();
 });
