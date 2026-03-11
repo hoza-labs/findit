@@ -300,7 +300,7 @@ async function renderSelectedImages() {
 
   for (let row = 0; row < p; row += 1) {
     const rowElement = document.createElement('div');
-    rowElement.className = 'deck-pattern-row';
+    rowElement.className = 'deck-pattern-row deck-pattern-row--grid';
     const gridRowItems = [];
     for (let col = 0; col < p; col += 1) {
       const slotIndex = n + row * p + col;

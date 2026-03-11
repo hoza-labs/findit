@@ -101,6 +101,10 @@ body.has-top-bar {
   margin-bottom: var(--pattern-gap);
 }
 
+.deck-pattern-row--grid {
+  justify-content: center;
+}
+
 .deck-pattern-item {
   width: var(--pattern-item-size);
   position: relative;
