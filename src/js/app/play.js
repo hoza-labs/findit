@@ -145,10 +145,17 @@ function updateHeader(players, settings) {
 }
 
 function renderCompletion(settings, players) {
+  stopCountdown();
   nextHandButton.disabled = true;
+  playCardGrid.innerHTML = '';
+  clearObjectUrls();
+  playBoardEmpty.hidden = false;
+  playBoardEmpty.textContent = getStatisticsText(settings);
   handStatus.textContent = getCompletionText(settings);
-  countdownStatus.textContent = settings.countdownSeconds > 0 ? 'Countdown stopped.' : 'Manual play only.';
-  playerStatus.textContent = players.length > 0 ? `Players: ${players.join(', ')}` : 'No player names configured.';
+  countdownStatus.textContent = `Elapsed: ${formatElapsedTime()}`;
+  playerStatus.textContent = players.length > 0
+    ? `Players: ${players.join(', ')} | Total hands played: ${state.handNumber}`
+    : `Total hands played: ${state.handNumber}`;
 }
 
 function describePlayLimit(settings) {
@@ -181,6 +188,11 @@ function getCompletionText(settings) {
   }
 
   return `Finished ${settings.lengthOfPlay} hand${settings.lengthOfPlay === 1 ? '' : 's'}.`;
+}
+
+function getStatisticsText(settings) {
+  const completedDecks = settings.cardCount > 0 ? (state.handNumber / settings.cardCount).toFixed(2) : '0.00';
+  return `Total hands played: ${state.handNumber}. Equivalent deck passes: ${completedDecks}. Elapsed time: ${formatElapsedTime()}.`;
 }
 
 function hasReachedPlayLimit(settings) {
@@ -217,6 +229,22 @@ function getCurrentHandStatus(settings, cardsToShow) {
   }
 
   return `Hand ${state.handNumber} of ${settings.lengthOfPlay}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}.`;
+}
+
+function formatElapsedTime() {
+  if (state.startedAtMs === 0) {
+    return '0s';
+  }
+
+  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - state.startedAtMs) / 1000));
+  const minutes = Math.floor(elapsedSeconds / 60);
+  const seconds = elapsedSeconds % 60;
+
+  if (minutes === 0) {
+    return `${seconds}s`;
+  }
+
+  return `${minutes}m ${seconds}s`;
 }
 
 async function renderHand() {
