@@ -53,10 +53,19 @@
               <div id="deck-pattern" class="deck-pattern"></div>
             </section>
             <section>
-              <h3 class="h6 mb-2">Sample Card</h3>
-              <div id="preview-sample-card-target" class="sample-card-target"></div>
-              <div class="mt-2">
-                <button id="refresh-sample-button" type="button" class="btn btn-outline-primary btn-sm">Refresh</button>
+              <h3 class="h6 mb-2">Deck Player</h3>
+              <div class="deck-player">
+                <label for="deck-player-slider" class="form-label mb-1">Card</label>
+                <input id="deck-player-slider" class="form-range" type="range" min="1" max="1" value="1" />
+                <div class="deck-player-controls" role="group" aria-label="Deck player controls">
+                  <button id="deck-player-rewind-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go to first card" title="First card">|&lt;</button>
+                  <button id="deck-player-back-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go back one card" title="Previous card">&lt;&lt;</button>
+                  <button id="deck-player-play-button" type="button" class="btn btn-primary deck-player-button" aria-label="Play deck" title="Play">&gt;</button>
+                  <button id="deck-player-forward-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go forward one card" title="Next card">&gt;&gt;</button>
+                  <button id="deck-player-end-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go to last card" title="Last card">&gt;|</button>
+                </div>
+                <p id="deck-player-status" class="deck-player-status text-muted mb-2"></p>
+                <div id="preview-sample-card-target" class="sample-card-target"></div>
               </div>
             </section>
           </div>
@@ -85,4 +94,3 @@
     <script type="module" src="./js/app/preview.js"></script>
   </body>
 </html>
-

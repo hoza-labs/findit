@@ -106,6 +106,12 @@ body.has-top-bar {
   position: relative;
 }
 
+.deck-pattern-item.is-active .deck-pattern-image {
+  border-color: #b026ff;
+  outline: 4px solid #b026ff;
+  outline-offset: 1px;
+}
+
 .deck-pattern-image-wrap {
   position: relative;
 }
@@ -146,6 +152,31 @@ body.has-top-bar {
   padding: 0.1rem 0.2rem;
   font-size: 0.85rem;
   cursor: pointer;
+}
+
+.deck-player {
+  border: 1px solid var(--card-border);
+  border-radius: 0.75rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f8f6ff 100%);
+  padding: 0.9rem;
+}
+
+.deck-player-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.deck-player-button {
+  min-width: 3rem;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.deck-player-status {
+  min-height: 2.5rem;
 }
 
 .step-one-row {
