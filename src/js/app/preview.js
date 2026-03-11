@@ -173,7 +173,7 @@ function updateDeckPlayerSummary() {
     return;
   }
 
-  deckPlayerSummary.textContent = deckPlayerStatus.textContent || 'Deck Player is on.';
+  deckPlayerSummary.textContent = '';
 }
 
 function setDeckPlayerExpanded(expanded) {
