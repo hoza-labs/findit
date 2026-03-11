@@ -115,7 +115,7 @@ async function maybeSaveBeforeNavigate(nextAction, deckName = '') {
       params.set('name', deckName);
     }
 
-    window.location.href = `./preview.html?${params.toString()}`;
+    window.location.href = `./save.html?${params.toString()}`;
   }
 
   return choice;
@@ -171,4 +171,3 @@ const normalizedTempDeck = tempDeck ?? createEmptyTempDeck();
 renderDeckStatusLine(deckStatusLine, normalizedTempDeck);
 renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Home', tempDeck: normalizedTempDeck });
 await renderExistingDecks();
-

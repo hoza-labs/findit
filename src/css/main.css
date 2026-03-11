@@ -443,3 +443,19 @@ body.has-top-bar {
   width: min(100%, 320px);
   margin-inline: auto;
 }
+
+.save-deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 200px));
+  gap: 1rem;
+}
+
+.save-card {
+  width: 200px;
+}
+
+.save-card-target {
+  width: 200px;
+  max-width: 100%;
+  margin-inline: auto;
+}
