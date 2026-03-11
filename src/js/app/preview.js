@@ -430,6 +430,7 @@ async function saveDeckWithName(name, confirmReplace) {
     name,
     symbolsPerCard: tempDeck.symbolsPerCard,
     imageRefs: [...tempDeck.selectedImageRefs],
+    playOptions: { ...tempDeck.playOptions },
     updatedAt: new Date().toISOString()
   });
 

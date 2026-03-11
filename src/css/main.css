@@ -395,3 +395,51 @@ body.has-top-bar {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+.generate-section {
+  overflow: hidden;
+}
+
+.generate-section-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 1rem 1rem 0.75rem;
+}
+
+.generate-section-summary::-webkit-details-marker {
+  display: none;
+}
+
+.generate-section summary + .card-body {
+  border-top: 1px solid #edf0f2;
+}
+
+.play-page {
+  background: linear-gradient(180deg, #ffffff 0%, #eef5ff 100%);
+  min-height: 100vh;
+}
+
+.play-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.play-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.play-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.play-card-target {
+  width: min(100%, 320px);
+  margin-inline: auto;
+}
