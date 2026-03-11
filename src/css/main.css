@@ -1,6 +1,9 @@
 ﻿:root {
   --page-bg: #f6f8fa;
   --card-border: #d0d7de;
+  --pattern-active-outline-width: 4px;
+  --pattern-active-outline-offset: 1px;
+  --pattern-active-outline-buffer: calc(var(--pattern-active-outline-width) + var(--pattern-active-outline-offset) + 1px);
 }
 
 body {
@@ -73,7 +76,7 @@ body.has-top-bar {
 .deck-pattern {
   --pattern-item-size: 96px;
   --pattern-gap: 8px;
-  overflow-x: auto;
+  overflow-x: hidden;
   padding-bottom: 0.25rem;
 }
 
@@ -84,6 +87,12 @@ body.has-top-bar {
   align-items: start;
 }
 
+.preview-page-shell {
+  max-width: 1600px;
+  margin-inline: auto;
+  padding-inline: max(0.75rem, calc(var(--bs-gutter-x, 1.5rem) * 0.5));
+}
+
 @media (max-width: 900px) {
   .preview-main-layout {
     grid-template-columns: 1fr;
@@ -91,7 +100,10 @@ body.has-top-bar {
 }
 
 .deck-pattern-canvas {
-  width: max-content;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  padding-inline: var(--pattern-active-outline-buffer);
 }
 
 .deck-pattern-row {
@@ -101,9 +113,19 @@ body.has-top-bar {
   margin-bottom: var(--pattern-gap);
 }
 
+.deck-pattern-row--grid {
+  justify-content: center;
+}
+
 .deck-pattern-item {
   width: var(--pattern-item-size);
   position: relative;
+}
+
+.deck-pattern-item.is-active .deck-pattern-image {
+  border-color: #b026ff;
+  outline: var(--pattern-active-outline-width) solid #b026ff;
+  outline-offset: var(--pattern-active-outline-offset);
 }
 
 .deck-pattern-image-wrap {
@@ -146,6 +168,63 @@ body.has-top-bar {
   padding: 0.1rem 0.2rem;
   font-size: 0.85rem;
   cursor: pointer;
+}
+
+.deck-player {
+  border: 1px solid var(--card-border);
+  border-radius: 0.75rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f8f6ff 100%);
+  padding: 0.9rem;
+}
+
+.deck-player-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.75rem;
+}
+
+.deck-player-summary {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-player-toggle {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 1.35rem;
+  line-height: 0.9;
+  padding: 0 0 0.08rem;
+  color: #fff;
+  background: #6c757d;
+}
+
+.deck-player-toggle[aria-expanded='true'] {
+  background: #0d6efd;
+}
+
+.deck-player-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.deck-player-button {
+  min-width: 3rem;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.deck-player-status {
+  min-height: 2.5rem;
 }
 
 .step-one-row {

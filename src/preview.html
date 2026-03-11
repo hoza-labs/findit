@@ -19,7 +19,7 @@
       </div>
     </nav>
 
-    <header class="container py-4">
+    <header class="container-fluid preview-page-shell py-4">
       <h1 class="display-6 mb-2">Preview</h1>
       <nav class="d-flex flex-wrap gap-3">
         <a href="./index.html" class="link-body-emphasis fw-semibold">Home</a>
@@ -32,7 +32,7 @@
       <p id="deck-status-line" class="text-muted mb-0">Current deck: (new untitled deck) (no changes yet)</p>
     </header>
 
-    <main class="container pb-5">
+    <main class="container-fluid preview-page-shell pb-5">
       <section class="card shadow-sm mb-3">
         <div class="card-body d-flex flex-wrap gap-2 align-items-center justify-content-between">
           <div>
@@ -53,10 +53,23 @@
               <div id="deck-pattern" class="deck-pattern"></div>
             </section>
             <section>
-              <h3 class="h6 mb-2">Sample Card</h3>
-              <div id="preview-sample-card-target" class="sample-card-target"></div>
-              <div class="mt-2">
-                <button id="refresh-sample-button" type="button" class="btn btn-outline-primary btn-sm">Refresh</button>
+              <div class="deck-player-toggle-row">
+                <h3 class="h6 mb-0">Deck Player</h3>
+                <p id="deck-player-summary" class="deck-player-summary text-muted mb-0">Deck Player is off.</p>
+                <button id="deck-player-toggle" type="button" class="deck-player-toggle" aria-controls="deck-player-panel" aria-expanded="false" aria-label="Turn Deck Player on">⏻</button>
+              </div>
+              <div id="deck-player-panel" class="deck-player" hidden>
+                <label for="deck-player-slider" class="form-label mb-1">Card</label>
+                <input id="deck-player-slider" class="form-range" type="range" min="1" max="1" value="1" />
+                <div class="deck-player-controls" role="group" aria-label="Deck player controls">
+                  <button id="deck-player-rewind-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go to first card" title="First card">|&lt;</button>
+                  <button id="deck-player-back-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go back one card" title="Previous card">&lt;&lt;</button>
+                  <button id="deck-player-play-button" type="button" class="btn btn-primary deck-player-button" aria-label="Play deck" title="Play">&gt;</button>
+                  <button id="deck-player-forward-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go forward one card" title="Next card">&gt;&gt;</button>
+                  <button id="deck-player-end-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go to last card" title="Last card">&gt;|</button>
+                </div>
+                <p id="deck-player-status" class="deck-player-status text-muted mb-2"></p>
+                <div id="preview-sample-card-target" class="sample-card-target"></div>
               </div>
             </section>
           </div>
@@ -85,4 +98,3 @@
     <script type="module" src="./js/app/preview.js"></script>
   </body>
 </html>
-
