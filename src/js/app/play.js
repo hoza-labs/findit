@@ -20,7 +20,9 @@ let countdownTimerId = null;
 const state = {
   handNumber: 0,
   startedAtMs: 0,
-  hatCardIndices: []
+  hatCardIndices: [],
+  discardCardIndices: [],
+  displayedCardIndices: []
 };
 
 function clearObjectUrls() {
@@ -139,16 +141,58 @@ function createShuffledCardIndices(cardCount) {
 
 function drawCardIndicesFromHat(cardCount, cardsToShow) {
   const selected = [];
+  state.displayedCardIndices = [];
 
   while (selected.length < cardsToShow) {
     if (state.hatCardIndices.length === 0) {
-      state.hatCardIndices = createShuffledCardIndices(cardCount);
+      if (state.discardCardIndices.length === 0 && state.displayedCardIndices.length === 0) {
+        state.hatCardIndices = createShuffledCardIndices(cardCount);
+      } else {
+      refillHatFromDiscard();
+      }
+    }
+
+    if (state.hatCardIndices.length === 0) {
+      break;
     }
 
     selected.push(state.hatCardIndices.pop());
+    state.displayedCardIndices = [...selected];
   }
 
   return selected;
+}
+
+function moveDisplayedCardsToDiscard() {
+  if (state.displayedCardIndices.length === 0) {
+    return;
+  }
+
+  state.discardCardIndices.push(...state.displayedCardIndices);
+  state.displayedCardIndices = [];
+}
+
+function refillHatFromDiscard() {
+  if (state.discardCardIndices.length === 0) {
+    return;
+  }
+
+  const displayedSet = new Set(state.displayedCardIndices);
+  const refillableDiscard = state.discardCardIndices.filter((cardIndex) => !displayedSet.has(cardIndex));
+
+  state.hatCardIndices = shuffleCardIndices(refillableDiscard);
+  state.discardCardIndices = state.discardCardIndices.filter((cardIndex) => displayedSet.has(cardIndex));
+}
+
+function shuffleCardIndices(indices) {
+  const shuffled = [...indices];
+
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  return shuffled;
 }
 
 function updateHeader(players, settings) {
@@ -162,6 +206,7 @@ function updateHeader(players, settings) {
 function renderCompletion(settings, players) {
   stopCountdown();
   nextHandButton.disabled = true;
+  moveDisplayedCardsToDiscard();
   playCardGrid.innerHTML = '';
   clearObjectUrls();
   playBoardEmpty.hidden = false;
@@ -276,13 +321,14 @@ async function renderHand() {
     return;
   }
 
+  moveDisplayedCardsToDiscard();
   state.handNumber += 1;
   playCardGrid.innerHTML = '';
   playBoardEmpty.hidden = true;
 
   const cardsToShow = getRandomInteger(settings.minCardsToShow, settings.maxCardsToShow);
-  const pattern = getPatternSources();
   const cardIndices = drawCardIndicesFromHat(settings.cardCount, cardsToShow);
+  const pattern = getPatternSources();
   const currentPlayer = players.length > 0 ? players[(state.handNumber - 1) % players.length] : '';
 
   handStatus.textContent = getCurrentHandStatus(settings, cardsToShow);
@@ -360,6 +406,8 @@ restartButton.addEventListener('click', () => {
   state.handNumber = 0;
   state.startedAtMs = 0;
   state.hatCardIndices = [];
+  state.discardCardIndices = [];
+  state.displayedCardIndices = [];
   nextHandButton.disabled = false;
   void renderHand();
 });
