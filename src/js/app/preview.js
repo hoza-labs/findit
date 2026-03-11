@@ -40,6 +40,7 @@ let slopePatternItems = [];
 let gridPatternItems = [];
 let deckPlayerIndex = 0;
 let deckPlayerTimerId = null;
+const patternActiveOutlineBuffer = 6;
 
 function clearObjectUrls() {
   for (const url of objectUrls) {
@@ -84,7 +85,8 @@ function applyPatternScale() {
   const columns = tempDeck.symbolsPerCard;
   const gap = 8;
   const availableWidth = deckPatternElement.clientWidth || 960;
-  const rawSize = Math.floor((availableWidth - (columns - 1) * gap) / columns);
+  const usableWidth = Math.max(0, availableWidth - patternActiveOutlineBuffer * 2);
+  const rawSize = Math.floor((usableWidth - (columns - 1) * gap) / columns);
   const imageSize = Math.max(24, Math.min(96, rawSize));
 
   deckPatternElement.style.setProperty('--pattern-item-size', `${imageSize}px`);
@@ -278,7 +280,7 @@ async function renderSelectedImages() {
   canvas.appendChild(slopeLabel);
 
   const slopeRow = document.createElement('div');
-  slopeRow.className = 'deck-pattern-row';
+  slopeRow.className = 'deck-pattern-row deck-pattern-row--slope';
   for (let slot = 0; slot < n; slot += 1) {
     const slotTitle = slot < p ? String(slot) : 'infinity';
     const topLabel = slot < p ? `(1,${slot})` : '(0,1)';

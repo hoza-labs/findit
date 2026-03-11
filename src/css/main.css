@@ -1,6 +1,9 @@
 ﻿:root {
   --page-bg: #f6f8fa;
   --card-border: #d0d7de;
+  --pattern-active-outline-width: 4px;
+  --pattern-active-outline-offset: 1px;
+  --pattern-active-outline-buffer: calc(var(--pattern-active-outline-width) + var(--pattern-active-outline-offset) + 1px);
 }
 
 body {
@@ -73,7 +76,7 @@ body.has-top-bar {
 .deck-pattern {
   --pattern-item-size: 96px;
   --pattern-gap: 8px;
-  overflow-x: auto;
+  overflow-x: hidden;
   padding-bottom: 0.25rem;
 }
 
@@ -84,6 +87,12 @@ body.has-top-bar {
   align-items: start;
 }
 
+.preview-page-shell {
+  max-width: 1600px;
+  margin-inline: auto;
+  padding-inline: max(0.75rem, calc(var(--bs-gutter-x, 1.5rem) * 0.5));
+}
+
 @media (max-width: 900px) {
   .preview-main-layout {
     grid-template-columns: 1fr;
@@ -91,7 +100,10 @@ body.has-top-bar {
 }
 
 .deck-pattern-canvas {
-  width: max-content;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  padding-inline: var(--pattern-active-outline-buffer);
 }
 
 .deck-pattern-row {
@@ -112,8 +124,8 @@ body.has-top-bar {
 
 .deck-pattern-item.is-active .deck-pattern-image {
   border-color: #b026ff;
-  outline: 4px solid #b026ff;
-  outline-offset: 1px;
+  outline: var(--pattern-active-outline-width) solid #b026ff;
+  outline-offset: var(--pattern-active-outline-offset);
 }
 
 .deck-pattern-image-wrap {
