@@ -22,7 +22,8 @@ const claimDialog = document.querySelector('#claim-dialog');
 const claimDialogHeader = document.querySelector('#claim-dialog-header');
 const claimDialogMessage = document.querySelector('#claim-dialog-message');
 const claimPlayerList = document.querySelector('#claim-player-list');
-const claimDialogOkButton = document.querySelector('#claim-dialog-ok-button');
+const claimDialogCancelButton = document.querySelector('#claim-dialog-cancel-button');
+const claimDialogNextHandButton = document.querySelector('#claim-dialog-next-hand-button');
 
 const tempDeck = await loadTempDeckOrDefault();
 const userImages = await repository.listUserImages();
@@ -646,8 +647,13 @@ claimPlayerList.addEventListener('click', (event) => {
   renderClaimPlayerList();
 });
 
-claimDialogOkButton.addEventListener('click', () => {
+claimDialogCancelButton.addEventListener('click', () => {
   closeClaimDialog();
+});
+
+claimDialogNextHandButton.addEventListener('click', () => {
+  closeClaimDialog({ resumeCountdown: false });
+  void renderHand();
 });
 
 claimDialogHeader.addEventListener('pointerdown', (event) => {
