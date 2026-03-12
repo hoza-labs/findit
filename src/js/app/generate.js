@@ -1,6 +1,7 @@
 import { markDirty, normalizePlayOptions } from '../modules/deckSession.js';
 import { loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { getDeckPlayerCardCount } from '../modules/deckPlayer.js';
+import { isValidPositiveNumberInput, isValidPositiveWholeNumberInput } from '../modules/playNumberValidation.js';
 
 const pageHeading = document.querySelector('header h1');
 const deckStatusLine = document.querySelector('#deck-status-line');
@@ -48,7 +49,6 @@ function getPlayOptionsValidationMessage(playOptions) {
   const maxRaw = getFieldValue('cardsToShowMax');
   const countdownRaw = getFieldValue('countdownSeconds');
   const lengthRaw = getFieldValue('lengthOfPlay');
-  const lengthUnits = getFieldValue('lengthOfPlayUnits') || 'hands';
   const min = playOptions.cardsToShowMin ? Number.parseInt(playOptions.cardsToShowMin, 10) : null;
   const max = playOptions.cardsToShowMax ? Number.parseInt(playOptions.cardsToShowMax, 10) : null;
 
@@ -60,18 +60,12 @@ function getPlayOptionsValidationMessage(playOptions) {
     return 'Maximum cards to show must be a whole number.';
   }
 
-  if (countdownRaw && !/^\d+$/.test(countdownRaw)) {
-    return 'Countdown in seconds must be a whole number.';
+  if (countdownRaw && !isValidPositiveWholeNumberInput(countdownRaw)) {
+    return 'Countdown in seconds must be a valid number.';
   }
 
-  if (lengthRaw) {
-    if (lengthUnits === 'minutes') {
-      if (!/^(?:\d+\.?\d*|\.\d+)$/.test(lengthRaw)) {
-        return 'Length of play in minutes must be a valid positive number.';
-      }
-    } else if (!/^\d+$/.test(lengthRaw)) {
-      return `Length of play in ${lengthUnits} must be a whole number.`;
-    }
+  if (lengthRaw && !isValidPositiveNumberInput(lengthRaw)) {
+    return 'Length of play must be a valid number.';
   }
 
   if (min !== null && min > deckCardCount) {

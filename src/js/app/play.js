@@ -2,6 +2,7 @@ import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { loadTempDeckOrDefault, repository } from '../modules/deckFlowCommon.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
 import { createPlayHatState, drawNextHand } from '../modules/playHat.js';
+import { parsePositiveNumberInput, parsePositiveWholeNumberInput } from '../modules/playNumberValidation.js';
 
 const playSubtitle = document.querySelector('#play-subtitle');
 const handStatus = document.querySelector('#hand-status');
@@ -108,15 +109,6 @@ function parseOptionalPositiveInteger(value) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
-function parseOptionalPositiveNumber(value) {
-  if (typeof value !== 'string' || !value.trim()) {
-    return null;
-  }
-
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-}
-
 function getPlayerNames() {
   const rawNames = tempDeck.playOptions?.playerNames ?? '';
   return rawNames
@@ -131,8 +123,8 @@ function getHandSettings() {
   const parsedMax = parseOptionalPositiveInteger(tempDeck.playOptions?.cardsToShowMax);
   const min = Math.max(1, Math.min(parsedMin ?? 2, cardCount));
   const max = Math.max(min, Math.min(parsedMax ?? min, cardCount));
-  const countdownSeconds = parseOptionalPositiveInteger(tempDeck.playOptions?.countdownSeconds) ?? 0;
-  const lengthOfPlay = parseOptionalPositiveNumber(tempDeck.playOptions?.lengthOfPlay);
+  const countdownSeconds = parsePositiveWholeNumberInput(tempDeck.playOptions?.countdownSeconds ?? '') ?? 0;
+  const lengthOfPlay = parsePositiveNumberInput(tempDeck.playOptions?.lengthOfPlay ?? '');
   const lengthOfPlayUnits = tempDeck.playOptions?.lengthOfPlayUnits ?? 'hands';
 
   return {
@@ -403,10 +395,11 @@ async function renderHand() {
   }
 
   if (settings.countdownSeconds > 0 && !hasReachedPlayLimit(settings)) {
-    let remaining = settings.countdownSeconds;
-    countdownStatus.textContent = `Auto-advancing in ${remaining}s.`;
+    const countdownStartedAt = Date.now();
+    countdownStatus.textContent = `Auto-advancing in ${settings.countdownSeconds.toFixed(1)}s.`;
     countdownTimerId = window.setInterval(() => {
-      remaining -= 1;
+      const elapsedSeconds = (Date.now() - countdownStartedAt) / 1000;
+      const remaining = Math.max(0, settings.countdownSeconds - elapsedSeconds);
       if (remaining <= 0) {
         stopCountdown();
         if (hasReachedPlayLimit(settings)) {
@@ -418,8 +411,8 @@ async function renderHand() {
         return;
       }
 
-      countdownStatus.textContent = `Auto-advancing in ${remaining}s.`;
-    }, 1000);
+      countdownStatus.textContent = `Auto-advancing in ${remaining.toFixed(1)}s.`;
+    }, 100);
   } else if (settings.countdownSeconds > 0) {
     countdownStatus.textContent = 'Final hand. Countdown complete.';
   } else {
