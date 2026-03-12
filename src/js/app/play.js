@@ -234,7 +234,7 @@ function getStatisticsText(settings, reason) {
     ? ((getElapsedMilliseconds() / 1000) / state.completedHandsCount).toFixed(2)
     : '0.00';
   const reasonText = reason === 'minutes'
-    ? 'Time limit reached.'
+    ? `Time limit reached after ${state.completedHandsCount} hand${state.completedHandsCount === 1 ? '' : 's'}.`
     : reason === 'decks'
       ? `The deck was used ${settings.lengthOfPlay} time${settings.lengthOfPlay === 1 ? '' : 's'} to play ${state.completedHandsCount} hands.`
       : reason === 'hands'
