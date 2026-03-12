@@ -5,7 +5,7 @@ const DEFAULT_PLAY_OPTIONS = Object.freeze({
   countdownSeconds: '',
   lengthOfPlay: '',
   lengthOfPlayUnits: 'hands',
-  playerNames: ''
+  playerNames: 'one, two'
 });
 
 export function createEmptyTempDeck() {

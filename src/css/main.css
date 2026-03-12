@@ -538,7 +538,7 @@ body.has-top-bar {
 
 .play-options-row {
   display: grid;
-  grid-template-columns: minmax(0, 360px) 180px;
+  grid-template-columns: minmax(0, 360px) auto;
   gap: 1rem;
   align-items: center;
 }
@@ -552,7 +552,7 @@ body.has-top-bar {
 }
 
 .play-options-number-input {
-  width: 180px;
+  width: 4.5rem;
 }
 
 .play-options-split-controls {
@@ -563,7 +563,7 @@ body.has-top-bar {
 }
 
 .play-options-units-select {
-  width: 180px;
+  width: 8rem;
 }
 
 @media (max-width: 768px) {
