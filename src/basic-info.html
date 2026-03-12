@@ -10,33 +10,40 @@
   <body class="has-top-bar">
     <nav class="top-next-bar navbar navbar-expand navbar-dark bg-primary fixed-top">
       <div class="container-fluid">
-        <ul class="navbar-nav">
-          <li class="nav-item">
-            <a href="./index.html" class="nav-link fw-semibold">Home</a>
-          </li>
-        </ul>
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item">
-            <a href="./standard-images.html" class="nav-link fw-semibold">Next</a>
-          </li>
-        </ul>
+        <div class="top-page-links">
+          <a href="./index.html" class="nav-link fw-semibold">Home</a>
+          <a href="./basic-info.html" class="nav-link fw-semibold is-current" aria-current="page">Basic Info</a>
+          <a href="./standard-images.html" class="nav-link fw-semibold">Standard Images</a>
+          <a href="./user-images.html" class="nav-link fw-semibold">User Images</a>
+          <a href="./web-images.html" class="nav-link fw-semibold">Web Images</a>
+          <a href="./preview.html" class="nav-link fw-semibold">Preview</a>
+          <a href="./play.html" class="nav-link fw-semibold">Play!</a>
+          <a href="./save.html" class="nav-link fw-semibold">Save</a>
+        </div>
+        <details class="top-page-menu-mobile">
+          <summary aria-label="Open page navigation">
+            <span class="top-page-menu-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+          </summary>
+          <ul class="top-page-menu-list">
+            <li><a href="./index.html" class="top-page-menu-link">Home</a></li>
+            <li><a href="./basic-info.html" class="top-page-menu-link" aria-current="page">Basic Info</a></li>
+            <li><a href="./standard-images.html" class="top-page-menu-link">Standard Images</a></li>
+            <li><a href="./user-images.html" class="top-page-menu-link">User Images</a></li>
+            <li><a href="./web-images.html" class="top-page-menu-link">Web Images</a></li>
+            <li><a href="./preview.html" class="top-page-menu-link">Preview</a></li>
+            <li><a href="./play.html" class="top-page-menu-link">Play!</a></li>
+            <li><a href="./save.html" class="top-page-menu-link">Save</a></li>
+          </ul>
+        </details>
       </div>
     </nav>
 
-    <header class="container py-4">
+    <header class="container-fluid preview-page-shell py-4">
       <h1 class="display-6 mb-2">Basic Info</h1>
-      <nav class="d-flex flex-wrap gap-3">
-        <a href="./index.html" class="link-body-emphasis fw-semibold">Home</a>
-        <a href="./basic-info.html" class="link-body-emphasis fw-semibold">Basic Info</a>
-        <a href="./standard-images.html" class="link-body-emphasis fw-semibold">Standard Images</a>
-        <a href="./user-images.html" class="link-body-emphasis fw-semibold">User Images</a>
-        <a href="./web-images.html" class="link-body-emphasis fw-semibold">Web Images</a>
-        <a href="./preview.html" class="link-body-emphasis fw-semibold">Preview</a>
-      </nav>
       <p id="deck-status-line" class="text-muted mb-0">Current deck: (new untitled deck) (no changes yet)</p>
     </header>
 
-    <main class="container pb-5">
+    <main class="container-fluid preview-page-shell pb-5">
       <section class="card shadow-sm mb-3">
         <div class="card-body">
           <label for="symbols-select" class="form-label">Pictures per card (n)</label>
@@ -63,4 +70,3 @@
     <script type="module" src="./js/app/basicInfo.js"></script>
   </body>
 </html>
-
