@@ -203,7 +203,7 @@ function getCompletionText(settings, reason) {
   }
 
   if (reason === 'decks') {
-    return `Finished after ${state.hatState?.refillCount ?? 0} deck refill${(state.hatState?.refillCount ?? 0) === 1 ? '' : 's'}.`;
+    return `Finished after using the deck ${settings.lengthOfPlay} time${settings.lengthOfPlay === 1 ? '' : 's'}.`;
   }
 
   if (!settings.lengthOfPlay) {
@@ -225,12 +225,12 @@ function getStatisticsText(settings, reason) {
   const reasonText = reason === 'minutes'
     ? 'Time limit reached.'
     : reason === 'decks'
-      ? 'Deck refill limit reached.'
+      ? `The deck was used ${settings.lengthOfPlay} time${settings.lengthOfPlay === 1 ? '' : 's'} to play ${state.completedHandsCount} hands.`
       : reason === 'hands'
         ? 'Hand limit reached.'
         : 'Play finished.';
 
-  return `${reasonText} Total hands played: ${state.completedHandsCount}. Equivalent deck passes: ${completedDecks}. Elapsed time: ${formatElapsedTime()}. Average seconds per hand: ${averageSecondsPerHand}.`;
+  return `${reasonText} Equivalent deck passes: ${completedDecks}. Elapsed time: ${formatElapsedTime()}. Average seconds per hand: ${averageSecondsPerHand}.`;
 }
 
 function hasReachedPlayLimit(settings) {
@@ -331,7 +331,7 @@ async function renderHand() {
     state.hatState = createPlayHatState(settings.cardCount);
   }
   const maxRefills = settings.lengthOfPlayUnits === 'decks' && settings.lengthOfPlay
-    ? settings.lengthOfPlay
+    ? Math.max(0, settings.lengthOfPlay - 1)
     : Number.POSITIVE_INFINITY;
   const drawResult = drawNextHand(state.hatState, cardsToShow, { maxRefills });
   state.hatState = drawResult.state;
