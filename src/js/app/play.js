@@ -238,7 +238,7 @@ function getStatisticsText(settings, reason) {
     : reason === 'decks'
       ? `The deck was used ${settings.lengthOfPlay} time${settings.lengthOfPlay === 1 ? '' : 's'} to play ${state.completedHandsCount} hands.`
       : reason === 'hands'
-        ? 'Hand limit reached.'
+        ? `Finished ${state.completedHandsCount} hand${state.completedHandsCount === 1 ? '' : 's'}.`
         : 'Play finished.';
 
   return `${reasonText} Equivalent deck passes: ${completedDecks}. Elapsed time: ${formatElapsedTime()}. Average seconds per hand: ${averageSecondsPerHand}.`;
