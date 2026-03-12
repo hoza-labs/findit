@@ -614,6 +614,16 @@ body.has-top-bar {
   margin-inline: auto;
 }
 
+.play-results-table-wrap,
+.play-results-table,
+.play-results-table > :not(caption) > * > * {
+  background: transparent;
+}
+
+.play-results-table-result {
+  font-weight: 600;
+}
+
 .claim-dialog {
   position: fixed;
   top: 50%;

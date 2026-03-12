@@ -44,6 +44,8 @@ const state = {
   countdownRemainingMs: 0,
   countdownEndsAtMs: 0,
   claimDialogOpen: false,
+  claimDialogOpenedAtMs: 0,
+  totalClaimDialogOpenMs: 0,
   playerScores: [],
   claimDragOffsetX: 0,
   claimDragOffsetY: 0,
@@ -243,6 +245,10 @@ function pauseCountdownForDialog() {
 
 function closeClaimDialog(options = {}) {
   const { resumeCountdown = true } = options;
+  if (state.claimDialogOpenedAtMs > 0) {
+    state.totalClaimDialogOpenMs += Math.max(0, Date.now() - state.claimDialogOpenedAtMs);
+    state.claimDialogOpenedAtMs = 0;
+  }
   state.claimDialogOpen = false;
   claimDialog.hidden = true;
 
@@ -257,6 +263,7 @@ function openClaimDialog(message) {
   }
 
   state.claimDialogOpen = true;
+  state.claimDialogOpenedAtMs = Date.now();
   claimDialogMessage.textContent = message;
   renderClaimPlayerList();
   claimDialog.hidden = false;
@@ -285,9 +292,9 @@ function renderCompletion(settings, players, reason = '') {
   playCardGrid.innerHTML = '';
   clearObjectUrls();
   playBoardEmpty.hidden = false;
-  playBoardEmpty.textContent = getStatisticsText(settings, reason);
+  renderStatisticsTable(settings, reason);
   handStatus.textContent = getCompletionText(settings, reason);
-  countdownStatus.textContent = `Elapsed: ${formatElapsedTime()}`;
+  countdownStatus.textContent = `Elapsed: ${formatElapsedTime(getActiveElapsedMilliseconds())}`;
   playerStatus.textContent = `Total hands played: ${state.completedHandsCount}`;
 }
 
@@ -337,9 +344,8 @@ function getCompletionText(settings, reason) {
 }
 
 function getStatisticsText(settings, reason) {
-  const completedDecks = settings.cardCount > 0 ? (state.completedHandsCount / settings.cardCount).toFixed(2) : '0.00';
   const averageSecondsPerHand = state.completedHandsCount > 0
-    ? ((getElapsedMilliseconds() / 1000) / state.completedHandsCount).toFixed(2)
+    ? ((getActiveElapsedMilliseconds() / 1000) / state.completedHandsCount).toFixed(2)
     : '0.00';
   const reasonText = reason === 'minutes'
     ? `Time limit reached after ${state.completedHandsCount} hand${state.completedHandsCount === 1 ? '' : 's'}.`
@@ -349,7 +355,12 @@ function getStatisticsText(settings, reason) {
         ? `Finished ${state.completedHandsCount} hand${state.completedHandsCount === 1 ? '' : 's'}.`
         : 'Play finished.';
 
-  return `${reasonText} Equivalent deck passes: ${completedDecks}. Elapsed time: ${formatElapsedTime()}. Average seconds per hand: ${averageSecondsPerHand}.`;
+  return {
+    reasonText,
+    elapsedTimeText: formatElapsedTime(getActiveElapsedMilliseconds()),
+    averageSecondsPerHand,
+    playerScores: state.playerScores.map((player) => ({ ...player }))
+  };
 }
 
 function hasReachedPlayLimit(settings) {
@@ -358,7 +369,7 @@ function hasReachedPlayLimit(settings) {
   }
 
   if (settings.lengthOfPlayUnits === 'minutes') {
-    return getElapsedMilliseconds() >= settings.lengthOfPlay * 60_000;
+    return getSessionElapsedMilliseconds() >= settings.lengthOfPlay * 60_000;
   }
 
   return settings.lengthOfPlayUnits === 'hands' && state.completedHandsCount >= settings.lengthOfPlay;
@@ -385,8 +396,8 @@ function getCurrentHandStatus(settings, cardsToShow, hatState) {
   return `Hand ${state.activeHandNumber} of ${settings.lengthOfPlay}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}.`;
 }
 
-function formatElapsedTime() {
-  const elapsedSeconds = Math.max(0, Math.floor(getElapsedMilliseconds() / 1000));
+function formatElapsedTime(elapsedMilliseconds) {
+  const elapsedSeconds = Math.max(0, Math.floor(elapsedMilliseconds / 1000));
   const minutes = Math.floor(elapsedSeconds / 60);
   const seconds = elapsedSeconds % 60;
 
@@ -397,7 +408,7 @@ function formatElapsedTime() {
   return `${minutes}m ${seconds}s`;
 }
 
-function getElapsedMilliseconds() {
+function getSessionElapsedMilliseconds() {
   if (state.startedAtMs === 0) {
     return 0;
   }
@@ -406,8 +417,76 @@ function getElapsedMilliseconds() {
   return Math.max(0, endTime - state.startedAtMs);
 }
 
+function getActiveElapsedMilliseconds() {
+  const currentDialogOpenMs = state.claimDialogOpenedAtMs > 0
+    ? Math.max(0, Date.now() - state.claimDialogOpenedAtMs)
+    : 0;
+  return Math.max(0, getSessionElapsedMilliseconds() - state.totalClaimDialogOpenMs - currentDialogOpenMs);
+}
+
+function renderStatisticsTable(settings, reason) {
+  const statistics = getStatisticsText(settings, reason);
+  playBoardEmpty.innerHTML = '';
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'table-responsive play-results-table-wrap';
+
+  const table = document.createElement('table');
+  table.className = 'table table-sm align-middle mb-0 play-results-table';
+
+  const body = document.createElement('tbody');
+  const rows = [
+    ['Elapsed Time', statistics.elapsedTimeText],
+    ['Total Hands Played', String(state.completedHandsCount)],
+    ['Average Seconds Per Hand', statistics.averageSecondsPerHand]
+  ];
+
+  const resultRow = document.createElement('tr');
+  const resultCell = document.createElement('td');
+  resultCell.colSpan = 2;
+  resultCell.textContent = statistics.reasonText;
+  resultCell.className = 'play-results-table-result';
+  resultRow.appendChild(resultCell);
+  body.appendChild(resultRow);
+
+  for (const [label, value] of rows) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.textContent = value;
+    const heading = document.createElement('th');
+    heading.scope = 'row';
+    heading.textContent = label;
+    row.append(cell, heading);
+    body.appendChild(row);
+  }
+
+  if (statistics.playerScores.length > 0) {
+    const scoresHeadingRow = document.createElement('tr');
+    const scoresHeading = document.createElement('th');
+    scoresHeading.colSpan = 2;
+    scoresHeading.textContent = 'Player Scores';
+    scoresHeadingRow.appendChild(scoresHeading);
+    body.appendChild(scoresHeadingRow);
+
+    for (const player of statistics.playerScores) {
+      const row = document.createElement('tr');
+      const score = document.createElement('td');
+      score.textContent = String(player.score);
+      const name = document.createElement('th');
+      name.scope = 'row';
+      name.textContent = player.name;
+      row.append(score, name);
+      body.appendChild(row);
+    }
+  }
+
+  table.appendChild(body);
+  wrapper.appendChild(table);
+  playBoardEmpty.appendChild(wrapper);
+}
+
 function getMinuteHandStatus(settings, cardsToShow) {
-  const remainingMilliseconds = Math.max(0, settings.lengthOfPlay * 60_000 - getElapsedMilliseconds());
+  const remainingMilliseconds = Math.max(0, settings.lengthOfPlay * 60_000 - getSessionElapsedMilliseconds());
   const remainingSeconds = (remainingMilliseconds / 1000).toFixed(1);
   return `Hand ${state.activeHandNumber}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}. ${remainingSeconds}s remaining.`;
 }
@@ -623,6 +702,8 @@ restartButton.addEventListener('click', () => {
   state.currentCardsShownCount = 0;
   state.pendingHandCount = false;
   state.countdownRemainingMs = 0;
+  state.claimDialogOpenedAtMs = 0;
+  state.totalClaimDialogOpenMs = 0;
   resetPlayerScores();
   playBoardEmpty.hidden = true;
   setNextHandButtonLabel('Next hand');
