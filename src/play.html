@@ -50,21 +50,20 @@
           <form id="play-options-form" class="play-options-form" novalidate>
             <div class="play-options-row">
               <label for="cards-to-show-min" class="form-label mb-0">Number of cards to show at once (minimum)</label>
-              <input id="cards-to-show-min" name="cardsToShowMin" type="number" class="form-control play-options-number-input" min="1" inputmode="numeric" />
+              <input id="cards-to-show-min" name="cardsToShowMin" type="text" class="form-control play-options-number-input" inputmode="numeric" />
             </div>
             <div class="play-options-row">
               <label for="cards-to-show-max" class="form-label mb-0">Number of cards to show at once (maximum)</label>
-              <input id="cards-to-show-max" name="cardsToShowMax" type="number" class="form-control play-options-number-input" min="1" inputmode="numeric" />
+              <input id="cards-to-show-max" name="cardsToShowMax" type="text" class="form-control play-options-number-input" inputmode="numeric" />
             </div>
             <div class="play-options-row">
               <label for="countdown-seconds" class="form-label mb-0">Countdown in seconds (blank for none)</label>
-              <input id="countdown-seconds" name="countdownSeconds" type="number" class="form-control play-options-number-input" min="1" inputmode="numeric" />
+              <input id="countdown-seconds" name="countdownSeconds" type="text" class="form-control play-options-number-input" inputmode="numeric" />
             </div>
             <div class="play-options-row play-options-row--split">
               <label for="length-of-play" class="form-label mb-0">Length of Play (blank for no limit)</label>
               <div class="play-options-split-controls">
-                <input id="length-of-play" name="lengthOfPlay" type="number" class="form-control play-options-number-input" min="1" inputmode="numeric" />
-                <label for="length-of-play-units" class="form-label mb-0">Units</label>
+                <input id="length-of-play" name="lengthOfPlay" type="text" class="form-control play-options-number-input" inputmode="decimal" />
                 <select id="length-of-play-units" name="lengthOfPlayUnits" class="form-select play-options-units-select">
                   <option value="hands">hands</option>
                   <option value="decks">decks</option>

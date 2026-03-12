@@ -16,8 +16,16 @@ const countdownStatus = document.querySelector('#countdown-status');
 const playerStatus = document.querySelector('#player-status');
 const playCardGrid = document.querySelector('#play-card-grid');
 const playBoardEmpty = document.querySelector('#play-board-empty');
+const resultsButton = document.querySelector('#results-button');
 const nextHandButton = document.querySelector('#next-hand-button');
 const restartButton = document.querySelector('#restart-button');
+const claimDialog = document.querySelector('#claim-dialog');
+const claimDialogHeader = document.querySelector('#claim-dialog-header');
+const claimDialogMessage = document.querySelector('#claim-dialog-message');
+const claimPlayerList = document.querySelector('#claim-player-list');
+const claimDialogResultsButton = document.querySelector('#claim-dialog-results-button');
+const claimDialogCancelButton = document.querySelector('#claim-dialog-cancel-button');
+const claimDialogNextHandButton = document.querySelector('#claim-dialog-next-hand-button');
 
 const tempDeck = await loadTempDeckOrDefault();
 const userImages = await repository.listUserImages();
@@ -34,7 +42,16 @@ const state = {
   hatState: null,
   sessionEnded: false,
   currentCardsShownCount: 0,
-  pendingHandCount: false
+  pendingHandCount: false,
+  countdownRemainingMs: 0,
+  countdownEndsAtMs: 0,
+  claimDialogOpen: false,
+  claimDialogOpenedAtMs: 0,
+  totalClaimDialogOpenMs: 0,
+  playerScores: [],
+  claimDragOffsetX: 0,
+  claimDragOffsetY: 0,
+  claimDragging: false
 };
 
 function clearObjectUrls() {
@@ -49,6 +66,8 @@ function stopCountdown() {
     window.clearInterval(countdownTimerId);
     countdownTimerId = null;
   }
+
+  state.countdownEndsAtMs = 0;
 }
 
 function stopMinuteLimitTimer() {
@@ -123,6 +142,61 @@ function getPlayerNames() {
     .filter(Boolean);
 }
 
+function resetPlayerScores() {
+  state.playerScores = getPlayerNames().map((name) => ({ name, score: 0 }));
+}
+
+function renderPlayerClaimPrompt() {
+  playerStatus.textContent = 'Any player can click anywhere or press any key to claim the hand.';
+}
+
+function renderClaimPlayerList() {
+  claimPlayerList.innerHTML = '';
+
+  if (state.playerScores.length === 0) {
+    const emptyRow = document.createElement('p');
+    emptyRow.className = 'mb-0 text-muted';
+    emptyRow.textContent = 'No player names are configured for scoring.';
+    claimPlayerList.appendChild(emptyRow);
+    return;
+  }
+
+  for (let index = 0; index < state.playerScores.length; index += 1) {
+    const player = state.playerScores[index];
+    const row = document.createElement('div');
+    row.className = 'claim-player-row';
+
+    const name = document.createElement('div');
+    name.className = 'claim-player-name';
+    name.textContent = player.name;
+
+    const score = document.createElement('div');
+    score.className = 'claim-player-score';
+    score.textContent = `Score: ${player.score}`;
+
+    const controls = document.createElement('div');
+    controls.className = 'claim-player-controls';
+
+    const decreaseButton = document.createElement('button');
+    decreaseButton.type = 'button';
+    decreaseButton.className = 'btn btn-outline-secondary claim-player-button';
+    decreaseButton.dataset.playerIndex = String(index);
+    decreaseButton.dataset.scoreDelta = '-1';
+    decreaseButton.textContent = '-';
+
+    const increaseButton = document.createElement('button');
+    increaseButton.type = 'button';
+    increaseButton.className = 'btn btn-outline-primary claim-player-button';
+    increaseButton.dataset.playerIndex = String(index);
+    increaseButton.dataset.scoreDelta = '1';
+    increaseButton.textContent = '+';
+
+    controls.append(decreaseButton, increaseButton);
+    row.append(name, score, controls);
+    claimPlayerList.appendChild(row);
+  }
+}
+
 function getHandSettings() {
   const cardCount = getDeckPlayerCardCount(tempDeck.symbolsPerCard);
   const parsedMin = parseOptionalPositiveInteger(tempDeck.playOptions?.cardsToShowMin);
@@ -143,6 +217,10 @@ function getHandSettings() {
   };
 }
 
+function isUnlimitedGame(settings) {
+  return !settings.lengthOfPlay;
+}
+
 function getRandomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -155,6 +233,52 @@ function updateHeader(players, settings) {
   document.title = `FindIt | Playing ${deckName}`;
 }
 
+function positionClaimDialogAtCenter() {
+  claimDialog.style.left = `${Math.max(16, Math.round((window.innerWidth - claimDialog.offsetWidth) / 2))}px`;
+  claimDialog.style.top = `${Math.max(72, Math.round((window.innerHeight - claimDialog.offsetHeight) / 2))}px`;
+  claimDialog.style.transform = 'none';
+}
+
+function pauseCountdownForDialog() {
+  if (countdownTimerId === null || state.countdownEndsAtMs === 0) {
+    return;
+  }
+
+  state.countdownRemainingMs = Math.max(0, state.countdownEndsAtMs - Date.now());
+  stopCountdown();
+  countdownStatus.textContent = `Countdown paused at ${(state.countdownRemainingMs / 1000).toFixed(1)}s.`;
+}
+
+function closeClaimDialog(options = {}) {
+  const { resumeCountdown = true } = options;
+  if (state.claimDialogOpenedAtMs > 0) {
+    state.totalClaimDialogOpenMs += Math.max(0, Date.now() - state.claimDialogOpenedAtMs);
+    state.claimDialogOpenedAtMs = 0;
+  }
+  state.claimDialogOpen = false;
+  claimDialog.hidden = true;
+
+  if (resumeCountdown && !state.sessionEnded && state.countdownRemainingMs > 0) {
+    startCountdown(getHandSettings());
+  }
+}
+
+function openClaimDialog(message) {
+  if (state.sessionEnded || state.claimDialogOpen || state.currentCardsShownCount === 0) {
+    return;
+  }
+
+  const settings = getHandSettings();
+  state.claimDialogOpen = true;
+  state.claimDialogOpenedAtMs = Date.now();
+  claimDialogMessage.textContent = message;
+  claimDialogResultsButton.hidden = !isUnlimitedGame(settings);
+  renderClaimPlayerList();
+  claimDialog.hidden = false;
+  positionClaimDialogAtCenter();
+  pauseCountdownForDialog();
+}
+
 function setNextHandButtonLabel(label) {
   nextHandButton.textContent = label;
 }
@@ -162,9 +286,11 @@ function setNextHandButtonLabel(label) {
 function renderCompletion(settings, players, reason = '') {
   stopCountdown();
   stopMinuteLimitTimer();
+  closeClaimDialog({ resumeCountdown: false });
   state.sessionEnded = true;
   state.endedAtMs = Date.now();
   setNextHandButtonLabel('Next hand');
+  resultsButton.hidden = true;
   nextHandButton.disabled = true;
   if (state.hatState) {
     state.hatState = {
@@ -175,12 +301,10 @@ function renderCompletion(settings, players, reason = '') {
   playCardGrid.innerHTML = '';
   clearObjectUrls();
   playBoardEmpty.hidden = false;
-  playBoardEmpty.textContent = getStatisticsText(settings, reason);
+  renderStatisticsTable(settings, reason);
   handStatus.textContent = getCompletionText(settings, reason);
-  countdownStatus.textContent = `Elapsed: ${formatElapsedTime()}`;
-  playerStatus.textContent = players.length > 0
-    ? `Players: ${players.join(', ')} | Total hands played: ${state.completedHandsCount}`
-    : `Total hands played: ${state.completedHandsCount}`;
+  countdownStatus.textContent = `Elapsed: ${formatElapsedTime(getActiveElapsedMilliseconds())}`;
+  playerStatus.textContent = `Total hands played: ${state.completedHandsCount}`;
 }
 
 function commitPendingHand() {
@@ -229,9 +353,8 @@ function getCompletionText(settings, reason) {
 }
 
 function getStatisticsText(settings, reason) {
-  const completedDecks = settings.cardCount > 0 ? (state.completedHandsCount / settings.cardCount).toFixed(2) : '0.00';
   const averageSecondsPerHand = state.completedHandsCount > 0
-    ? ((getElapsedMilliseconds() / 1000) / state.completedHandsCount).toFixed(2)
+    ? ((getActiveElapsedMilliseconds() / 1000) / state.completedHandsCount).toFixed(2)
     : '0.00';
   const reasonText = reason === 'minutes'
     ? `Time limit reached after ${state.completedHandsCount} hand${state.completedHandsCount === 1 ? '' : 's'}.`
@@ -241,7 +364,12 @@ function getStatisticsText(settings, reason) {
         ? `Finished ${state.completedHandsCount} hand${state.completedHandsCount === 1 ? '' : 's'}.`
         : 'Play finished.';
 
-  return `${reasonText} Equivalent deck passes: ${completedDecks}. Elapsed time: ${formatElapsedTime()}. Average seconds per hand: ${averageSecondsPerHand}.`;
+  return {
+    reasonText,
+    elapsedTimeText: formatElapsedTime(getActiveElapsedMilliseconds()),
+    averageSecondsPerHand,
+    playerScores: state.playerScores.map((player) => ({ ...player }))
+  };
 }
 
 function hasReachedPlayLimit(settings) {
@@ -250,7 +378,7 @@ function hasReachedPlayLimit(settings) {
   }
 
   if (settings.lengthOfPlayUnits === 'minutes') {
-    return getElapsedMilliseconds() >= settings.lengthOfPlay * 60_000;
+    return getActiveElapsedMilliseconds() >= settings.lengthOfPlay * 60_000;
   }
 
   return settings.lengthOfPlayUnits === 'hands' && state.completedHandsCount >= settings.lengthOfPlay;
@@ -277,8 +405,8 @@ function getCurrentHandStatus(settings, cardsToShow, hatState) {
   return `Hand ${state.activeHandNumber} of ${settings.lengthOfPlay}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}.`;
 }
 
-function formatElapsedTime() {
-  const elapsedSeconds = Math.max(0, Math.floor(getElapsedMilliseconds() / 1000));
+function formatElapsedTime(elapsedMilliseconds) {
+  const elapsedSeconds = Math.max(0, Math.floor(elapsedMilliseconds / 1000));
   const minutes = Math.floor(elapsedSeconds / 60);
   const seconds = elapsedSeconds % 60;
 
@@ -289,7 +417,7 @@ function formatElapsedTime() {
   return `${minutes}m ${seconds}s`;
 }
 
-function getElapsedMilliseconds() {
+function getSessionElapsedMilliseconds() {
   if (state.startedAtMs === 0) {
     return 0;
   }
@@ -298,8 +426,76 @@ function getElapsedMilliseconds() {
   return Math.max(0, endTime - state.startedAtMs);
 }
 
+function getActiveElapsedMilliseconds() {
+  const currentDialogOpenMs = state.claimDialogOpenedAtMs > 0
+    ? Math.max(0, Date.now() - state.claimDialogOpenedAtMs)
+    : 0;
+  return Math.max(0, getSessionElapsedMilliseconds() - state.totalClaimDialogOpenMs - currentDialogOpenMs);
+}
+
+function renderStatisticsTable(settings, reason) {
+  const statistics = getStatisticsText(settings, reason);
+  playBoardEmpty.innerHTML = '';
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'table-responsive play-results-table-wrap';
+
+  const table = document.createElement('table');
+  table.className = 'table table-sm align-middle mb-0 play-results-table';
+
+  const body = document.createElement('tbody');
+  const rows = [
+    ['Elapsed Time', statistics.elapsedTimeText],
+    ['Total Hands Played', String(state.completedHandsCount)],
+    ['Average Seconds Per Hand', statistics.averageSecondsPerHand]
+  ];
+
+  const resultRow = document.createElement('tr');
+  const resultCell = document.createElement('td');
+  resultCell.colSpan = 2;
+  resultCell.textContent = statistics.reasonText;
+  resultCell.className = 'play-results-table-result';
+  resultRow.appendChild(resultCell);
+  body.appendChild(resultRow);
+
+  for (const [label, value] of rows) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.textContent = value;
+    const heading = document.createElement('th');
+    heading.scope = 'row';
+    heading.textContent = label;
+    row.append(cell, heading);
+    body.appendChild(row);
+  }
+
+  if (statistics.playerScores.length > 0) {
+    const scoresHeadingRow = document.createElement('tr');
+    const scoresHeading = document.createElement('th');
+    scoresHeading.colSpan = 2;
+    scoresHeading.textContent = 'Player Scores';
+    scoresHeadingRow.appendChild(scoresHeading);
+    body.appendChild(scoresHeadingRow);
+
+    for (const player of statistics.playerScores) {
+      const row = document.createElement('tr');
+      const score = document.createElement('td');
+      score.textContent = String(player.score);
+      const name = document.createElement('th');
+      name.scope = 'row';
+      name.textContent = player.name;
+      row.append(score, name);
+      body.appendChild(row);
+    }
+  }
+
+  table.appendChild(body);
+  wrapper.appendChild(table);
+  playBoardEmpty.appendChild(wrapper);
+}
+
 function getMinuteHandStatus(settings, cardsToShow) {
-  const remainingMilliseconds = Math.max(0, settings.lengthOfPlay * 60_000 - getElapsedMilliseconds());
+  const remainingMilliseconds = Math.max(0, settings.lengthOfPlay * 60_000 - getActiveElapsedMilliseconds());
   const remainingSeconds = (remainingMilliseconds / 1000).toFixed(1);
   return `Hand ${state.activeHandNumber}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}. ${remainingSeconds}s remaining.`;
 }
@@ -323,6 +519,63 @@ function startMinuteLimitTimer(settings, players) {
   }, 100);
 }
 
+function startCountdown(settings) {
+  stopCountdown();
+
+  if (settings.countdownSeconds <= 0 || hasReachedPlayLimit(settings)) {
+    countdownStatus.textContent = settings.countdownSeconds > 0
+      ? 'Final hand. Countdown complete.'
+      : 'No countdown. Advance manually.';
+    return;
+  }
+
+  state.countdownRemainingMs = state.countdownRemainingMs > 0
+    ? state.countdownRemainingMs
+    : settings.countdownSeconds * 1000;
+  state.countdownEndsAtMs = Date.now() + state.countdownRemainingMs;
+  countdownStatus.textContent = `Auto-advancing in ${(state.countdownRemainingMs / 1000).toFixed(1)}s.`;
+  countdownTimerId = window.setInterval(() => {
+    const remainingMs = Math.max(0, state.countdownEndsAtMs - Date.now());
+    state.countdownRemainingMs = remainingMs;
+    if (remainingMs <= 0) {
+      stopCountdown();
+      const players = getPlayerNames();
+      if (hasReachedPlayLimit(settings)) {
+        renderCompletion(settings, players, settings.lengthOfPlayUnits === 'minutes' ? 'minutes' : 'hands');
+        return;
+      }
+      countdownStatus.textContent = 'Advancing...';
+      void renderHand();
+      return;
+    }
+
+    countdownStatus.textContent = `Auto-advancing in ${(remainingMs / 1000).toFixed(1)}s.`;
+  }, 100);
+}
+
+function getClaimEventMessage(event) {
+  if (event instanceof KeyboardEvent) {
+    const keyLabel = event.key === ' ' ? 'Space' : event.key;
+    return `The ${keyLabel} key was pressed!`;
+  }
+
+  if (event instanceof PointerEvent) {
+    if (event.pointerType === 'mouse') {
+      return 'Mouse click detected!';
+    }
+
+    if (event.pointerType === 'touch') {
+      return 'Screen was touched!';
+    }
+
+    if (event.pointerType === 'pen') {
+      return 'Pen touch detected!';
+    }
+  }
+
+  return 'Input detected!';
+}
+
 async function renderHand() {
   const players = getPlayerNames();
   const settings = getHandSettings();
@@ -334,6 +587,7 @@ async function renderHand() {
   }
   commitPendingHand();
   updateHeader(players, settings);
+  resultsButton.hidden = !isUnlimitedGame(settings);
   setNextHandButtonLabel('Next hand');
   nextHandButton.disabled = false;
 
@@ -343,6 +597,7 @@ async function renderHand() {
   }
 
   state.activeHandNumber = state.completedHandsCount + 1;
+  state.countdownRemainingMs = 0;
   playCardGrid.innerHTML = '';
   playBoardEmpty.hidden = true;
 
@@ -367,12 +622,8 @@ async function renderHand() {
   const cardIndices = state.hatState.displayedCardIndices;
   state.currentCardsShownCount = cardIndices.length;
   const pattern = getPatternSources();
-  const currentPlayer = players.length > 0 ? players[(state.activeHandNumber - 1) % players.length] : '';
-
   handStatus.textContent = getCurrentHandStatus(settings, cardsToShow, state.hatState);
-  playerStatus.textContent = currentPlayer
-    ? `Players: ${players.join(', ')} | Current: ${currentPlayer}`
-    : 'No player names configured.';
+  renderPlayerClaimPrompt();
 
   for (let i = 0; i < cardIndices.length; i += 1) {
     const cardIndex = cardIndices[i];
@@ -416,37 +667,13 @@ async function renderHand() {
 
   state.pendingHandCount = true;
 
-  stopCountdown();
   if (drawResult.refillLimitHit) {
     commitPendingHand();
     renderCompletion(settings, players, 'decks');
     return;
   }
 
-  if (settings.countdownSeconds > 0 && !hasReachedPlayLimit(settings)) {
-    const countdownStartedAt = Date.now();
-    countdownStatus.textContent = `Auto-advancing in ${settings.countdownSeconds.toFixed(1)}s.`;
-    countdownTimerId = window.setInterval(() => {
-      const elapsedSeconds = (Date.now() - countdownStartedAt) / 1000;
-      const remaining = Math.max(0, settings.countdownSeconds - elapsedSeconds);
-      if (remaining <= 0) {
-        stopCountdown();
-        if (hasReachedPlayLimit(settings)) {
-          renderCompletion(settings, players, settings.lengthOfPlayUnits === 'minutes' ? 'minutes' : 'hands');
-          return;
-        }
-        countdownStatus.textContent = 'Advancing...';
-        void renderHand();
-        return;
-      }
-
-      countdownStatus.textContent = `Auto-advancing in ${remaining.toFixed(1)}s.`;
-    }, 100);
-  } else if (settings.countdownSeconds > 0) {
-    countdownStatus.textContent = 'Final hand. Countdown complete.';
-  } else {
-    countdownStatus.textContent = 'No countdown. Advance manually.';
-  }
+  startCountdown(settings);
 }
 
 function showEmptyState(message) {
@@ -456,8 +683,27 @@ function showEmptyState(message) {
   handStatus.textContent = '';
   countdownStatus.textContent = '';
   playerStatus.textContent = '';
+  resultsButton.hidden = true;
   nextHandButton.disabled = true;
 }
+
+resultsButton.addEventListener('click', () => {
+  const settings = getHandSettings();
+  const players = getPlayerNames();
+  if (isUnlimitedGame(settings)) {
+    commitPendingHand();
+  }
+  renderCompletion(settings, players);
+});
+
+claimDialogResultsButton.addEventListener('click', () => {
+  const settings = getHandSettings();
+  const players = getPlayerNames();
+  if (isUnlimitedGame(settings)) {
+    commitPendingHand();
+  }
+  renderCompletion(settings, players);
+});
 
 nextHandButton.addEventListener('click', () => {
   const settings = getHandSettings();
@@ -475,6 +721,7 @@ nextHandButton.addEventListener('click', () => {
 restartButton.addEventListener('click', () => {
   stopCountdown();
   stopMinuteLimitTimer();
+  closeClaimDialog({ resumeCountdown: false });
   state.completedHandsCount = 0;
   state.activeHandNumber = 0;
   state.startedAtMs = 0;
@@ -483,10 +730,85 @@ restartButton.addEventListener('click', () => {
   state.sessionEnded = false;
   state.currentCardsShownCount = 0;
   state.pendingHandCount = false;
+  state.countdownRemainingMs = 0;
+  state.claimDialogOpenedAtMs = 0;
+  state.totalClaimDialogOpenMs = 0;
+  resetPlayerScores();
   playBoardEmpty.hidden = true;
+  resultsButton.hidden = true;
   setNextHandButtonLabel('Next hand');
   nextHandButton.disabled = false;
   void renderHand();
+});
+
+claimPlayerList.addEventListener('click', (event) => {
+  const button = event.target instanceof HTMLElement ? event.target.closest('button[data-player-index]') : null;
+  if (!button) {
+    return;
+  }
+
+  const playerIndex = Number.parseInt(button.dataset.playerIndex ?? '', 10);
+  const scoreDelta = Number.parseInt(button.dataset.scoreDelta ?? '', 10);
+  const player = state.playerScores[playerIndex];
+  if (!player || Number.isNaN(scoreDelta)) {
+    return;
+  }
+
+  player.score += scoreDelta;
+  renderClaimPlayerList();
+});
+
+claimDialogCancelButton.addEventListener('click', () => {
+  closeClaimDialog();
+});
+
+claimDialogNextHandButton.addEventListener('click', () => {
+  closeClaimDialog({ resumeCountdown: false });
+  void renderHand();
+});
+
+claimDialogHeader.addEventListener('pointerdown', (event) => {
+  state.claimDragging = true;
+  const dialogRect = claimDialog.getBoundingClientRect();
+  state.claimDragOffsetX = event.clientX - dialogRect.left;
+  state.claimDragOffsetY = event.clientY - dialogRect.top;
+  claimDialogHeader.setPointerCapture(event.pointerId);
+});
+
+claimDialogHeader.addEventListener('pointermove', (event) => {
+  if (!state.claimDragging) {
+    return;
+  }
+
+  claimDialog.style.left = `${Math.max(8, event.clientX - state.claimDragOffsetX)}px`;
+  claimDialog.style.top = `${Math.max(56, event.clientY - state.claimDragOffsetY)}px`;
+  claimDialog.style.transform = 'none';
+});
+
+claimDialogHeader.addEventListener('pointerup', (event) => {
+  state.claimDragging = false;
+  claimDialogHeader.releasePointerCapture(event.pointerId);
+});
+
+document.addEventListener('pointerdown', (event) => {
+  if (state.sessionEnded || state.claimDialogOpen) {
+    return;
+  }
+
+  const target = event.target instanceof HTMLElement ? event.target : null;
+  if (!target || target.closest('button, a, input, select, textarea, summary, #claim-dialog')) {
+    return;
+  }
+
+  openClaimDialog(getClaimEventMessage(event));
+}, true);
+
+document.addEventListener('keydown', (event) => {
+  if (state.sessionEnded || state.claimDialogOpen) {
+    return;
+  }
+
+  openClaimDialog(getClaimEventMessage(event));
 });
 
 window.addEventListener('beforeunload', () => {
@@ -495,6 +817,7 @@ window.addEventListener('beforeunload', () => {
   clearObjectUrls();
 });
 
+resetPlayerScores();
 if (tempDeck.selectedImageRefs.length === 0) {
   showEmptyState('This deck has no selected images yet. Add images before using Play.');
 } else {

@@ -12,7 +12,7 @@ test('given empty temp deck, play options are initialized with defaults', () => 
     countdownSeconds: '',
     lengthOfPlay: '',
     lengthOfPlayUnits: 'hands',
-    playerNames: ''
+    playerNames: 'one, two'
   });
 });
 
@@ -78,6 +78,6 @@ test('given legacy temp deck without play options, normalizeTempDeck adds defaul
     countdownSeconds: '',
     lengthOfPlay: '',
     lengthOfPlayUnits: 'hands',
-    playerNames: ''
+    playerNames: 'one, two'
   });
 });
