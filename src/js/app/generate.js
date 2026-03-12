@@ -131,10 +131,7 @@ playButton.addEventListener('click', () => {
       return;
     }
 
-    const opened = window.open('./playing.html', '_blank', 'noopener');
-    if (!opened) {
-      playOptionsMessage.textContent = 'The play window was blocked by the browser.';
-    }
+    window.location.assign('./playing.html');
   })();
 });
 
