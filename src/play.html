@@ -42,36 +42,36 @@
       <section class="card shadow-sm">
         <div class="card-body">
           <p>You can 'play' your deck right here in the browser. Review the options and click the button!</p>
-          <form id="play-options-form" class="row g-3" novalidate>
-            <div class="col-md-3">
-              <label for="cards-to-show-min" class="form-label">Number of cards to show at once (minimum)</label>
-              <input id="cards-to-show-min" name="cardsToShowMin" type="number" class="form-control" min="1" inputmode="numeric" />
+          <form id="play-options-form" class="play-options-form" novalidate>
+            <div class="play-options-row">
+              <label for="cards-to-show-min" class="form-label mb-0">Number of cards to show at once (minimum)</label>
+              <input id="cards-to-show-min" name="cardsToShowMin" type="number" class="form-control play-options-number-input" min="1" inputmode="numeric" />
             </div>
-            <div class="col-md-3">
-              <label for="cards-to-show-max" class="form-label">Number of cards to show at once (maximum)</label>
-              <input id="cards-to-show-max" name="cardsToShowMax" type="number" class="form-control" min="1" inputmode="numeric" />
+            <div class="play-options-row">
+              <label for="cards-to-show-max" class="form-label mb-0">Number of cards to show at once (maximum)</label>
+              <input id="cards-to-show-max" name="cardsToShowMax" type="number" class="form-control play-options-number-input" min="1" inputmode="numeric" />
             </div>
-            <div class="col-md-3">
-              <label for="countdown-seconds" class="form-label">Countdown in seconds (blank for none)</label>
-              <input id="countdown-seconds" name="countdownSeconds" type="number" class="form-control" min="1" inputmode="numeric" />
+            <div class="play-options-row">
+              <label for="countdown-seconds" class="form-label mb-0">Countdown in seconds (blank for none)</label>
+              <input id="countdown-seconds" name="countdownSeconds" type="number" class="form-control play-options-number-input" min="1" inputmode="numeric" />
             </div>
-            <div class="col-md-3">
-              <label for="length-of-play" class="form-label">Length of play (blank for no limit)</label>
-              <input id="length-of-play" name="lengthOfPlay" type="number" class="form-control" min="1" inputmode="numeric" />
+            <div class="play-options-row play-options-row--split">
+              <label for="length-of-play" class="form-label mb-0">Length of Play (blank for no limit)</label>
+              <div class="play-options-split-controls">
+                <input id="length-of-play" name="lengthOfPlay" type="number" class="form-control play-options-number-input" min="1" inputmode="numeric" />
+                <label for="length-of-play-units" class="form-label mb-0">Units</label>
+                <select id="length-of-play-units" name="lengthOfPlayUnits" class="form-select play-options-units-select">
+                  <option value="hands">hands</option>
+                  <option value="decks">decks</option>
+                  <option value="minutes">minutes</option>
+                </select>
+              </div>
             </div>
-            <div class="col-md-3">
-              <label for="length-of-play-units" class="form-label">Units</label>
-              <select id="length-of-play-units" name="lengthOfPlayUnits" class="form-select">
-                <option value="hands">hands</option>
-                <option value="decks">decks</option>
-                <option value="minutes">minutes</option>
-              </select>
-            </div>
-            <div class="col-12">
-              <label for="player-names" class="form-label">Player Names (comma separated)</label>
+            <div class="play-options-row play-options-row--text">
+              <label for="player-names" class="form-label mb-0">Player Names (comma separated)</label>
               <input id="player-names" name="playerNames" type="text" class="form-control" />
             </div>
-            <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
+            <div class="d-flex flex-wrap gap-2 align-items-center pt-2">
               <button id="play-button" type="button" class="btn btn-primary">Play!</button>
               <p id="play-options-message" class="mb-0 text-muted" aria-live="polite"></p>
             </div>
