@@ -8,6 +8,7 @@ const deckStatusLine = document.querySelector('#deck-status-line');
 const playOptionsForm = document.querySelector('#play-options-form');
 const playButton = document.querySelector('#play-button');
 const playOptionsMessage = document.querySelector('#play-options-message');
+const readyMessageHtml = 'Play options are ready and we\'ll help you keep score. You\'ll have to invent your own rules or (better yet!) support the fine folks who invented <a href="https://www.spotitgame.com/" target="_blank" rel="noopener noreferrer">Spot It!</a>';
 
 let tempDeck = await loadTempDeckOrDefault();
 
@@ -104,6 +105,15 @@ function getFieldValue(name) {
   return field && 'value' in field ? field.value.trim() : '';
 }
 
+function renderPlayOptionsMessage(message, { allowHtml = false } = {}) {
+  if (allowHtml) {
+    playOptionsMessage.innerHTML = message;
+    return;
+  }
+
+  playOptionsMessage.textContent = message;
+}
+
 async function persistPlayOptions() {
   const playOptions = getPlayOptionsFromForm();
   const didChange = JSON.stringify(playOptions) !== JSON.stringify(tempDeck.playOptions);
@@ -115,7 +125,7 @@ async function persistPlayOptions() {
   }
 
   const validationMessage = getPlayOptionsValidationMessage(playOptions);
-  playOptionsMessage.textContent = validationMessage || 'Play options saved in browser storage.';
+  renderPlayOptionsMessage(validationMessage || 'Play options saved in browser storage.');
   playButton.disabled = Boolean(validationMessage);
   return { playOptions, validationMessage };
 }
@@ -138,5 +148,5 @@ playButton.addEventListener('click', () => {
 renderPlayOptions();
 updateHeader();
 const initialValidationMessage = getPlayOptionsValidationMessage(tempDeck.playOptions);
-playOptionsMessage.textContent = initialValidationMessage || 'Play options are ready.';
+renderPlayOptionsMessage(initialValidationMessage || readyMessageHtml, { allowHtml: !initialValidationMessage });
 playButton.disabled = Boolean(initialValidationMessage);
