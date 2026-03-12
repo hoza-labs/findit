@@ -10,31 +10,30 @@
   <body class="has-top-bar">
     <nav class="top-next-bar navbar navbar-expand navbar-dark bg-primary fixed-top">
       <div class="container-fluid">
-        <ul class="navbar-nav">
-          <li class="nav-item">
-            <a href="./index.html" class="nav-link fw-semibold">Home</a>
-          </li>
-        </ul>
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item">
-            <a href="./preview.html" class="nav-link fw-semibold">Next</a>
-          </li>
-        </ul>
+        <div class="top-next-bar-slot">
+          <a href="./index.html" class="nav-link fw-semibold">Home</a>
+        </div>
+        <details class="top-nav-menu">
+          <summary>Web Images</summary>
+          <ul class="top-nav-menu-list">
+            <li><a href="./index.html" class="top-nav-menu-link">Home</a></li>
+            <li><a href="./basic-info.html" class="top-nav-menu-link">Basic Info</a></li>
+            <li><a href="./standard-images.html" class="top-nav-menu-link">Standard Images</a></li>
+            <li><a href="./user-images.html" class="top-nav-menu-link">User Images</a></li>
+            <li><a href="./web-images.html" class="top-nav-menu-link" aria-current="page">Web Images</a></li>
+            <li><a href="./preview.html" class="top-nav-menu-link">Preview</a></li>
+            <li><a href="./play.html" class="top-nav-menu-link">Play!</a></li>
+            <li><a href="./save.html" class="top-nav-menu-link">Save</a></li>
+          </ul>
+        </details>
+        <div class="top-next-bar-slot top-next-bar-slot--end">
+          <a href="./preview.html" class="nav-link fw-semibold">Next</a>
+        </div>
       </div>
     </nav>
 
     <header class="container py-4">
       <h1 class="display-6 mb-2">Web Images</h1>
-      <nav class="d-flex flex-wrap gap-3">
-        <a href="./index.html" class="link-body-emphasis fw-semibold">Home</a>
-        <a href="./basic-info.html" class="link-body-emphasis fw-semibold">Basic Info</a>
-        <a href="./standard-images.html" class="link-body-emphasis fw-semibold">Standard Images</a>
-        <a href="./user-images.html" class="link-body-emphasis fw-semibold">User Images</a>
-        <a href="./web-images.html" class="link-body-emphasis fw-semibold">Web Images</a>
-        <a href="./preview.html" class="link-body-emphasis fw-semibold">Preview</a>
-        <a href="./play.html" class="link-body-emphasis fw-semibold">Play!</a>
-        <a href="./save.html" class="link-body-emphasis fw-semibold">Save</a>
-      </nav>
       <p id="deck-status-line" class="text-muted mb-0">Current deck: (new untitled deck) (no changes yet)</p>
     </header>
 
