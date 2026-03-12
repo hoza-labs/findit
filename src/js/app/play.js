@@ -690,12 +690,18 @@ function showEmptyState(message) {
 resultsButton.addEventListener('click', () => {
   const settings = getHandSettings();
   const players = getPlayerNames();
+  if (isUnlimitedGame(settings)) {
+    commitPendingHand();
+  }
   renderCompletion(settings, players);
 });
 
 claimDialogResultsButton.addEventListener('click', () => {
   const settings = getHandSettings();
   const players = getPlayerNames();
+  if (isUnlimitedGame(settings)) {
+    commitPendingHand();
+  }
   renderCompletion(settings, players);
 });
 
