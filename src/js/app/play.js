@@ -16,6 +16,7 @@ const countdownStatus = document.querySelector('#countdown-status');
 const playerStatus = document.querySelector('#player-status');
 const playCardGrid = document.querySelector('#play-card-grid');
 const playBoardEmpty = document.querySelector('#play-board-empty');
+const resultsButton = document.querySelector('#results-button');
 const nextHandButton = document.querySelector('#next-hand-button');
 const restartButton = document.querySelector('#restart-button');
 const claimDialog = document.querySelector('#claim-dialog');
@@ -282,6 +283,7 @@ function renderCompletion(settings, players, reason = '') {
   state.sessionEnded = true;
   state.endedAtMs = Date.now();
   setNextHandButtonLabel('Next hand');
+  resultsButton.hidden = true;
   nextHandButton.disabled = true;
   if (state.hatState) {
     state.hatState = {
@@ -369,7 +371,7 @@ function hasReachedPlayLimit(settings) {
   }
 
   if (settings.lengthOfPlayUnits === 'minutes') {
-    return getSessionElapsedMilliseconds() >= settings.lengthOfPlay * 60_000;
+    return getActiveElapsedMilliseconds() >= settings.lengthOfPlay * 60_000;
   }
 
   return settings.lengthOfPlayUnits === 'hands' && state.completedHandsCount >= settings.lengthOfPlay;
@@ -486,7 +488,7 @@ function renderStatisticsTable(settings, reason) {
 }
 
 function getMinuteHandStatus(settings, cardsToShow) {
-  const remainingMilliseconds = Math.max(0, settings.lengthOfPlay * 60_000 - getSessionElapsedMilliseconds());
+  const remainingMilliseconds = Math.max(0, settings.lengthOfPlay * 60_000 - getActiveElapsedMilliseconds());
   const remainingSeconds = (remainingMilliseconds / 1000).toFixed(1);
   return `Hand ${state.activeHandNumber}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}. ${remainingSeconds}s remaining.`;
 }
@@ -578,6 +580,7 @@ async function renderHand() {
   }
   commitPendingHand();
   updateHeader(players, settings);
+  resultsButton.hidden = Boolean(settings.lengthOfPlay);
   setNextHandButtonLabel('Next hand');
   nextHandButton.disabled = false;
 
@@ -673,8 +676,15 @@ function showEmptyState(message) {
   handStatus.textContent = '';
   countdownStatus.textContent = '';
   playerStatus.textContent = '';
+  resultsButton.hidden = true;
   nextHandButton.disabled = true;
 }
+
+resultsButton.addEventListener('click', () => {
+  const settings = getHandSettings();
+  const players = getPlayerNames();
+  renderCompletion(settings, players);
+});
 
 nextHandButton.addEventListener('click', () => {
   const settings = getHandSettings();
@@ -706,6 +716,7 @@ restartButton.addEventListener('click', () => {
   state.totalClaimDialogOpenMs = 0;
   resetPlayerScores();
   playBoardEmpty.hidden = true;
+  resultsButton.hidden = true;
   setNextHandButtonLabel('Next hand');
   nextHandButton.disabled = false;
   void renderHand();
