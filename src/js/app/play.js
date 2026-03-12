@@ -18,10 +18,16 @@ const webImages = await repository.listWebImages();
 
 let objectUrls = [];
 let countdownTimerId = null;
+let minuteLimitTimerId = null;
 const state = {
-  handNumber: 0,
+  completedHandsCount: 0,
+  activeHandNumber: 0,
   startedAtMs: 0,
-  hatState: null
+  endedAtMs: 0,
+  hatState: null,
+  sessionEnded: false,
+  currentCardsShownCount: 0,
+  pendingHandCount: false
 };
 
 function clearObjectUrls() {
@@ -35,6 +41,13 @@ function stopCountdown() {
   if (countdownTimerId !== null) {
     window.clearInterval(countdownTimerId);
     countdownTimerId = null;
+  }
+}
+
+function stopMinuteLimitTimer() {
+  if (minuteLimitTimerId !== null) {
+    window.clearInterval(minuteLimitTimerId);
+    minuteLimitTimerId = null;
   }
 }
 
@@ -95,6 +108,15 @@ function parseOptionalPositiveInteger(value) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
+function parseOptionalPositiveNumber(value) {
+  if (typeof value !== 'string' || !value.trim()) {
+    return null;
+  }
+
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 function getPlayerNames() {
   const rawNames = tempDeck.playOptions?.playerNames ?? '';
   return rawNames
@@ -110,7 +132,7 @@ function getHandSettings() {
   const min = Math.max(1, Math.min(parsedMin ?? 2, cardCount));
   const max = Math.max(min, Math.min(parsedMax ?? min, cardCount));
   const countdownSeconds = parseOptionalPositiveInteger(tempDeck.playOptions?.countdownSeconds) ?? 0;
-  const lengthOfPlay = parseOptionalPositiveInteger(tempDeck.playOptions?.lengthOfPlay);
+  const lengthOfPlay = parseOptionalPositiveNumber(tempDeck.playOptions?.lengthOfPlay);
   const lengthOfPlayUnits = tempDeck.playOptions?.lengthOfPlayUnits ?? 'hands';
 
   return {
@@ -132,11 +154,14 @@ function updateHeader(players, settings) {
   const limitText = describePlayLimit(settings);
   const playersText = players.length > 0 ? `${players.length} player${players.length === 1 ? '' : 's'}` : 'no named players';
   playSubtitle.textContent = `${deckName} | n=${tempDeck.symbolsPerCard} | ${limitText} | ${playersText}`;
-  document.title = `FindIt | Play | ${deckName}`;
+  document.title = `FindIt | Playing ${deckName}`;
 }
 
-function renderCompletion(settings, players) {
+function renderCompletion(settings, players, reason = '') {
   stopCountdown();
+  stopMinuteLimitTimer();
+  state.sessionEnded = true;
+  state.endedAtMs = Date.now();
   nextHandButton.disabled = true;
   if (state.hatState) {
     state.hatState = {
@@ -147,12 +172,21 @@ function renderCompletion(settings, players) {
   playCardGrid.innerHTML = '';
   clearObjectUrls();
   playBoardEmpty.hidden = false;
-  playBoardEmpty.textContent = getStatisticsText(settings);
-  handStatus.textContent = getCompletionText(settings);
+  playBoardEmpty.textContent = getStatisticsText(settings, reason);
+  handStatus.textContent = getCompletionText(settings, reason);
   countdownStatus.textContent = `Elapsed: ${formatElapsedTime()}`;
   playerStatus.textContent = players.length > 0
-    ? `Players: ${players.join(', ')} | Total hands played: ${state.handNumber}`
-    : `Total hands played: ${state.handNumber}`;
+    ? `Players: ${players.join(', ')} | Total hands played: ${state.completedHandsCount}`
+    : `Total hands played: ${state.completedHandsCount}`;
+}
+
+function commitPendingHand() {
+  if (!state.pendingHandCount) {
+    return;
+  }
+
+  state.completedHandsCount += 1;
+  state.pendingHandCount = false;
 }
 
 function describePlayLimit(settings) {
@@ -171,7 +205,15 @@ function describePlayLimit(settings) {
   return `${settings.lengthOfPlay} hand${settings.lengthOfPlay === 1 ? '' : 's'}`;
 }
 
-function getCompletionText(settings) {
+function getCompletionText(settings, reason) {
+  if (reason === 'minutes') {
+    return `Finished ${settings.lengthOfPlay} minute${settings.lengthOfPlay === 1 ? '' : 's'} of play.`;
+  }
+
+  if (reason === 'decks') {
+    return `Finished after ${state.hatState?.refillCount ?? 0} deck refill${(state.hatState?.refillCount ?? 0) === 1 ? '' : 's'}.`;
+  }
+
   if (!settings.lengthOfPlay) {
     return 'Finished.';
   }
@@ -180,16 +222,23 @@ function getCompletionText(settings) {
     return `Finished ${settings.lengthOfPlay} deck${settings.lengthOfPlay === 1 ? '' : 's'} of play.`;
   }
 
-  if (settings.lengthOfPlayUnits === 'minutes') {
-    return `Finished ${settings.lengthOfPlay} minute${settings.lengthOfPlay === 1 ? '' : 's'} of play.`;
-  }
-
   return `Finished ${settings.lengthOfPlay} hand${settings.lengthOfPlay === 1 ? '' : 's'}.`;
 }
 
-function getStatisticsText(settings) {
-  const completedDecks = settings.cardCount > 0 ? (state.handNumber / settings.cardCount).toFixed(2) : '0.00';
-  return `Total hands played: ${state.handNumber}. Equivalent deck passes: ${completedDecks}. Elapsed time: ${formatElapsedTime()}.`;
+function getStatisticsText(settings, reason) {
+  const completedDecks = settings.cardCount > 0 ? (state.completedHandsCount / settings.cardCount).toFixed(2) : '0.00';
+  const averageSecondsPerHand = state.completedHandsCount > 0
+    ? ((getElapsedMilliseconds() / 1000) / state.completedHandsCount).toFixed(2)
+    : '0.00';
+  const reasonText = reason === 'minutes'
+    ? 'Time limit reached.'
+    : reason === 'decks'
+      ? 'Deck refill limit reached.'
+      : reason === 'hands'
+        ? 'Hand limit reached.'
+        : 'Play finished.';
+
+  return `${reasonText} Total hands played: ${state.completedHandsCount}. Equivalent deck passes: ${completedDecks}. Elapsed time: ${formatElapsedTime()}. Average seconds per hand: ${averageSecondsPerHand}.`;
 }
 
 function hasReachedPlayLimit(settings) {
@@ -198,42 +247,26 @@ function hasReachedPlayLimit(settings) {
   }
 
   if (settings.lengthOfPlayUnits === 'minutes') {
-    return Date.now() - state.startedAtMs >= settings.lengthOfPlay * 60_000;
+    return getElapsedMilliseconds() >= settings.lengthOfPlay * 60_000;
   }
 
-  const totalHandsAllowed = settings.lengthOfPlayUnits === 'decks'
-    ? settings.lengthOfPlay * settings.cardCount
-    : settings.lengthOfPlay;
-
-  return state.handNumber >= totalHandsAllowed;
+  return settings.lengthOfPlayUnits === 'hands' && state.completedHandsCount >= settings.lengthOfPlay;
 }
 
 function getCurrentHandStatus(settings, cardsToShow) {
   if (!settings.lengthOfPlay) {
-    return `Hand ${state.handNumber}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}.`;
-  }
-
-  if (settings.lengthOfPlayUnits === 'decks') {
-    const totalHandsAllowed = settings.lengthOfPlay * settings.cardCount;
-    return `Hand ${state.handNumber} of ${totalHandsAllowed}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}.`;
+    return `Hand ${state.activeHandNumber}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}.`;
   }
 
   if (settings.lengthOfPlayUnits === 'minutes') {
-    const elapsedSeconds = Math.floor((Date.now() - state.startedAtMs) / 1000);
-    const totalSeconds = settings.lengthOfPlay * 60;
-    const remainingSeconds = Math.max(0, totalSeconds - elapsedSeconds);
-    return `Hand ${state.handNumber}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}. ${remainingSeconds}s remaining.`;
+    return getMinuteHandStatus(settings, cardsToShow);
   }
 
-  return `Hand ${state.handNumber} of ${settings.lengthOfPlay}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}.`;
+  return `Hand ${state.activeHandNumber} of ${settings.lengthOfPlay}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}.`;
 }
 
 function formatElapsedTime() {
-  if (state.startedAtMs === 0) {
-    return '0s';
-  }
-
-  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - state.startedAtMs) / 1000));
+  const elapsedSeconds = Math.max(0, Math.floor(getElapsedMilliseconds() / 1000));
   const minutes = Math.floor(elapsedSeconds / 60);
   const seconds = elapsedSeconds % 60;
 
@@ -244,32 +277,76 @@ function formatElapsedTime() {
   return `${minutes}m ${seconds}s`;
 }
 
+function getElapsedMilliseconds() {
+  if (state.startedAtMs === 0) {
+    return 0;
+  }
+
+  const endTime = state.endedAtMs || Date.now();
+  return Math.max(0, endTime - state.startedAtMs);
+}
+
+function getMinuteHandStatus(settings, cardsToShow) {
+  const remainingMilliseconds = Math.max(0, settings.lengthOfPlay * 60_000 - getElapsedMilliseconds());
+  const remainingSeconds = (remainingMilliseconds / 1000).toFixed(1);
+  return `Hand ${state.activeHandNumber}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}. ${remainingSeconds}s remaining.`;
+}
+
+function startMinuteLimitTimer(settings, players) {
+  if (settings.lengthOfPlayUnits !== 'minutes' || !settings.lengthOfPlay) {
+    return;
+  }
+
+  stopMinuteLimitTimer();
+  minuteLimitTimerId = window.setInterval(() => {
+    if (state.sessionEnded) {
+      stopMinuteLimitTimer();
+      return;
+    }
+
+    handStatus.textContent = getMinuteHandStatus(settings, state.currentCardsShownCount);
+    if (hasReachedPlayLimit(settings)) {
+      renderCompletion(settings, players, 'minutes');
+    }
+  }, 100);
+}
+
 async function renderHand() {
   const players = getPlayerNames();
   const settings = getHandSettings();
+  if (state.sessionEnded) {
+    return;
+  }
   if (state.startedAtMs === 0) {
     state.startedAtMs = Date.now();
   }
+  commitPendingHand();
   updateHeader(players, settings);
   nextHandButton.disabled = false;
 
   if (hasReachedPlayLimit(settings)) {
-    renderCompletion(settings, players);
+    renderCompletion(settings, players, settings.lengthOfPlayUnits === 'minutes' ? 'minutes' : 'hands');
     return;
   }
 
-  state.handNumber += 1;
+  state.activeHandNumber = state.completedHandsCount + 1;
   playCardGrid.innerHTML = '';
   playBoardEmpty.hidden = true;
 
   const cardsToShow = getRandomInteger(settings.minCardsToShow, settings.maxCardsToShow);
+  state.currentCardsShownCount = cardsToShow;
   if (!state.hatState || state.hatState.cardCount !== settings.cardCount) {
     state.hatState = createPlayHatState(settings.cardCount);
   }
-  state.hatState = drawNextHand(state.hatState, cardsToShow);
+  const maxRefills = settings.lengthOfPlayUnits === 'decks' && settings.lengthOfPlay
+    ? settings.lengthOfPlay
+    : Number.POSITIVE_INFINITY;
+  const drawResult = drawNextHand(state.hatState, cardsToShow, { maxRefills });
+  state.hatState = drawResult.state;
   const cardIndices = state.hatState.displayedCardIndices;
+  state.currentCardsShownCount = cardIndices.length;
   const pattern = getPatternSources();
-  const currentPlayer = players.length > 0 ? players[(state.handNumber - 1) % players.length] : '';
+  const currentPlayer = players.length > 0 ? players[(state.activeHandNumber - 1) % players.length] : '';
 
   handStatus.textContent = getCurrentHandStatus(settings, cardsToShow);
   playerStatus.textContent = currentPlayer
@@ -299,9 +376,32 @@ async function renderHand() {
     playCardGrid.appendChild(card);
 
     await drawImagesOnSquareTarget(target, sources);
+    if (state.sessionEnded) {
+      return;
+    }
   }
 
+  startMinuteLimitTimer(settings, players);
+
+  if (hasReachedPlayLimit(settings) && settings.lengthOfPlayUnits === 'minutes') {
+    renderCompletion(settings, players, 'minutes');
+    return;
+  }
+
+  if (cardIndices.length < settings.minCardsToShow) {
+    renderCompletion(settings, players, settings.lengthOfPlayUnits === 'decks' ? 'decks' : 'hands');
+    return;
+  }
+
+  state.pendingHandCount = true;
+
   stopCountdown();
+  if (drawResult.refillLimitHit) {
+    commitPendingHand();
+    renderCompletion(settings, players, 'decks');
+    return;
+  }
+
   if (settings.countdownSeconds > 0 && !hasReachedPlayLimit(settings)) {
     let remaining = settings.countdownSeconds;
     countdownStatus.textContent = `Auto-advancing in ${remaining}s.`;
@@ -310,7 +410,7 @@ async function renderHand() {
       if (remaining <= 0) {
         stopCountdown();
         if (hasReachedPlayLimit(settings)) {
-          renderCompletion(settings, players);
+          renderCompletion(settings, players, settings.lengthOfPlayUnits === 'minutes' ? 'minutes' : 'hands');
           return;
         }
         countdownStatus.textContent = 'Advancing...';
@@ -343,15 +443,23 @@ nextHandButton.addEventListener('click', () => {
 
 restartButton.addEventListener('click', () => {
   stopCountdown();
-  state.handNumber = 0;
+  stopMinuteLimitTimer();
+  state.completedHandsCount = 0;
+  state.activeHandNumber = 0;
   state.startedAtMs = 0;
+  state.endedAtMs = 0;
   state.hatState = null;
+  state.sessionEnded = false;
+  state.currentCardsShownCount = 0;
+  state.pendingHandCount = false;
+  playBoardEmpty.hidden = true;
   nextHandButton.disabled = false;
   void renderHand();
 });
 
 window.addEventListener('beforeunload', () => {
   stopCountdown();
+  stopMinuteLimitTimer();
   clearObjectUrls();
 });
 

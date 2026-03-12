@@ -70,7 +70,7 @@ export function normalizePlayOptions(playOptions) {
     cardsToShowMin: normalizeOptionalPositiveInteger(playOptions.cardsToShowMin),
     cardsToShowMax: normalizeOptionalPositiveInteger(playOptions.cardsToShowMax),
     countdownSeconds: normalizeOptionalPositiveInteger(playOptions.countdownSeconds),
-    lengthOfPlay: normalizeOptionalPositiveInteger(playOptions.lengthOfPlay ?? playOptions.handsToPlay),
+    lengthOfPlay: normalizeOptionalPositiveNumber(playOptions.lengthOfPlay ?? playOptions.handsToPlay),
     lengthOfPlayUnits: normalizeLengthOfPlayUnits(playOptions.lengthOfPlayUnits),
     playerNames: normalizePlayerNames(playOptions.playerNames)
   };
@@ -100,6 +100,36 @@ function normalizeOptionalPositiveInteger(value) {
 
   const parsed = Number.parseInt(trimmed, 10);
   return parsed > 0 ? String(parsed) : '';
+}
+
+function normalizeOptionalPositiveNumber(value) {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return normalizePositiveNumberString(String(value));
+  }
+
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  if (!/^(?:\d+\.?\d*|\.\d+)$/.test(trimmed)) {
+    return '';
+  }
+
+  return normalizePositiveNumberString(trimmed);
+}
+
+function normalizePositiveNumberString(value) {
+  const numericValue = Number.parseFloat(value);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return '';
+  }
+
+  return String(numericValue);
 }
 
 function normalizePlayerNames(value) {

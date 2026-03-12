@@ -44,8 +44,35 @@ function getPlayOptionsFromForm() {
 
 function getPlayOptionsValidationMessage(playOptions) {
   const deckCardCount = getDeckPlayerCardCount(tempDeck.symbolsPerCard);
+  const minRaw = getFieldValue('cardsToShowMin');
+  const maxRaw = getFieldValue('cardsToShowMax');
+  const countdownRaw = getFieldValue('countdownSeconds');
+  const lengthRaw = getFieldValue('lengthOfPlay');
+  const lengthUnits = getFieldValue('lengthOfPlayUnits') || 'hands';
   const min = playOptions.cardsToShowMin ? Number.parseInt(playOptions.cardsToShowMin, 10) : null;
   const max = playOptions.cardsToShowMax ? Number.parseInt(playOptions.cardsToShowMax, 10) : null;
+
+  if (minRaw && !/^\d+$/.test(minRaw)) {
+    return 'Minimum cards to show must be a whole number.';
+  }
+
+  if (maxRaw && !/^\d+$/.test(maxRaw)) {
+    return 'Maximum cards to show must be a whole number.';
+  }
+
+  if (countdownRaw && !/^\d+$/.test(countdownRaw)) {
+    return 'Countdown in seconds must be a whole number.';
+  }
+
+  if (lengthRaw) {
+    if (lengthUnits === 'minutes') {
+      if (!/^(?:\d+\.?\d*|\.\d+)$/.test(lengthRaw)) {
+        return 'Length of play in minutes must be a valid positive number.';
+      }
+    } else if (!/^\d+$/.test(lengthRaw)) {
+      return `Length of play in ${lengthUnits} must be a whole number.`;
+    }
+  }
 
   if (min !== null && min > deckCardCount) {
     return `Minimum cards to show cannot exceed ${deckCardCount}.`;
@@ -59,7 +86,28 @@ function getPlayOptionsValidationMessage(playOptions) {
     return 'Minimum cards to show cannot be greater than maximum cards to show.';
   }
 
+  if (playOptions.cardsToShowMin === '') {
+    return 'Minimum cards to show must be at least 1.';
+  }
+
+  if (playOptions.cardsToShowMax === '') {
+    return 'Maximum cards to show must be at least 1.';
+  }
+
+  if (lengthRaw && playOptions.lengthOfPlay === '') {
+    return 'Length of play must be greater than 0.';
+  }
+
+  if (countdownRaw && playOptions.countdownSeconds === '') {
+    return 'Countdown in seconds must be at least 1.';
+  }
+
   return '';
+}
+
+function getFieldValue(name) {
+  const field = playOptionsForm.elements.namedItem(name);
+  return field && 'value' in field ? field.value.trim() : '';
 }
 
 async function persistPlayOptions() {
@@ -89,7 +137,7 @@ playButton.addEventListener('click', () => {
       return;
     }
 
-    const opened = window.open('./play.html', '_blank', 'noopener');
+    const opened = window.open('./playing.html', '_blank', 'noopener');
     if (!opened) {
       playOptionsMessage.textContent = 'The play window was blocked by the browser.';
     }

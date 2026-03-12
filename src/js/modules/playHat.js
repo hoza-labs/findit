@@ -4,31 +4,48 @@ export function createPlayHatState(cardCount, random = Math.random) {
   return {
     cardCount,
     hatCardIndices: createShuffledCardIndices(cardCount, random),
-    displayedCardIndices: []
+    displayedCardIndices: [],
+    refillCount: 0
   };
 }
 
-export function drawNextHand(previousState, cardsToShow, random = Math.random) {
+export function drawNextHand(previousState, cardsToShow, options = {}, random = Math.random) {
   const state = cloneState(previousState);
   validateCardsToShow(state.cardCount, cardsToShow);
+  const maxRefills = Number.isFinite(options.maxRefills) ? options.maxRefills : Number.POSITIVE_INFINITY;
 
   state.displayedCardIndices = [];
+  let refillLimitHit = false;
 
   while (state.displayedCardIndices.length < cardsToShow) {
     if (state.hatCardIndices.length === 0) {
+      if (state.refillCount >= maxRefills) {
+        refillLimitHit = true;
+        break;
+      }
       state.hatCardIndices = createShuffledCardIndices(state.cardCount, random);
+      state.refillCount += 1;
     }
 
     const cardIndex = popNextEligibleCard(state.hatCardIndices, new Set(state.displayedCardIndices));
     if (cardIndex === null) {
+      if (state.refillCount >= maxRefills) {
+        refillLimitHit = true;
+        break;
+      }
       state.hatCardIndices = createShuffledCardIndices(state.cardCount, random);
+      state.refillCount += 1;
       continue;
     }
 
     state.displayedCardIndices.push(cardIndex);
   }
 
-  return state;
+  return {
+    state,
+    refillLimitHit,
+    completedRequestedDraw: state.displayedCardIndices.length === cardsToShow
+  };
 }
 
 function popNextEligibleCard(hatCardIndices, excludedSet) {
@@ -79,7 +96,8 @@ function cloneState(state) {
   return {
     cardCount: state.cardCount,
     hatCardIndices: Array.isArray(state.hatCardIndices) ? [...state.hatCardIndices] : [],
-    displayedCardIndices: Array.isArray(state.displayedCardIndices) ? [...state.displayedCardIndices] : []
+    displayedCardIndices: Array.isArray(state.displayedCardIndices) ? [...state.displayedCardIndices] : [],
+    refillCount: Number.isInteger(state.refillCount) && state.refillCount >= 0 ? state.refillCount : 0
   };
 }
 

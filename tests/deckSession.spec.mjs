@@ -25,7 +25,7 @@ test('given saved deck with play options, temp deck preserves normalized play op
       cardsToShowMin: ' 2 ',
       cardsToShowMax: 4,
       countdownSeconds: '05',
-      lengthOfPlay: '',
+      lengthOfPlay: '1.5',
       lengthOfPlayUnits: 'minutes',
       playerNames: ' Alice, Bob , , Carol '
     }
@@ -35,7 +35,7 @@ test('given saved deck with play options, temp deck preserves normalized play op
     cardsToShowMin: '2',
     cardsToShowMax: '4',
     countdownSeconds: '5',
-    lengthOfPlay: '',
+    lengthOfPlay: '1.5',
     lengthOfPlayUnits: 'minutes',
     playerNames: 'Alice, Bob, Carol'
   });
