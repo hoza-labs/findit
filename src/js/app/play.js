@@ -1,6 +1,12 @@
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { loadTempDeckOrDefault, repository } from '../modules/deckFlowCommon.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
+import {
+  getCardsToDrawForHand,
+  getCurrentDeckNumber,
+  getDeckLimitedHandStatus,
+  isFinalDeckExhausted
+} from '../modules/playDeckLimit.js';
 import { createPlayHatState, drawNextHand } from '../modules/playHat.js';
 import { parsePositiveNumberInput, parsePositiveWholeNumberInput } from '../modules/playNumberValidation.js';
 
@@ -149,11 +155,16 @@ function updateHeader(players, settings) {
   document.title = `FindIt | Playing ${deckName}`;
 }
 
+function setNextHandButtonLabel(label) {
+  nextHandButton.textContent = label;
+}
+
 function renderCompletion(settings, players, reason = '') {
   stopCountdown();
   stopMinuteLimitTimer();
   state.sessionEnded = true;
   state.endedAtMs = Date.now();
+  setNextHandButtonLabel('Next hand');
   nextHandButton.disabled = true;
   if (state.hatState) {
     state.hatState = {
@@ -245,13 +256,22 @@ function hasReachedPlayLimit(settings) {
   return settings.lengthOfPlayUnits === 'hands' && state.completedHandsCount >= settings.lengthOfPlay;
 }
 
-function getCurrentHandStatus(settings, cardsToShow) {
+function getCurrentHandStatus(settings, cardsToShow, hatState) {
   if (!settings.lengthOfPlay) {
     return `Hand ${state.activeHandNumber}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}.`;
   }
 
   if (settings.lengthOfPlayUnits === 'minutes') {
     return getMinuteHandStatus(settings, cardsToShow);
+  }
+
+  if (settings.lengthOfPlayUnits === 'decks') {
+    return getDeckLimitedHandStatus(
+      state.activeHandNumber,
+      settings.lengthOfPlay,
+      getCurrentDeckNumber(hatState),
+      hatState.hatCardIndices.length
+    );
   }
 
   return `Hand ${state.activeHandNumber} of ${settings.lengthOfPlay}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}.`;
@@ -314,6 +334,7 @@ async function renderHand() {
   }
   commitPendingHand();
   updateHeader(players, settings);
+  setNextHandButtonLabel('Next hand');
   nextHandButton.disabled = false;
 
   if (hasReachedPlayLimit(settings)) {
@@ -325,11 +346,19 @@ async function renderHand() {
   playCardGrid.innerHTML = '';
   playBoardEmpty.hidden = true;
 
-  const cardsToShow = getRandomInteger(settings.minCardsToShow, settings.maxCardsToShow);
-  state.currentCardsShownCount = cardsToShow;
   if (!state.hatState || state.hatState.cardCount !== settings.cardCount) {
     state.hatState = createPlayHatState(settings.cardCount);
   }
+  if (isFinalDeckExhausted(settings, state.hatState)) {
+    handStatus.textContent = getCurrentHandStatus(settings, 0, state.hatState);
+    countdownStatus.textContent = 'Final deck complete. Click Finished to view statistics.';
+    playCardGrid.innerHTML = '';
+    playBoardEmpty.hidden = true;
+    setNextHandButtonLabel('Finished');
+    return;
+  }
+  const cardsToShow = getCardsToDrawForHand(settings, state.hatState, getRandomInteger);
+  state.currentCardsShownCount = cardsToShow;
   const maxRefills = settings.lengthOfPlayUnits === 'decks' && settings.lengthOfPlay
     ? Math.max(0, settings.lengthOfPlay - 1)
     : Number.POSITIVE_INFINITY;
@@ -340,7 +369,7 @@ async function renderHand() {
   const pattern = getPatternSources();
   const currentPlayer = players.length > 0 ? players[(state.activeHandNumber - 1) % players.length] : '';
 
-  handStatus.textContent = getCurrentHandStatus(settings, cardsToShow);
+  handStatus.textContent = getCurrentHandStatus(settings, cardsToShow, state.hatState);
   playerStatus.textContent = currentPlayer
     ? `Players: ${players.join(', ')} | Current: ${currentPlayer}`
     : 'No player names configured.';
@@ -431,6 +460,15 @@ function showEmptyState(message) {
 }
 
 nextHandButton.addEventListener('click', () => {
+  const settings = getHandSettings();
+  const players = getPlayerNames();
+
+  if (!state.sessionEnded && state.hatState && isFinalDeckExhausted(settings, state.hatState)) {
+    commitPendingHand();
+    renderCompletion(settings, players, 'decks');
+    return;
+  }
+
   void renderHand();
 });
 
@@ -446,6 +484,7 @@ restartButton.addEventListener('click', () => {
   state.currentCardsShownCount = 0;
   state.pendingHandCount = false;
   playBoardEmpty.hidden = true;
+  setNextHandButtonLabel('Next hand');
   nextHandButton.disabled = false;
   void renderHand();
 });
