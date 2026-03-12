@@ -125,7 +125,7 @@ async function persistPlayOptions() {
   }
 
   const validationMessage = getPlayOptionsValidationMessage(playOptions);
-  renderPlayOptionsMessage(validationMessage || 'Play options saved in browser storage.');
+  renderPlayOptionsMessage(validationMessage || readyMessageHtml, { allowHtml: !validationMessage });
   playButton.disabled = Boolean(validationMessage);
   return { playOptions, validationMessage };
 }
