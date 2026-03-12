@@ -75,6 +75,19 @@
       </section>
     </main>
 
+    <section id="claim-dialog" class="claim-dialog" hidden aria-live="polite">
+      <div id="claim-dialog-header" class="claim-dialog-header">
+        <h2 class="h5 mb-0">Claim Hand</h2>
+      </div>
+      <div class="claim-dialog-body">
+        <p id="claim-dialog-message" class="mb-3"></p>
+        <div id="claim-player-list" class="claim-player-list"></div>
+        <div class="claim-dialog-actions">
+          <button id="claim-dialog-ok-button" type="button" class="btn btn-primary">OK</button>
+        </div>
+      </div>
+    </section>
+
     <script type="module" src="./js/app/play.js"></script>
   </body>
 </html>

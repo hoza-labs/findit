@@ -614,6 +614,83 @@ body.has-top-bar {
   margin-inline: auto;
 }
 
+.claim-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 2rem));
+  max-height: calc(100vh - 5rem);
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 0.8rem;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
+  z-index: 3000;
+}
+
+.claim-dialog-header {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid #edf0f2;
+  cursor: move;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+}
+
+.claim-dialog-body {
+  padding: 1rem;
+}
+
+.claim-player-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.claim-player-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--card-border);
+  border-radius: 0.6rem;
+  background: #fafbfc;
+}
+
+.claim-player-name {
+  font-weight: 600;
+}
+
+.claim-player-score {
+  min-width: 4rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.claim-player-controls {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.claim-player-button {
+  min-width: 2.5rem;
+}
+
+.claim-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+@media (max-width: 576px) {
+  .claim-player-row {
+    grid-template-columns: 1fr;
+  }
+
+  .claim-player-score {
+    text-align: left;
+  }
+}
+
 .save-deck-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 200px));
