@@ -23,6 +23,7 @@ const claimDialog = document.querySelector('#claim-dialog');
 const claimDialogHeader = document.querySelector('#claim-dialog-header');
 const claimDialogMessage = document.querySelector('#claim-dialog-message');
 const claimPlayerList = document.querySelector('#claim-player-list');
+const claimDialogResultsButton = document.querySelector('#claim-dialog-results-button');
 const claimDialogCancelButton = document.querySelector('#claim-dialog-cancel-button');
 const claimDialogNextHandButton = document.querySelector('#claim-dialog-next-hand-button');
 
@@ -216,6 +217,10 @@ function getHandSettings() {
   };
 }
 
+function isUnlimitedGame(settings) {
+  return !settings.lengthOfPlay;
+}
+
 function getRandomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -263,9 +268,11 @@ function openClaimDialog(message) {
     return;
   }
 
+  const settings = getHandSettings();
   state.claimDialogOpen = true;
   state.claimDialogOpenedAtMs = Date.now();
   claimDialogMessage.textContent = message;
+  claimDialogResultsButton.hidden = !isUnlimitedGame(settings);
   renderClaimPlayerList();
   claimDialog.hidden = false;
   positionClaimDialogAtCenter();
@@ -580,7 +587,7 @@ async function renderHand() {
   }
   commitPendingHand();
   updateHeader(players, settings);
-  resultsButton.hidden = Boolean(settings.lengthOfPlay);
+  resultsButton.hidden = !isUnlimitedGame(settings);
   setNextHandButtonLabel('Next hand');
   nextHandButton.disabled = false;
 
@@ -681,6 +688,12 @@ function showEmptyState(message) {
 }
 
 resultsButton.addEventListener('click', () => {
+  const settings = getHandSettings();
+  const players = getPlayerNames();
+  renderCompletion(settings, players);
+});
+
+claimDialogResultsButton.addEventListener('click', () => {
   const settings = getHandSettings();
   const players = getPlayerNames();
   renderCompletion(settings, players);
