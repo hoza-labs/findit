@@ -48,6 +48,7 @@ function getPlayOptionsValidationMessage(playOptions) {
   const countsRaw = getFieldValue('cardsToShowCounts');
   const countdownRaw = getFieldValue('countdownSeconds');
   const lengthRaw = getFieldValue('lengthOfPlay');
+  const lengthUnits = playOptions.lengthOfPlayUnits;
   const counts = playOptions.cardsToShowCounts
     ? playOptions.cardsToShowCounts.split(',').map((item) => Number.parseInt(item.trim(), 10))
     : [];
@@ -67,8 +68,14 @@ function getPlayOptionsValidationMessage(playOptions) {
     return 'Countdown in seconds must be a valid number.';
   }
 
-  if (lengthRaw && !isValidPositiveNumberInput(lengthRaw)) {
-    return 'Length of play must be a valid number.';
+  if (lengthRaw) {
+    if (lengthUnits === 'minutes' && !isValidPositiveNumberInput(lengthRaw)) {
+      return 'Length of play must be a valid number.';
+    }
+
+    if ((lengthUnits === 'hands' || lengthUnits === 'decks') && !isValidPositiveWholeNumberInput(lengthRaw)) {
+      return `Length of play must be a positive whole number of hands or decks; fractional minutes are allowed.`;
+    }
   }
 
   if (counts.some((count) => !Number.isInteger(count) || count <= 0)) {
