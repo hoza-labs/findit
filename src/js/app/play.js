@@ -26,6 +26,10 @@ const claimPlayerList = document.querySelector('#claim-player-list');
 const claimDialogResultsButton = document.querySelector('#claim-dialog-results-button');
 const claimDialogCancelButton = document.querySelector('#claim-dialog-cancel-button');
 const claimDialogNextHandButton = document.querySelector('#claim-dialog-next-hand-button');
+const confirmationDialog = document.querySelector('#confirmation-dialog');
+const confirmationDialogMessage = document.querySelector('#confirmation-dialog-message');
+const confirmationDialogCancelButton = document.querySelector('#confirmation-dialog-cancel-button');
+const confirmationDialogOkButton = document.querySelector('#confirmation-dialog-ok-button');
 
 const tempDeck = await loadTempDeckOrDefault();
 const userImages = await repository.listUserImages();
@@ -48,6 +52,10 @@ const state = {
   claimDialogOpen: false,
   claimDialogOpenedAtMs: 0,
   totalClaimDialogOpenMs: 0,
+  confirmationDialogOpen: false,
+  confirmationDialogOpenedAtMs: 0,
+  totalConfirmationDialogOpenMs: 0,
+  pendingConfirmedAction: null,
   playerScores: [],
   claimDragOffsetX: 0,
   claimDragOffsetY: 0,
@@ -260,8 +268,29 @@ function pauseCountdownForDialog() {
   countdownStatus.textContent = `Countdown paused at ${(state.countdownRemainingMs / 1000).toFixed(1)}s.`;
 }
 
+function setPlayActionButtonsDisabled(disabled) {
+  restartButton.disabled = disabled;
+  nextHandButton.disabled = disabled;
+  resultsButton.disabled = disabled || resultsButton.hidden;
+}
+
+function openConfirmationDialog(action) {
+  if (state.sessionEnded || state.confirmationDialogOpen) {
+    return;
+  }
+
+  state.confirmationDialogOpen = true;
+  state.confirmationDialogOpenedAtMs = Date.now();
+  state.pendingConfirmedAction = action;
+  confirmationDialogMessage.textContent = action === 'restart'
+    ? 'Restart this game?'
+    : 'Show results and end this game?';
+  confirmationDialog.hidden = false;
+  pauseCountdownForDialog();
+}
+
 function closeClaimDialog(options = {}) {
-  const { resumeCountdown = true } = options;
+  const { resumeCountdown = true, restoreButtons = true } = options;
   if (state.claimDialogOpenedAtMs > 0) {
     state.totalClaimDialogOpenMs += Math.max(0, Date.now() - state.claimDialogOpenedAtMs);
     state.claimDialogOpenedAtMs = 0;
@@ -269,13 +298,38 @@ function closeClaimDialog(options = {}) {
   state.claimDialogOpen = false;
   claimDialog.hidden = true;
 
+  if (restoreButtons && !state.sessionEnded && !state.confirmationDialogOpen) {
+    setPlayActionButtonsDisabled(false);
+  }
+
   if (resumeCountdown && !state.sessionEnded && state.countdownRemainingMs > 0) {
     startCountdown(getHandSettings());
   }
 }
 
+function closeConfirmationDialog(options = {}) {
+  const { resumeTimers = true } = options;
+  if (state.confirmationDialogOpenedAtMs > 0) {
+    state.totalConfirmationDialogOpenMs += Math.max(0, Date.now() - state.confirmationDialogOpenedAtMs);
+    state.confirmationDialogOpenedAtMs = 0;
+  }
+
+  state.confirmationDialogOpen = false;
+  state.pendingConfirmedAction = null;
+  confirmationDialog.hidden = true;
+
+  if (
+    resumeTimers
+    && !state.sessionEnded
+    && !state.claimDialogOpen
+    && state.countdownRemainingMs > 0
+  ) {
+    startCountdown(getHandSettings());
+  }
+}
+
 function openClaimDialog(message) {
-  if (state.sessionEnded || state.claimDialogOpen || state.currentCardsShownCount === 0) {
+  if (state.sessionEnded || state.claimDialogOpen || state.confirmationDialogOpen || state.currentCardsShownCount === 0) {
     return;
   }
 
@@ -286,8 +340,56 @@ function openClaimDialog(message) {
   claimDialogResultsButton.hidden = !isUnlimitedGame(settings);
   renderClaimPlayerList();
   claimDialog.hidden = false;
+  setPlayActionButtonsDisabled(true);
   positionClaimDialogAtCenter();
   pauseCountdownForDialog();
+}
+
+function performRestart() {
+  stopCountdown();
+  stopMinuteLimitTimer();
+  closeConfirmationDialog({ resumeTimers: false });
+  closeClaimDialog({ resumeCountdown: false, restoreButtons: false });
+  state.completedHandsCount = 0;
+  state.activeHandNumber = 0;
+  state.startedAtMs = 0;
+  state.endedAtMs = 0;
+  state.hatState = null;
+  state.sessionEnded = false;
+  state.currentCardsShownCount = 0;
+  state.pendingHandCount = false;
+  state.countdownRemainingMs = 0;
+  state.claimDialogOpenedAtMs = 0;
+  state.totalClaimDialogOpenMs = 0;
+  state.confirmationDialogOpenedAtMs = 0;
+  state.totalConfirmationDialogOpenMs = 0;
+  resetPlayerScores();
+  playBoardEmpty.hidden = true;
+  resultsButton.hidden = true;
+  setNextHandButtonLabel('Next hand');
+  nextHandButton.disabled = false;
+  void renderHand();
+}
+
+function performResults() {
+  const settings = getHandSettings();
+  const players = getPlayerNames();
+  if (isUnlimitedGame(settings)) {
+    commitPendingHand();
+  }
+  closeConfirmationDialog({ resumeTimers: false });
+  renderCompletion(settings, players);
+}
+
+function executeConfirmedAction() {
+  if (state.pendingConfirmedAction === 'restart') {
+    performRestart();
+    return;
+  }
+
+  if (state.pendingConfirmedAction === 'results') {
+    performResults();
+  }
 }
 
 function setNextHandButtonLabel(label) {
@@ -441,7 +543,17 @@ function getActiveElapsedMilliseconds() {
   const currentDialogOpenMs = state.claimDialogOpenedAtMs > 0
     ? Math.max(0, Date.now() - state.claimDialogOpenedAtMs)
     : 0;
-  return Math.max(0, getSessionElapsedMilliseconds() - state.totalClaimDialogOpenMs - currentDialogOpenMs);
+  const currentConfirmationOpenMs = state.confirmationDialogOpenedAtMs > 0
+    ? Math.max(0, Date.now() - state.confirmationDialogOpenedAtMs)
+    : 0;
+  return Math.max(
+    0,
+    getSessionElapsedMilliseconds()
+      - state.totalClaimDialogOpenMs
+      - currentDialogOpenMs
+      - state.totalConfirmationDialogOpenMs
+      - currentConfirmationOpenMs
+  );
 }
 
 function renderStatisticsTable(settings, reason) {
@@ -700,25 +812,16 @@ function showEmptyState(message) {
   countdownStatus.textContent = '';
   playerStatus.textContent = '';
   resultsButton.hidden = true;
+  resultsButton.disabled = true;
   nextHandButton.disabled = true;
 }
 
 resultsButton.addEventListener('click', () => {
-  const settings = getHandSettings();
-  const players = getPlayerNames();
-  if (isUnlimitedGame(settings)) {
-    commitPendingHand();
-  }
-  renderCompletion(settings, players);
+  openConfirmationDialog('results');
 });
 
 claimDialogResultsButton.addEventListener('click', () => {
-  const settings = getHandSettings();
-  const players = getPlayerNames();
-  if (isUnlimitedGame(settings)) {
-    commitPendingHand();
-  }
-  renderCompletion(settings, players);
+  openConfirmationDialog('results');
 });
 
 nextHandButton.addEventListener('click', () => {
@@ -735,26 +838,7 @@ nextHandButton.addEventListener('click', () => {
 });
 
 restartButton.addEventListener('click', () => {
-  stopCountdown();
-  stopMinuteLimitTimer();
-  closeClaimDialog({ resumeCountdown: false });
-  state.completedHandsCount = 0;
-  state.activeHandNumber = 0;
-  state.startedAtMs = 0;
-  state.endedAtMs = 0;
-  state.hatState = null;
-  state.sessionEnded = false;
-  state.currentCardsShownCount = 0;
-  state.pendingHandCount = false;
-  state.countdownRemainingMs = 0;
-  state.claimDialogOpenedAtMs = 0;
-  state.totalClaimDialogOpenMs = 0;
-  resetPlayerScores();
-  playBoardEmpty.hidden = true;
-  resultsButton.hidden = true;
-  setNextHandButtonLabel('Next hand');
-  nextHandButton.disabled = false;
-  void renderHand();
+  openConfirmationDialog('restart');
 });
 
 claimPlayerList.addEventListener('click', (event) => {
@@ -783,6 +867,14 @@ claimDialogNextHandButton.addEventListener('click', () => {
   void renderHand();
 });
 
+confirmationDialogCancelButton.addEventListener('click', () => {
+  closeConfirmationDialog({ resumeTimers: true });
+});
+
+confirmationDialogOkButton.addEventListener('click', () => {
+  executeConfirmedAction();
+});
+
 claimDialogHeader.addEventListener('pointerdown', (event) => {
   state.claimDragging = true;
   const dialogRect = claimDialog.getBoundingClientRect();
@@ -807,7 +899,7 @@ claimDialogHeader.addEventListener('pointerup', (event) => {
 });
 
 document.addEventListener('pointerdown', (event) => {
-  if (state.sessionEnded || state.claimDialogOpen) {
+  if (state.sessionEnded || state.claimDialogOpen || state.confirmationDialogOpen) {
     return;
   }
 
@@ -820,7 +912,7 @@ document.addEventListener('pointerdown', (event) => {
 }, true);
 
 document.addEventListener('keydown', (event) => {
-  if (state.sessionEnded || state.claimDialogOpen) {
+  if (state.sessionEnded || state.claimDialogOpen || state.confirmationDialogOpen) {
     return;
   }
 
