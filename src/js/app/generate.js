@@ -35,8 +35,7 @@ function renderPlayOptions() {
 function getPlayOptionsFromForm() {
   const formData = new FormData(playOptionsForm);
   return normalizePlayOptions({
-    cardsToShowMin: formData.get('cardsToShowMin'),
-    cardsToShowMax: formData.get('cardsToShowMax'),
+    cardsToShowCounts: formData.get('cardsToShowCounts'),
     countdownSeconds: formData.get('countdownSeconds'),
     lengthOfPlay: formData.get('lengthOfPlay'),
     lengthOfPlayUnits: formData.get('lengthOfPlayUnits'),
@@ -46,19 +45,22 @@ function getPlayOptionsFromForm() {
 
 function getPlayOptionsValidationMessage(playOptions) {
   const deckCardCount = getDeckPlayerCardCount(tempDeck.symbolsPerCard);
-  const minRaw = getFieldValue('cardsToShowMin');
-  const maxRaw = getFieldValue('cardsToShowMax');
+  const countsRaw = getFieldValue('cardsToShowCounts');
   const countdownRaw = getFieldValue('countdownSeconds');
   const lengthRaw = getFieldValue('lengthOfPlay');
-  const min = playOptions.cardsToShowMin ? Number.parseInt(playOptions.cardsToShowMin, 10) : null;
-  const max = playOptions.cardsToShowMax ? Number.parseInt(playOptions.cardsToShowMax, 10) : null;
+  const counts = playOptions.cardsToShowCounts
+    ? playOptions.cardsToShowCounts.split(',').map((item) => Number.parseInt(item.trim(), 10))
+    : [];
 
-  if (minRaw && !/^\d+$/.test(minRaw)) {
-    return 'Minimum cards to show must be a whole number.';
+  if (!playOptions.cardsToShowCounts) {
+    return 'Number of cards to display at once must include at least one whole number.';
   }
 
-  if (maxRaw && !/^\d+$/.test(maxRaw)) {
-    return 'Maximum cards to show must be a whole number.';
+  if (countsRaw) {
+    const rawParts = countsRaw.split(',').map((item) => item.trim());
+    if (rawParts.some((item) => item === '' || !/^\d+$/.test(item))) {
+      return 'Number of cards to display at once must be a comma-separated list of whole numbers.';
+    }
   }
 
   if (countdownRaw && !isValidPositiveWholeNumberInput(countdownRaw)) {
@@ -69,24 +71,12 @@ function getPlayOptionsValidationMessage(playOptions) {
     return 'Length of play must be a valid number.';
   }
 
-  if (min !== null && min > deckCardCount) {
-    return `Minimum cards to show cannot exceed ${deckCardCount}.`;
+  if (counts.some((count) => !Number.isInteger(count) || count <= 0)) {
+    return 'Number of cards to display at once must include only whole numbers greater than 0.';
   }
 
-  if (max !== null && max > deckCardCount) {
-    return `Maximum cards to show cannot exceed ${deckCardCount}.`;
-  }
-
-  if (min !== null && max !== null && min > max) {
-    return 'Minimum cards to show cannot be greater than maximum cards to show.';
-  }
-
-  if (playOptions.cardsToShowMin === '') {
-    return 'Minimum cards to show must be at least 1.';
-  }
-
-  if (playOptions.cardsToShowMax === '') {
-    return 'Maximum cards to show must be at least 1.';
+  if (counts.some((count) => count > deckCardCount)) {
+    return `Number of cards to display at once cannot include values above ${deckCardCount}.`;
   }
 
   if (lengthRaw && playOptions.lengthOfPlay === '') {

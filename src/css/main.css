@@ -555,6 +555,31 @@ body.has-top-bar {
   width: 4.5rem;
 }
 
+.play-options-count-list-input {
+  width: min(16rem, 100%);
+}
+
+.play-options-count-list-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.play-options-help-button {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid #adb5bd;
+  border-radius: 999px;
+  background: #fff;
+  color: #495057;
+  font-size: 0.95rem;
+  line-height: 1;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+}
+
 .play-options-split-controls {
   display: flex;
   align-items: center;

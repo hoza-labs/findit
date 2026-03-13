@@ -1,7 +1,6 @@
 const DEFAULT_SYMBOLS_PER_CARD = 4;
 const DEFAULT_PLAY_OPTIONS = Object.freeze({
-  cardsToShowMin: '2',
-  cardsToShowMax: '2',
+  cardsToShowCounts: '2',
   countdownSeconds: '',
   lengthOfPlay: '',
   lengthOfPlayUnits: 'hands',
@@ -67,8 +66,11 @@ export function normalizePlayOptions(playOptions) {
   }
 
   return {
-    cardsToShowMin: normalizeOptionalPositiveInteger(playOptions.cardsToShowMin),
-    cardsToShowMax: normalizeOptionalPositiveInteger(playOptions.cardsToShowMax),
+    cardsToShowCounts: normalizeCardCountList(
+      playOptions.cardsToShowCounts
+      ?? playOptions.cardsToDisplayAtOnce
+      ?? createLegacyCardCountList(playOptions.cardsToShowMin, playOptions.cardsToShowMax)
+    ),
     countdownSeconds: normalizeOptionalPositiveInteger(playOptions.countdownSeconds),
     lengthOfPlay: normalizeOptionalPositiveNumber(playOptions.lengthOfPlay ?? playOptions.handsToPlay),
     lengthOfPlayUnits: normalizeLengthOfPlayUnits(playOptions.lengthOfPlayUnits),
@@ -100,6 +102,47 @@ function normalizeOptionalPositiveInteger(value) {
 
   const parsed = Number.parseInt(trimmed, 10);
   return parsed > 0 ? String(parsed) : '';
+}
+
+function normalizeCardCountList(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => normalizeOptionalPositiveInteger(String(item)))
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  return value
+    .split(',')
+    .map((item) => normalizeOptionalPositiveInteger(item))
+    .filter(Boolean)
+    .join(', ');
+}
+
+function createLegacyCardCountList(minValue, maxValue) {
+  const min = normalizeOptionalPositiveInteger(minValue);
+  const max = normalizeOptionalPositiveInteger(maxValue);
+
+  if (!min && !max) {
+    return '';
+  }
+
+  const minNumber = min ? Number.parseInt(min, 10) : null;
+  const maxNumber = max ? Number.parseInt(max, 10) : null;
+
+  if (minNumber !== null && maxNumber !== null) {
+    if (minNumber > maxNumber) {
+      return '';
+    }
+
+    return Array.from({ length: maxNumber - minNumber + 1 }, (_, index) => String(minNumber + index)).join(', ');
+  }
+
+  return min || max || '';
 }
 
 function normalizeOptionalPositiveNumber(value) {

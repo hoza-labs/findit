@@ -134,6 +134,17 @@ function parseOptionalPositiveInteger(value) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
+function parseCardCountList(value, cardCount) {
+  if (typeof value !== 'string' || !value.trim()) {
+    return [];
+  }
+
+  return value
+    .split(',')
+    .map((item) => parseOptionalPositiveInteger(item))
+    .filter((count) => count !== null && count <= cardCount);
+}
+
 function getPlayerNames() {
   const rawNames = tempDeck.playOptions?.playerNames ?? '';
   return rawNames
@@ -199,18 +210,14 @@ function renderClaimPlayerList() {
 
 function getHandSettings() {
   const cardCount = getDeckPlayerCardCount(tempDeck.symbolsPerCard);
-  const parsedMin = parseOptionalPositiveInteger(tempDeck.playOptions?.cardsToShowMin);
-  const parsedMax = parseOptionalPositiveInteger(tempDeck.playOptions?.cardsToShowMax);
-  const min = Math.max(1, Math.min(parsedMin ?? 2, cardCount));
-  const max = Math.max(min, Math.min(parsedMax ?? min, cardCount));
+  const cardsToShowCounts = parseCardCountList(tempDeck.playOptions?.cardsToShowCounts, cardCount);
   const countdownSeconds = parsePositiveWholeNumberInput(tempDeck.playOptions?.countdownSeconds ?? '') ?? 0;
   const lengthOfPlay = parsePositiveNumberInput(tempDeck.playOptions?.lengthOfPlay ?? '');
   const lengthOfPlayUnits = tempDeck.playOptions?.lengthOfPlayUnits ?? 'hands';
 
   return {
     cardCount,
-    minCardsToShow: min,
-    maxCardsToShow: max,
+    cardsToShowCounts: cardsToShowCounts.length > 0 ? cardsToShowCounts : [Math.min(2, cardCount)],
     countdownSeconds,
     lengthOfPlay,
     lengthOfPlayUnits
@@ -219,6 +226,10 @@ function getHandSettings() {
 
 function isUnlimitedGame(settings) {
   return !settings.lengthOfPlay;
+}
+
+function getMinimumAllowedCardsToShow(settings) {
+  return Math.min(...settings.cardsToShowCounts);
 }
 
 function getRandomInteger(min, max) {
@@ -613,6 +624,10 @@ async function renderHand() {
     return;
   }
   const cardsToShow = getCardsToDrawForHand(settings, state.hatState, getRandomInteger);
+  if (cardsToShow === 0) {
+    renderCompletion(settings, players, 'decks');
+    return;
+  }
   state.currentCardsShownCount = cardsToShow;
   const maxRefills = settings.lengthOfPlayUnits === 'decks' && settings.lengthOfPlay
     ? Math.max(0, settings.lengthOfPlay - 1)
@@ -660,7 +675,8 @@ async function renderHand() {
     return;
   }
 
-  if (cardIndices.length < settings.minCardsToShow) {
+  const minimumCardsToShow = getMinimumAllowedCardsToShow(settings);
+  if (cardIndices.length < minimumCardsToShow) {
     renderCompletion(settings, players, settings.lengthOfPlayUnits === 'decks' ? 'decks' : 'hands');
     return;
   }
