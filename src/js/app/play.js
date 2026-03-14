@@ -218,6 +218,16 @@ function renderClaimPlayerList() {
   }
 }
 
+function cancelClaimHandPoints() {
+  for (let index = 0; index < state.playerScores.length; index += 1) {
+    const player = state.playerScores[index];
+    const handPoints = state.claimHandPoints[index] ?? 0;
+    player.score -= handPoints;
+  }
+
+  state.claimHandPoints = state.playerScores.map(() => 0);
+}
+
 function getHandSettings() {
   const cardCount = getDeckPlayerCardCount(tempDeck.symbolsPerCard);
   const cardsToShowCounts = parseCardCountList(tempDeck.playOptions?.cardsToShowCounts, cardCount);
@@ -877,6 +887,7 @@ claimPlayerList.addEventListener('click', (event) => {
 });
 
 claimDialogCancelButton.addEventListener('click', () => {
+  cancelClaimHandPoints();
   closeClaimDialog();
 });
 
