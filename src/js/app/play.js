@@ -56,6 +56,11 @@ const state = {
   confirmationDialogOpenedAtMs: 0,
   totalConfirmationDialogOpenMs: 0,
   pendingConfirmedAction: null,
+  navigationConfirmationEnabled: false,
+  navigationPromptOpenedAtMs: 0,
+  totalNavigationPromptOpenMs: 0,
+  navigationPromptOverlapsDialog: false,
+  totalNavigationPromptOverlapMs: 0,
   playerScores: [],
   claimHandPoints: [],
   claimDragOffsetX: 0,
@@ -286,6 +291,56 @@ function setPlayActionButtonsDisabled(disabled) {
   resultsButton.disabled = disabled || resultsButton.hidden;
 }
 
+function setNavigationConfirmationEnabled(enabled) {
+  state.navigationConfirmationEnabled = enabled;
+}
+
+function pauseForNavigationPrompt() {
+  if (state.sessionEnded || state.navigationPromptOpenedAtMs > 0) {
+    return;
+  }
+
+  state.navigationPromptOpenedAtMs = Date.now();
+  state.navigationPromptOverlapsDialog = state.claimDialogOpen || state.confirmationDialogOpen;
+  pauseCountdownForDialog();
+  stopMinuteLimitTimer();
+}
+
+function resumeAfterNavigationPrompt() {
+  if (state.navigationPromptOpenedAtMs === 0) {
+    return;
+  }
+
+  const promptOpenMs = Math.max(0, Date.now() - state.navigationPromptOpenedAtMs);
+  state.totalNavigationPromptOpenMs += promptOpenMs;
+  if (state.navigationPromptOverlapsDialog) {
+    state.totalNavigationPromptOverlapMs += promptOpenMs;
+  }
+  state.navigationPromptOpenedAtMs = 0;
+  state.navigationPromptOverlapsDialog = false;
+
+  if (state.sessionEnded) {
+    return;
+  }
+
+  const settings = getHandSettings();
+  const players = getPlayerNames();
+
+  if (settings.lengthOfPlayUnits === 'minutes' && settings.lengthOfPlay && state.currentCardsShownCount > 0) {
+    handStatus.textContent = getMinuteHandStatus(settings, state.currentCardsShownCount);
+    startMinuteLimitTimer(settings, players);
+  }
+
+  if (
+    state.countdownRemainingMs > 0
+    && !state.claimDialogOpen
+    && !state.confirmationDialogOpen
+    && state.currentCardsShownCount > 0
+  ) {
+    startCountdown(settings);
+  }
+}
+
 function openConfirmationDialog(action) {
   if (state.confirmationDialogOpen) {
     return;
@@ -352,6 +407,7 @@ function openClaimDialog(message) {
   }
 
   const settings = getHandSettings();
+  setNavigationConfirmationEnabled(true);
   state.claimDialogOpen = true;
   state.claimDialogOpenedAtMs = Date.now();
   state.claimHandPoints = state.playerScores.map(() => 0);
@@ -377,6 +433,11 @@ function performRestart() {
   state.sessionEnded = false;
   state.currentCardsShownCount = 0;
   state.pendingHandCount = false;
+  state.navigationConfirmationEnabled = false;
+  state.navigationPromptOpenedAtMs = 0;
+  state.totalNavigationPromptOpenMs = 0;
+  state.navigationPromptOverlapsDialog = false;
+  state.totalNavigationPromptOverlapMs = 0;
   state.countdownRemainingMs = 0;
   state.claimDialogOpenedAtMs = 0;
   state.totalClaimDialogOpenMs = 0;
@@ -425,6 +486,9 @@ function renderCompletion(settings, players, reason = '') {
   stopMinuteLimitTimer();
   closeClaimDialog({ resumeCountdown: false });
   state.sessionEnded = true;
+  setNavigationConfirmationEnabled(false);
+  state.navigationPromptOpenedAtMs = 0;
+  state.navigationPromptOverlapsDialog = false;
   state.endedAtMs = Date.now();
   setNextHandButtonLabel('Next hand');
   setRestartButtonLabel('New game');
@@ -572,6 +636,12 @@ function getActiveElapsedMilliseconds() {
   const currentConfirmationOpenMs = state.confirmationDialogOpenedAtMs > 0
     ? Math.max(0, Date.now() - state.confirmationDialogOpenedAtMs)
     : 0;
+  const currentNavigationPromptOpenMs = state.navigationPromptOpenedAtMs > 0
+    ? Math.max(0, Date.now() - state.navigationPromptOpenedAtMs)
+    : 0;
+  const currentNavigationPromptOverlapMs = state.navigationPromptOpenedAtMs > 0 && state.navigationPromptOverlapsDialog
+    ? currentNavigationPromptOpenMs
+    : 0;
   return Math.max(
     0,
     getSessionElapsedMilliseconds()
@@ -579,6 +649,10 @@ function getActiveElapsedMilliseconds() {
       - currentDialogOpenMs
       - state.totalConfirmationDialogOpenMs
       - currentConfirmationOpenMs
+      - state.totalNavigationPromptOpenMs
+      + state.totalNavigationPromptOverlapMs
+      - currentNavigationPromptOpenMs
+      + currentNavigationPromptOverlapMs
   );
 }
 
@@ -747,6 +821,9 @@ async function renderHand() {
   }
 
   state.activeHandNumber = state.completedHandsCount + 1;
+  if (state.activeHandNumber >= 2) {
+    setNavigationConfirmationEnabled(true);
+  }
   state.countdownRemainingMs = 0;
   playCardGrid.innerHTML = '';
   playBoardEmpty.hidden = true;
@@ -948,10 +1025,25 @@ document.addEventListener('keydown', (event) => {
   openClaimDialog(getClaimEventMessage(event));
 });
 
-window.addEventListener('beforeunload', () => {
+window.addEventListener('beforeunload', (event) => {
+  if (state.navigationConfirmationEnabled) {
+    pauseForNavigationPrompt();
+    event.preventDefault();
+    event.returnValue = '';
+    return '';
+  }
+
   stopCountdown();
   stopMinuteLimitTimer();
   clearObjectUrls();
+});
+
+window.addEventListener('focus', () => {
+  resumeAfterNavigationPrompt();
+});
+
+window.addEventListener('pageshow', () => {
+  resumeAfterNavigationPrompt();
 });
 
 resetPlayerScores();
