@@ -21,12 +21,16 @@ body.has-top-bar {
 }
 
 .top-next-bar .container-fluid {
-  justify-content: center;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .top-page-menu-mobile {
   display: none;
   position: relative;
+  justify-self: start;
 }
 
 .top-page-menu-mobile summary {
@@ -69,6 +73,7 @@ body.has-top-bar {
   white-space: nowrap;
   scrollbar-width: thin;
   padding-bottom: 0.1rem;
+  justify-self: center;
 }
 
 .top-page-links .nav-link {
@@ -96,7 +101,7 @@ body.has-top-bar {
 
 .top-page-menu-list {
   position: absolute;
-  right: 0;
+  left: 0;
   top: calc(100% + 0.35rem);
   min-width: 16rem;
   margin: 0;
@@ -132,13 +137,18 @@ body.has-top-bar {
   content: '› ';
 }
 
+.top-nav-next-link {
+  justify-self: end;
+  white-space: nowrap;
+}
+
 @media (max-width: 900px) {
   body.has-top-bar {
     padding-top: 3.75rem;
   }
 
   .top-next-bar .container-fluid {
-    justify-content: flex-end;
+    grid-template-columns: auto 1fr auto;
   }
 
   .top-page-links {
