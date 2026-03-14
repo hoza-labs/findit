@@ -80,6 +80,9 @@ export function createIndexedDbRepository() {
     async saveDeck(deck) {
       await putRecord(await dbPromise, STORE_DECKS, deck);
     },
+    async deleteDeck(name) {
+      await deleteRecord(await dbPromise, STORE_DECKS, name);
+    },
     async getTempDeck() {
       return getRecord(await dbPromise, STORE_TEMP, TEMP_KEY);
     },

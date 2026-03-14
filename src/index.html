@@ -75,6 +75,18 @@
       </form>
     </dialog>
 
+    <dialog id="delete-deck-dialog" class="save-as-dialog">
+      <form method="dialog" class="p-3">
+        <h2 class="h5 mb-2">Delete deck</h2>
+        <p id="delete-deck-message" class="mb-3"></p>
+        <p class="mb-3 text-muted">Note: Deleting the deck will NOT delete the images used by the deck.</p>
+        <div class="d-flex gap-2 justify-content-end">
+          <button id="delete-deck-cancel" type="button" class="btn btn-outline-secondary">Cancel</button>
+          <button id="delete-deck-confirm" type="button" class="btn btn-danger">Delete</button>
+        </div>
+      </form>
+    </dialog>
+
     <script type="module" src="./js/app/index.js"></script>
   </body>
 </html>

@@ -12,6 +12,10 @@ const saveChangesDialog = document.querySelector('#save-changes-dialog');
 const saveChangesYesButton = document.querySelector('#save-changes-yes');
 const saveChangesNoButton = document.querySelector('#save-changes-no');
 const saveChangesCancelButton = document.querySelector('#save-changes-cancel');
+const deleteDeckDialog = document.querySelector('#delete-deck-dialog');
+const deleteDeckMessage = document.querySelector('#delete-deck-message');
+const deleteDeckCancelButton = document.querySelector('#delete-deck-cancel');
+const deleteDeckConfirmButton = document.querySelector('#delete-deck-confirm');
 
 async function openNewDeck() {
   await repository.saveTempDeck(createEmptyTempDeck());
@@ -26,6 +30,61 @@ async function openExistingDeck(name) {
 
   await repository.saveTempDeck(createTempDeckFromSavedDeck(deck));
   window.location.href = './basic-info.html';
+}
+
+async function promptDeleteDeck(name) {
+  if (typeof deleteDeckDialog.showModal !== 'function') {
+    return window.confirm(`Are you sure you want to delete deck "${name}"? This action cannot be undone.`);
+  }
+
+  deleteDeckMessage.textContent = `Are you sure you want to delete deck "${name}"? This action cannot be undone.`;
+
+  return new Promise((resolve) => {
+    let resolved = false;
+
+    function cleanup() {
+      deleteDeckCancelButton.removeEventListener('click', onCancel);
+      deleteDeckConfirmButton.removeEventListener('click', onConfirm);
+      deleteDeckDialog.removeEventListener('cancel', onDialogCancel);
+      deleteDeckDialog.removeEventListener('close', onDialogClose);
+    }
+
+    function finish(value) {
+      if (resolved) {
+        return;
+      }
+      resolved = true;
+      cleanup();
+      if (deleteDeckDialog.open) {
+        deleteDeckDialog.close();
+      }
+      resolve(value);
+    }
+
+    function onCancel() {
+      finish(false);
+    }
+
+    function onConfirm() {
+      finish(true);
+    }
+
+    function onDialogCancel(event) {
+      event.preventDefault();
+      finish(false);
+    }
+
+    function onDialogClose() {
+      finish(false);
+    }
+
+    deleteDeckCancelButton.addEventListener('click', onCancel);
+    deleteDeckConfirmButton.addEventListener('click', onConfirm);
+    deleteDeckDialog.addEventListener('cancel', onDialogCancel);
+    deleteDeckDialog.addEventListener('close', onDialogClose);
+
+    deleteDeckDialog.showModal();
+  });
 }
 
 async function promptSaveChoice() {
@@ -134,14 +193,12 @@ async function renderExistingDecks() {
     const row = document.createElement('div');
     row.className = 'selected-ref';
 
-    const text = document.createElement('span');
+    const text = document.createElement('a');
+    text.href = '#';
+    text.className = 'link-primary text-decoration-none';
     text.textContent = `${deck.name} (n=${deck.symbolsPerCard}, images=${deck.imageRefs.length})`;
-
-    const button = document.createElement('button');
-    button.className = 'btn btn-sm btn-outline-primary';
-    button.type = 'button';
-    button.textContent = 'Open';
-    button.addEventListener('click', () => {
+    text.addEventListener('click', (event) => {
+      event.preventDefault();
       void (async () => {
         const choice = await maybeSaveBeforeNavigate('open', deck.name);
         if (choice === 'yes' || choice === 'cancel') {
@@ -151,7 +208,40 @@ async function renderExistingDecks() {
       })();
     });
 
-    row.append(text, button);
+    const actionGroup = document.createElement('div');
+    actionGroup.className = 'd-flex gap-2';
+
+    const openButton = document.createElement('button');
+    openButton.className = 'btn btn-sm btn-outline-primary';
+    openButton.type = 'button';
+    openButton.textContent = 'Open';
+    openButton.addEventListener('click', () => {
+      void (async () => {
+        const choice = await maybeSaveBeforeNavigate('open', deck.name);
+        if (choice === 'yes' || choice === 'cancel') {
+          return;
+        }
+        await openExistingDeck(deck.name);
+      })();
+    });
+
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'btn btn-sm btn-outline-danger';
+    deleteButton.type = 'button';
+    deleteButton.textContent = 'Delete';
+    deleteButton.addEventListener('click', () => {
+      void (async () => {
+        const confirmed = await promptDeleteDeck(deck.name);
+        if (!confirmed) {
+          return;
+        }
+        await repository.deleteDeck(deck.name);
+        await renderExistingDecks();
+      })();
+    });
+
+    actionGroup.append(openButton, deleteButton);
+    row.append(text, actionGroup);
     existingDecksElement.appendChild(row);
   }
 }
