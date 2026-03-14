@@ -1107,8 +1107,4 @@ window.addEventListener('pageshow', () => {
 });
 
 resetPlayerScores();
-if (tempDeck.selectedImageRefs.length === 0) {
-  showEmptyState('This deck has no selected images yet. Add images before using Play.');
-} else {
-  await renderHand();
-}
+await renderHand();
