@@ -142,6 +142,13 @@ body.has-top-bar {
   white-space: nowrap;
 }
 
+.top-nav-step-links {
+  justify-self: end;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 @media (max-width: 900px) {
   body.has-top-bar {
     padding-top: 3.75rem;
