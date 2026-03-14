@@ -654,15 +654,21 @@ body.has-top-bar {
   max-width: 100%;
   padding: 1.1rem 1.15rem 0.9rem;
   margin: 0.5rem 0 0 1.25rem;
-  background: #feff9c;
-  border: 1px solid rgba(125, 104, 28, 0.18);
-  border-radius: 0.35rem 0.45rem 0.4rem 0.55rem;
+  background-image: url('../assets/images/postit-note.svg');
+  background-position: top left;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-origin: border-box;
+  background-clip: border-box;
+  border: 0;
+  border-radius: 0;
   box-shadow:
     0.4rem 0.8rem 1.5rem rgba(77, 64, 16, 0.24),
-    0.1rem 0.18rem 0 rgba(255, 255, 255, 0.35) inset,
-    0 -0.12rem 0 rgba(191, 164, 62, 0.18) inset;
+    0.1rem 0.18rem 0 rgba(255, 255, 255, 0.2) inset;
   transform: translateY(calc(-1 * (var(--play-board-empty-padding) + var(--play-board-empty-margin)))) rotate(-4deg);
   transform-origin: top right;
+  position: relative;
+  overflow: visible;
 }
 
 .play-results-table {
