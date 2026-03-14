@@ -38,6 +38,7 @@ const webImages = await repository.listWebImages();
 let objectUrls = [];
 let countdownTimerId = null;
 let minuteLimitTimerId = null;
+let scoreAnimationTimerId = null;
 const state = {
   completedHandsCount: 0,
   activeHandNumber: 0,
@@ -88,6 +89,13 @@ function stopMinuteLimitTimer() {
   if (minuteLimitTimerId !== null) {
     window.clearInterval(minuteLimitTimerId);
     minuteLimitTimerId = null;
+  }
+}
+
+function stopScoreAnimation() {
+  if (scoreAnimationTimerId !== null) {
+    window.clearInterval(scoreAnimationTimerId);
+    scoreAnimationTimerId = null;
   }
 }
 
@@ -423,6 +431,7 @@ function openClaimDialog(message) {
 function performRestart() {
   stopCountdown();
   stopMinuteLimitTimer();
+  stopScoreAnimation();
   closeConfirmationDialog({ resumeTimers: false });
   closeClaimDialog({ resumeCountdown: false, restoreButtons: false });
   state.completedHandsCount = 0;
@@ -484,6 +493,7 @@ function setRestartButtonLabel(label) {
 function renderCompletion(settings, players, reason = '') {
   stopCountdown();
   stopMinuteLimitTimer();
+  stopScoreAnimation();
   closeClaimDialog({ resumeCountdown: false });
   state.sessionEnded = true;
   setNavigationConfirmationEnabled(false);
@@ -659,6 +669,7 @@ function getActiveElapsedMilliseconds() {
 function renderStatisticsTable(settings, reason) {
   const statistics = getStatisticsText(settings, reason);
   playBoardEmpty.innerHTML = '';
+  stopScoreAnimation();
 
   const wrapper = document.createElement('div');
   wrapper.className = 'table-responsive play-results-table-wrap';
@@ -700,21 +711,70 @@ function renderStatisticsTable(settings, reason) {
     scoresHeadingRow.appendChild(scoresHeading);
     body.appendChild(scoresHeadingRow);
 
+    const maximumScore = Math.max(...statistics.playerScores.map((player) => player.score));
+    const animatedPlayers = [];
+
     for (const player of statistics.playerScores) {
       const row = document.createElement('tr');
       const score = document.createElement('td');
-      score.textContent = String(player.score);
+      const startingScore = player.score < 0 ? player.score : 0;
+      score.textContent = String(startingScore);
+      score.className = 'play-results-player-score';
       const name = document.createElement('th');
       name.scope = 'row';
       name.textContent = player.name;
+      name.className = 'play-results-player-name';
+      updateResultsProgressBar(name, maximumScore, startingScore);
       row.append(score, name);
       body.appendChild(row);
+
+      animatedPlayers.push({
+        actualScore: player.score,
+        displayedScore: startingScore,
+        scoreElement: score,
+        nameElement: name
+      });
+    }
+
+    if (animatedPlayers.some((player) => player.displayedScore < player.actualScore)) {
+      scoreAnimationTimerId = window.setInterval(() => {
+        let hasRemainingAnimation = false;
+
+        for (const player of animatedPlayers) {
+          if (player.displayedScore < player.actualScore) {
+            player.displayedScore += 1;
+            player.scoreElement.textContent = String(player.displayedScore);
+            updateResultsProgressBar(player.nameElement, maximumScore, player.displayedScore);
+          }
+
+          if (player.displayedScore < player.actualScore) {
+            hasRemainingAnimation = true;
+          }
+        }
+
+        if (!hasRemainingAnimation) {
+          stopScoreAnimation();
+        }
+      }, 1000 / 3);
     }
   }
 
   table.appendChild(body);
   wrapper.appendChild(table);
   playBoardEmpty.appendChild(wrapper);
+}
+
+function updateResultsProgressBar(element, maximumScore, displayedScore) {
+  if (maximumScore <= 0) {
+    element.style.removeProperty('--play-results-score-fill');
+    element.classList.remove('has-score-bar');
+    return;
+  }
+
+  const clampedScore = Math.max(0, displayedScore);
+  const fillPercent = Math.max(0, Math.min(100, (clampedScore / maximumScore) * 100));
+  element.style.setProperty('--play-results-score-fill', `${fillPercent}`);
+  element.classList.add('has-score-bar');
 }
 
 function getMinuteHandStatus(settings, cardsToShow) {

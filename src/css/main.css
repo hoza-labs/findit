@@ -695,6 +695,21 @@ body.has-top-bar {
   padding-bottom: 0.65rem;
 }
 
+.play-results-player-score {
+  font-variant-numeric: tabular-nums;
+}
+
+.play-results-player-name {
+  position: relative;
+}
+
+.play-results-player-name.has-score-bar {
+  background-image: linear-gradient(90deg, rgba(13, 110, 253, 0.3), rgba(13, 110, 253, 0.3));
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: calc(var(--play-results-score-fill, 0) * 0.8%) 60%;
+}
+
 @media (max-width: 768px) {
   .play-results-table-wrap {
     width: min(26rem, calc(100% - 0.5rem));
