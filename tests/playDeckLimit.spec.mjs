@@ -29,8 +29,7 @@ test('given the final deck, deck-limited hand status shows remaining cards in th
 test('given the final deck, cards to draw never exceeds cards left in the hat', () => {
   const cardsToDraw = getCardsToDrawForHand(
     {
-      minCardsToShow: 2,
-      maxCardsToShow: 4,
+      cardsToShowCounts: [2, 4],
       lengthOfPlay: 3,
       lengthOfPlayUnits: 'decks'
     },
@@ -38,17 +37,16 @@ test('given the final deck, cards to draw never exceeds cards left in the hat', 
       hatCardIndices: [0],
       refillCount: 2
     },
-    () => 4
+    () => 0
   );
 
-  assert.equal(cardsToDraw, 1);
+  assert.equal(cardsToDraw, 0);
 });
 
 test('given a non-final deck, cards to draw still uses the requested random size', () => {
   const cardsToDraw = getCardsToDrawForHand(
     {
-      minCardsToShow: 2,
-      maxCardsToShow: 4,
+      cardsToShowCounts: [2, 4],
       lengthOfPlay: 3,
       lengthOfPlayUnits: 'decks'
     },
@@ -56,10 +54,27 @@ test('given a non-final deck, cards to draw still uses the requested random size
       hatCardIndices: [0],
       refillCount: 1
     },
-    () => 4
+    () => 1
   );
 
   assert.equal(cardsToDraw, 4);
+});
+
+test('given the final deck, cards to draw are chosen from the allowed counts that still fit', () => {
+  const cardsToDraw = getCardsToDrawForHand(
+    {
+      cardsToShowCounts: [2, 3, 4],
+      lengthOfPlay: 3,
+      lengthOfPlayUnits: 'decks'
+    },
+    {
+      hatCardIndices: [0, 1, 2],
+      refillCount: 2
+    },
+    () => 1
+  );
+
+  assert.equal(cardsToDraw, 3);
 });
 
 test('given the final deck with no cards left, isFinalDeckExhausted returns true', () => {

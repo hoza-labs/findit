@@ -26,6 +26,10 @@ const claimPlayerList = document.querySelector('#claim-player-list');
 const claimDialogResultsButton = document.querySelector('#claim-dialog-results-button');
 const claimDialogCancelButton = document.querySelector('#claim-dialog-cancel-button');
 const claimDialogNextHandButton = document.querySelector('#claim-dialog-next-hand-button');
+const confirmationDialog = document.querySelector('#confirmation-dialog');
+const confirmationDialogMessage = document.querySelector('#confirmation-dialog-message');
+const confirmationDialogCancelButton = document.querySelector('#confirmation-dialog-cancel-button');
+const confirmationDialogOkButton = document.querySelector('#confirmation-dialog-ok-button');
 
 const tempDeck = await loadTempDeckOrDefault();
 const userImages = await repository.listUserImages();
@@ -48,7 +52,17 @@ const state = {
   claimDialogOpen: false,
   claimDialogOpenedAtMs: 0,
   totalClaimDialogOpenMs: 0,
+  confirmationDialogOpen: false,
+  confirmationDialogOpenedAtMs: 0,
+  totalConfirmationDialogOpenMs: 0,
+  pendingConfirmedAction: null,
+  navigationConfirmationEnabled: false,
+  navigationPromptOpenedAtMs: 0,
+  totalNavigationPromptOpenMs: 0,
+  navigationPromptOverlapsDialog: false,
+  totalNavigationPromptOverlapMs: 0,
   playerScores: [],
+  claimHandPoints: [],
   claimDragOffsetX: 0,
   claimDragOffsetY: 0,
   claimDragging: false
@@ -134,6 +148,17 @@ function parseOptionalPositiveInteger(value) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
+function parseCardCountList(value, cardCount) {
+  if (typeof value !== 'string' || !value.trim()) {
+    return [];
+  }
+
+  return value
+    .split(',')
+    .map((item) => parseOptionalPositiveInteger(item))
+    .filter((count) => count !== null && count <= cardCount);
+}
+
 function getPlayerNames() {
   const rawNames = tempDeck.playOptions?.playerNames ?? '';
   return rawNames
@@ -144,6 +169,7 @@ function getPlayerNames() {
 
 function resetPlayerScores() {
   state.playerScores = getPlayerNames().map((name) => ({ name, score: 0 }));
+  state.claimHandPoints = state.playerScores.map(() => 0);
 }
 
 function renderPlayerClaimPrompt() {
@@ -172,7 +198,7 @@ function renderClaimPlayerList() {
 
     const score = document.createElement('div');
     score.className = 'claim-player-score';
-    score.textContent = `Score: ${player.score}`;
+    score.textContent = `Points for this hand: ${state.claimHandPoints[index] ?? 0}`;
 
     const controls = document.createElement('div');
     controls.className = 'claim-player-controls';
@@ -197,20 +223,26 @@ function renderClaimPlayerList() {
   }
 }
 
+function cancelClaimHandPoints() {
+  for (let index = 0; index < state.playerScores.length; index += 1) {
+    const player = state.playerScores[index];
+    const handPoints = state.claimHandPoints[index] ?? 0;
+    player.score -= handPoints;
+  }
+
+  state.claimHandPoints = state.playerScores.map(() => 0);
+}
+
 function getHandSettings() {
   const cardCount = getDeckPlayerCardCount(tempDeck.symbolsPerCard);
-  const parsedMin = parseOptionalPositiveInteger(tempDeck.playOptions?.cardsToShowMin);
-  const parsedMax = parseOptionalPositiveInteger(tempDeck.playOptions?.cardsToShowMax);
-  const min = Math.max(1, Math.min(parsedMin ?? 2, cardCount));
-  const max = Math.max(min, Math.min(parsedMax ?? min, cardCount));
+  const cardsToShowCounts = parseCardCountList(tempDeck.playOptions?.cardsToShowCounts, cardCount);
   const countdownSeconds = parsePositiveWholeNumberInput(tempDeck.playOptions?.countdownSeconds ?? '') ?? 0;
   const lengthOfPlay = parsePositiveNumberInput(tempDeck.playOptions?.lengthOfPlay ?? '');
   const lengthOfPlayUnits = tempDeck.playOptions?.lengthOfPlayUnits ?? 'hands';
 
   return {
     cardCount,
-    minCardsToShow: min,
-    maxCardsToShow: max,
+    cardsToShowCounts: cardsToShowCounts.length > 0 ? cardsToShowCounts : [Math.min(2, cardCount)],
     countdownSeconds,
     lengthOfPlay,
     lengthOfPlayUnits
@@ -219,6 +251,10 @@ function getHandSettings() {
 
 function isUnlimitedGame(settings) {
   return !settings.lengthOfPlay;
+}
+
+function getMinimumAllowedCardsToShow(settings) {
+  return Math.min(...settings.cardsToShowCounts);
 }
 
 function getRandomInteger(min, max) {
@@ -249,8 +285,85 @@ function pauseCountdownForDialog() {
   countdownStatus.textContent = `Countdown paused at ${(state.countdownRemainingMs / 1000).toFixed(1)}s.`;
 }
 
+function setPlayActionButtonsDisabled(disabled) {
+  restartButton.disabled = disabled;
+  nextHandButton.disabled = disabled;
+  resultsButton.disabled = disabled || resultsButton.hidden;
+}
+
+function setNavigationConfirmationEnabled(enabled) {
+  state.navigationConfirmationEnabled = enabled;
+}
+
+function pauseForNavigationPrompt() {
+  if (state.sessionEnded || state.navigationPromptOpenedAtMs > 0) {
+    return;
+  }
+
+  state.navigationPromptOpenedAtMs = Date.now();
+  state.navigationPromptOverlapsDialog = state.claimDialogOpen || state.confirmationDialogOpen;
+  pauseCountdownForDialog();
+  stopMinuteLimitTimer();
+}
+
+function resumeAfterNavigationPrompt() {
+  if (state.navigationPromptOpenedAtMs === 0) {
+    return;
+  }
+
+  const promptOpenMs = Math.max(0, Date.now() - state.navigationPromptOpenedAtMs);
+  state.totalNavigationPromptOpenMs += promptOpenMs;
+  if (state.navigationPromptOverlapsDialog) {
+    state.totalNavigationPromptOverlapMs += promptOpenMs;
+  }
+  state.navigationPromptOpenedAtMs = 0;
+  state.navigationPromptOverlapsDialog = false;
+
+  if (state.sessionEnded) {
+    return;
+  }
+
+  const settings = getHandSettings();
+  const players = getPlayerNames();
+
+  if (settings.lengthOfPlayUnits === 'minutes' && settings.lengthOfPlay && state.currentCardsShownCount > 0) {
+    handStatus.textContent = getMinuteHandStatus(settings, state.currentCardsShownCount);
+    startMinuteLimitTimer(settings, players);
+  }
+
+  if (
+    state.countdownRemainingMs > 0
+    && !state.claimDialogOpen
+    && !state.confirmationDialogOpen
+    && state.currentCardsShownCount > 0
+  ) {
+    startCountdown(settings);
+  }
+}
+
+function openConfirmationDialog(action) {
+  if (state.confirmationDialogOpen) {
+    return;
+  }
+
+  if (action === 'results' && state.sessionEnded) {
+    return;
+  }
+
+  state.confirmationDialogOpen = true;
+  state.confirmationDialogOpenedAtMs = Date.now();
+  state.pendingConfirmedAction = action;
+  confirmationDialogMessage.textContent = action === 'restart'
+    ? (restartButton.textContent === 'New game'
+        ? 'Start a new game with the same options?'
+        : 'Restart this game?')
+    : 'Show results and end this game?';
+  confirmationDialog.hidden = false;
+  pauseCountdownForDialog();
+}
+
 function closeClaimDialog(options = {}) {
-  const { resumeCountdown = true } = options;
+  const { resumeCountdown = true, restoreButtons = true } = options;
   if (state.claimDialogOpenedAtMs > 0) {
     state.totalClaimDialogOpenMs += Math.max(0, Date.now() - state.claimDialogOpenedAtMs);
     state.claimDialogOpenedAtMs = 0;
@@ -258,29 +371,114 @@ function closeClaimDialog(options = {}) {
   state.claimDialogOpen = false;
   claimDialog.hidden = true;
 
+  if (restoreButtons && !state.sessionEnded && !state.confirmationDialogOpen) {
+    setPlayActionButtonsDisabled(false);
+  }
+
   if (resumeCountdown && !state.sessionEnded && state.countdownRemainingMs > 0) {
     startCountdown(getHandSettings());
   }
 }
 
+function closeConfirmationDialog(options = {}) {
+  const { resumeTimers = true } = options;
+  if (state.confirmationDialogOpenedAtMs > 0) {
+    state.totalConfirmationDialogOpenMs += Math.max(0, Date.now() - state.confirmationDialogOpenedAtMs);
+    state.confirmationDialogOpenedAtMs = 0;
+  }
+
+  state.confirmationDialogOpen = false;
+  state.pendingConfirmedAction = null;
+  confirmationDialog.hidden = true;
+
+  if (
+    resumeTimers
+    && !state.sessionEnded
+    && !state.claimDialogOpen
+    && state.countdownRemainingMs > 0
+  ) {
+    startCountdown(getHandSettings());
+  }
+}
+
 function openClaimDialog(message) {
-  if (state.sessionEnded || state.claimDialogOpen || state.currentCardsShownCount === 0) {
+  if (state.sessionEnded || state.claimDialogOpen || state.confirmationDialogOpen || state.currentCardsShownCount === 0) {
     return;
   }
 
   const settings = getHandSettings();
+  setNavigationConfirmationEnabled(true);
   state.claimDialogOpen = true;
   state.claimDialogOpenedAtMs = Date.now();
+  state.claimHandPoints = state.playerScores.map(() => 0);
   claimDialogMessage.textContent = message;
   claimDialogResultsButton.hidden = !isUnlimitedGame(settings);
   renderClaimPlayerList();
   claimDialog.hidden = false;
+  setPlayActionButtonsDisabled(true);
   positionClaimDialogAtCenter();
   pauseCountdownForDialog();
 }
 
+function performRestart() {
+  stopCountdown();
+  stopMinuteLimitTimer();
+  closeConfirmationDialog({ resumeTimers: false });
+  closeClaimDialog({ resumeCountdown: false, restoreButtons: false });
+  state.completedHandsCount = 0;
+  state.activeHandNumber = 0;
+  state.startedAtMs = 0;
+  state.endedAtMs = 0;
+  state.hatState = null;
+  state.sessionEnded = false;
+  state.currentCardsShownCount = 0;
+  state.pendingHandCount = false;
+  state.navigationConfirmationEnabled = false;
+  state.navigationPromptOpenedAtMs = 0;
+  state.totalNavigationPromptOpenMs = 0;
+  state.navigationPromptOverlapsDialog = false;
+  state.totalNavigationPromptOverlapMs = 0;
+  state.countdownRemainingMs = 0;
+  state.claimDialogOpenedAtMs = 0;
+  state.totalClaimDialogOpenMs = 0;
+  state.confirmationDialogOpenedAtMs = 0;
+  state.totalConfirmationDialogOpenMs = 0;
+  resetPlayerScores();
+  playBoardEmpty.hidden = true;
+  resultsButton.hidden = true;
+  setRestartButtonLabel('Restart');
+  setNextHandButtonLabel('Next hand');
+  nextHandButton.disabled = false;
+  void renderHand();
+}
+
+function performResults() {
+  const settings = getHandSettings();
+  const players = getPlayerNames();
+  if (isUnlimitedGame(settings)) {
+    commitPendingHand();
+  }
+  closeConfirmationDialog({ resumeTimers: false });
+  renderCompletion(settings, players);
+}
+
+function executeConfirmedAction() {
+  if (state.pendingConfirmedAction === 'restart') {
+    performRestart();
+    return;
+  }
+
+  if (state.pendingConfirmedAction === 'results') {
+    performResults();
+  }
+}
+
 function setNextHandButtonLabel(label) {
   nextHandButton.textContent = label;
+}
+
+function setRestartButtonLabel(label) {
+  restartButton.textContent = label;
 }
 
 function renderCompletion(settings, players, reason = '') {
@@ -288,9 +486,14 @@ function renderCompletion(settings, players, reason = '') {
   stopMinuteLimitTimer();
   closeClaimDialog({ resumeCountdown: false });
   state.sessionEnded = true;
+  setNavigationConfirmationEnabled(false);
+  state.navigationPromptOpenedAtMs = 0;
+  state.navigationPromptOverlapsDialog = false;
   state.endedAtMs = Date.now();
   setNextHandButtonLabel('Next hand');
+  setRestartButtonLabel('New game');
   resultsButton.hidden = true;
+  restartButton.disabled = false;
   nextHandButton.disabled = true;
   if (state.hatState) {
     state.hatState = {
@@ -430,7 +633,27 @@ function getActiveElapsedMilliseconds() {
   const currentDialogOpenMs = state.claimDialogOpenedAtMs > 0
     ? Math.max(0, Date.now() - state.claimDialogOpenedAtMs)
     : 0;
-  return Math.max(0, getSessionElapsedMilliseconds() - state.totalClaimDialogOpenMs - currentDialogOpenMs);
+  const currentConfirmationOpenMs = state.confirmationDialogOpenedAtMs > 0
+    ? Math.max(0, Date.now() - state.confirmationDialogOpenedAtMs)
+    : 0;
+  const currentNavigationPromptOpenMs = state.navigationPromptOpenedAtMs > 0
+    ? Math.max(0, Date.now() - state.navigationPromptOpenedAtMs)
+    : 0;
+  const currentNavigationPromptOverlapMs = state.navigationPromptOpenedAtMs > 0 && state.navigationPromptOverlapsDialog
+    ? currentNavigationPromptOpenMs
+    : 0;
+  return Math.max(
+    0,
+    getSessionElapsedMilliseconds()
+      - state.totalClaimDialogOpenMs
+      - currentDialogOpenMs
+      - state.totalConfirmationDialogOpenMs
+      - currentConfirmationOpenMs
+      - state.totalNavigationPromptOpenMs
+      + state.totalNavigationPromptOverlapMs
+      - currentNavigationPromptOpenMs
+      + currentNavigationPromptOverlapMs
+  );
 }
 
 function renderStatisticsTable(settings, reason) {
@@ -587,6 +810,7 @@ async function renderHand() {
   }
   commitPendingHand();
   updateHeader(players, settings);
+  setRestartButtonLabel('Restart');
   resultsButton.hidden = !isUnlimitedGame(settings);
   setNextHandButtonLabel('Next hand');
   nextHandButton.disabled = false;
@@ -597,6 +821,9 @@ async function renderHand() {
   }
 
   state.activeHandNumber = state.completedHandsCount + 1;
+  if (state.activeHandNumber >= 2) {
+    setNavigationConfirmationEnabled(true);
+  }
   state.countdownRemainingMs = 0;
   playCardGrid.innerHTML = '';
   playBoardEmpty.hidden = true;
@@ -613,6 +840,10 @@ async function renderHand() {
     return;
   }
   const cardsToShow = getCardsToDrawForHand(settings, state.hatState, getRandomInteger);
+  if (cardsToShow === 0) {
+    renderCompletion(settings, players, 'decks');
+    return;
+  }
   state.currentCardsShownCount = cardsToShow;
   const maxRefills = settings.lengthOfPlayUnits === 'decks' && settings.lengthOfPlay
     ? Math.max(0, settings.lengthOfPlay - 1)
@@ -660,7 +891,8 @@ async function renderHand() {
     return;
   }
 
-  if (cardIndices.length < settings.minCardsToShow) {
+  const minimumCardsToShow = getMinimumAllowedCardsToShow(settings);
+  if (cardIndices.length < minimumCardsToShow) {
     renderCompletion(settings, players, settings.lengthOfPlayUnits === 'decks' ? 'decks' : 'hands');
     return;
   }
@@ -684,25 +916,16 @@ function showEmptyState(message) {
   countdownStatus.textContent = '';
   playerStatus.textContent = '';
   resultsButton.hidden = true;
+  resultsButton.disabled = true;
   nextHandButton.disabled = true;
 }
 
 resultsButton.addEventListener('click', () => {
-  const settings = getHandSettings();
-  const players = getPlayerNames();
-  if (isUnlimitedGame(settings)) {
-    commitPendingHand();
-  }
-  renderCompletion(settings, players);
+  openConfirmationDialog('results');
 });
 
 claimDialogResultsButton.addEventListener('click', () => {
-  const settings = getHandSettings();
-  const players = getPlayerNames();
-  if (isUnlimitedGame(settings)) {
-    commitPendingHand();
-  }
-  renderCompletion(settings, players);
+  openConfirmationDialog('results');
 });
 
 nextHandButton.addEventListener('click', () => {
@@ -719,26 +942,7 @@ nextHandButton.addEventListener('click', () => {
 });
 
 restartButton.addEventListener('click', () => {
-  stopCountdown();
-  stopMinuteLimitTimer();
-  closeClaimDialog({ resumeCountdown: false });
-  state.completedHandsCount = 0;
-  state.activeHandNumber = 0;
-  state.startedAtMs = 0;
-  state.endedAtMs = 0;
-  state.hatState = null;
-  state.sessionEnded = false;
-  state.currentCardsShownCount = 0;
-  state.pendingHandCount = false;
-  state.countdownRemainingMs = 0;
-  state.claimDialogOpenedAtMs = 0;
-  state.totalClaimDialogOpenMs = 0;
-  resetPlayerScores();
-  playBoardEmpty.hidden = true;
-  resultsButton.hidden = true;
-  setNextHandButtonLabel('Next hand');
-  nextHandButton.disabled = false;
-  void renderHand();
+  openConfirmationDialog('restart');
 });
 
 claimPlayerList.addEventListener('click', (event) => {
@@ -755,16 +959,26 @@ claimPlayerList.addEventListener('click', (event) => {
   }
 
   player.score += scoreDelta;
+  state.claimHandPoints[playerIndex] = (state.claimHandPoints[playerIndex] ?? 0) + scoreDelta;
   renderClaimPlayerList();
 });
 
 claimDialogCancelButton.addEventListener('click', () => {
+  cancelClaimHandPoints();
   closeClaimDialog();
 });
 
 claimDialogNextHandButton.addEventListener('click', () => {
   closeClaimDialog({ resumeCountdown: false });
   void renderHand();
+});
+
+confirmationDialogCancelButton.addEventListener('click', () => {
+  closeConfirmationDialog({ resumeTimers: true });
+});
+
+confirmationDialogOkButton.addEventListener('click', () => {
+  executeConfirmedAction();
 });
 
 claimDialogHeader.addEventListener('pointerdown', (event) => {
@@ -791,7 +1005,7 @@ claimDialogHeader.addEventListener('pointerup', (event) => {
 });
 
 document.addEventListener('pointerdown', (event) => {
-  if (state.sessionEnded || state.claimDialogOpen) {
+  if (state.sessionEnded || state.claimDialogOpen || state.confirmationDialogOpen) {
     return;
   }
 
@@ -804,17 +1018,32 @@ document.addEventListener('pointerdown', (event) => {
 }, true);
 
 document.addEventListener('keydown', (event) => {
-  if (state.sessionEnded || state.claimDialogOpen) {
+  if (state.sessionEnded || state.claimDialogOpen || state.confirmationDialogOpen) {
     return;
   }
 
   openClaimDialog(getClaimEventMessage(event));
 });
 
-window.addEventListener('beforeunload', () => {
+window.addEventListener('beforeunload', (event) => {
+  if (state.navigationConfirmationEnabled) {
+    pauseForNavigationPrompt();
+    event.preventDefault();
+    event.returnValue = '';
+    return '';
+  }
+
   stopCountdown();
   stopMinuteLimitTimer();
   clearObjectUrls();
+});
+
+window.addEventListener('focus', () => {
+  resumeAfterNavigationPrompt();
+});
+
+window.addEventListener('pageshow', () => {
+  resumeAfterNavigationPrompt();
 });
 
 resetPlayerScores();

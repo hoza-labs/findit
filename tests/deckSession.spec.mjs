@@ -7,8 +7,7 @@ test('given empty temp deck, play options are initialized with defaults', () => 
   const deck = createEmptyTempDeck();
 
   assert.deepEqual(deck.playOptions, {
-    cardsToShowMin: '2',
-    cardsToShowMax: '2',
+    cardsToShowCounts: '2',
     countdownSeconds: '',
     lengthOfPlay: '',
     lengthOfPlayUnits: 'hands',
@@ -22,8 +21,7 @@ test('given saved deck with play options, temp deck preserves normalized play op
     symbolsPerCard: 4,
     imageRefs: [{ source: 'standard', id: '1.png' }],
     playOptions: {
-      cardsToShowMin: ' 2 ',
-      cardsToShowMax: 4,
+      cardsToShowCounts: ' 2, 4, 3 ',
       countdownSeconds: '05',
       lengthOfPlay: '1.5',
       lengthOfPlayUnits: 'minutes',
@@ -32,8 +30,7 @@ test('given saved deck with play options, temp deck preserves normalized play op
   });
 
   assert.deepEqual(tempDeck.playOptions, {
-    cardsToShowMin: '2',
-    cardsToShowMax: '4',
+    cardsToShowCounts: '2, 4, 3',
     countdownSeconds: '5',
     lengthOfPlay: '1.5',
     lengthOfPlayUnits: 'minutes',
@@ -55,8 +52,7 @@ test('given legacy handsToPlay option, normalize maps it to lengthOfPlay in hand
   });
 
   assert.deepEqual(normalized.playOptions, {
-    cardsToShowMin: '',
-    cardsToShowMax: '',
+    cardsToShowCounts: '',
     countdownSeconds: '',
     lengthOfPlay: '3',
     lengthOfPlayUnits: 'hands',
@@ -73,8 +69,7 @@ test('given legacy temp deck without play options, normalizeTempDeck adds defaul
   });
 
   assert.deepEqual(normalized.playOptions, {
-    cardsToShowMin: '2',
-    cardsToShowMax: '2',
+    cardsToShowCounts: '2',
     countdownSeconds: '',
     lengthOfPlay: '',
     lengthOfPlayUnits: 'hands',

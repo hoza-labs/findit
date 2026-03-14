@@ -555,6 +555,31 @@ body.has-top-bar {
   width: 4.5rem;
 }
 
+.play-options-count-list-input {
+  width: min(16rem, 100%);
+}
+
+.play-options-count-list-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.play-options-help-button {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid #adb5bd;
+  border-radius: 999px;
+  background: #fff;
+  color: #495057;
+  font-size: 0.95rem;
+  line-height: 1;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+}
+
 .play-options-split-controls {
   display: flex;
   align-items: center;
@@ -614,14 +639,67 @@ body.has-top-bar {
   margin-inline: auto;
 }
 
-.play-results-table-wrap,
-.play-results-table,
+#play-board-empty {
+  --play-board-empty-padding: 1rem;
+  --play-board-empty-margin: 1rem;
+  padding: var(--play-board-empty-padding);
+  margin-bottom: var(--play-board-empty-margin);
+  background: #fff;
+  border-color: #fff;
+}
+
+.play-results-table-wrap {
+  display: inline-block;
+  width: min(30rem, calc(100% - 1rem));
+  max-width: 100%;
+  padding: 1.1rem 1.15rem 0.9rem;
+  margin: 0.5rem 0 0 1.25rem;
+  background-image: url('../assets/images/postit-note.svg');
+  background-position: top left;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-origin: border-box;
+  background-clip: border-box;
+  border: 0;
+  border-radius: 0;
+  box-shadow:
+    0.4rem 0.8rem 1.5rem rgba(77, 64, 16, 0.24),
+    0.1rem 0.18rem 0 rgba(255, 255, 255, 0.2) inset;
+  transform: translateY(calc(-1 * (var(--play-board-empty-padding) + var(--play-board-empty-margin)))) rotate(-4deg);
+  transform-origin: top right;
+  position: relative;
+  overflow: visible;
+}
+
+.play-results-table {
+  width: 100%;
+  margin: 0;
+  background: transparent;
+  color: #3b310d;
+}
+
 .play-results-table > :not(caption) > * > * {
   background: transparent;
+  border-bottom: 1px solid rgba(109, 93, 27, 0.25);
+  padding-block: 0.42rem;
+}
+
+.play-results-table tbody tr:last-child > * {
+  border-bottom: 0;
 }
 
 .play-results-table-result {
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-align: center;
+  padding-bottom: 0.65rem;
+}
+
+@media (max-width: 768px) {
+  .play-results-table-wrap {
+    width: min(26rem, calc(100% - 0.5rem));
+    margin-left: 0.25rem;
+  }
 }
 
 .claim-dialog {
@@ -690,6 +768,30 @@ body.has-top-bar {
   justify-content: flex-end;
   gap: 0.75rem;
   margin-top: 1rem;
+}
+
+.confirmation-dialog {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 3200;
+}
+
+.confirmation-dialog-body {
+  width: min(420px, calc(100vw - 2rem));
+  background: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 0.8rem;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+}
+
+.confirmation-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
 }
 
 @media (max-width: 576px) {

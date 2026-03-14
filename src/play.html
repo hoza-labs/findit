@@ -49,12 +49,16 @@
           <p>You can 'play' your deck right here in the browser. Review the options and click the button!</p>
           <form id="play-options-form" class="play-options-form" novalidate>
             <div class="play-options-row">
-              <label for="cards-to-show-min" class="form-label mb-0">Number of cards to show at once (minimum)</label>
-              <input id="cards-to-show-min" name="cardsToShowMin" type="text" class="form-control play-options-number-input" inputmode="numeric" />
-            </div>
-            <div class="play-options-row">
-              <label for="cards-to-show-max" class="form-label mb-0">Number of cards to show at once (maximum)</label>
-              <input id="cards-to-show-max" name="cardsToShowMax" type="text" class="form-control play-options-number-input" inputmode="numeric" />
+              <label for="cards-to-show-counts" class="form-label mb-0">Number of cards to display at once</label>
+              <div class="play-options-count-list-wrap">
+                <input id="cards-to-show-counts" name="cardsToShowCounts" type="text" class="form-control play-options-count-list-input" inputmode="text" />
+                <button
+                  type="button"
+                  class="play-options-help-button"
+                  aria-label="Help about number of cards to display at once"
+                  title="You can enter a list of numbers here, for variety during the game, such as '2,4'"
+                >?</button>
+              </div>
             </div>
             <div class="play-options-row">
               <label for="countdown-seconds" class="form-label mb-0">Countdown in seconds (blank for none)</label>
