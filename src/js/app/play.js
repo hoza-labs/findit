@@ -782,7 +782,7 @@ function updateResultsProgressBar(element, maximumScore, displayedScore) {
 function getMinuteHandStatus(settings, cardsToShow) {
   const remainingMilliseconds = Math.max(0, settings.lengthOfPlay * 60_000 - getActiveElapsedMilliseconds());
   const remainingSeconds = (remainingMilliseconds / 1000).toFixed(1);
-  return `Hand ${state.activeHandNumber}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}. ${remainingSeconds}s remaining.`;
+  return `Hand ${state.activeHandNumber}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}. ${remainingSeconds}s\u00A0remaining.`;
 }
 
 function startMinuteLimitTimer(settings, players) {
