@@ -282,6 +282,26 @@ function positionClaimDialogAtCenter() {
   claimDialog.style.left = `${Math.max(16, Math.round((window.innerWidth - claimDialog.offsetWidth) / 2))}px`;
   claimDialog.style.top = `${Math.max(72, Math.round((window.innerHeight - claimDialog.offsetHeight) / 2))}px`;
   claimDialog.style.transform = 'none';
+  clampClaimDialogToViewport();
+}
+
+function clampClaimDialogToViewport() {
+  if (claimDialog.hidden) {
+    return;
+  }
+
+  const minimumLeft = 8;
+  const minimumTop = 56;
+  const maximumLeft = Math.max(minimumLeft, window.innerWidth - claimDialog.offsetWidth - 8);
+  const maximumTop = Math.max(minimumTop, window.innerHeight - claimDialog.offsetHeight - 8);
+  const currentLeft = Number.parseFloat(claimDialog.style.left || '');
+  const currentTop = Number.parseFloat(claimDialog.style.top || '');
+  const nextLeft = Number.isFinite(currentLeft) ? Math.min(Math.max(currentLeft, minimumLeft), maximumLeft) : minimumLeft;
+  const nextTop = Number.isFinite(currentTop) ? Math.min(Math.max(currentTop, minimumTop), maximumTop) : minimumTop;
+
+  claimDialog.style.left = `${nextLeft}px`;
+  claimDialog.style.top = `${nextTop}px`;
+  claimDialog.style.transform = 'none';
 }
 
 function pauseCountdownForDialog() {
@@ -1061,9 +1081,10 @@ claimDialogHeader.addEventListener('pointermove', (event) => {
     return;
   }
 
-  claimDialog.style.left = `${Math.max(8, event.clientX - state.claimDragOffsetX)}px`;
-  claimDialog.style.top = `${Math.max(56, event.clientY - state.claimDragOffsetY)}px`;
+  claimDialog.style.left = `${event.clientX - state.claimDragOffsetX}px`;
+  claimDialog.style.top = `${event.clientY - state.claimDragOffsetY}px`;
   claimDialog.style.transform = 'none';
+  clampClaimDialogToViewport();
 });
 
 claimDialogHeader.addEventListener('pointerup', (event) => {
@@ -1111,6 +1132,10 @@ window.addEventListener('focus', () => {
 
 window.addEventListener('pageshow', () => {
   resumeAfterNavigationPrompt();
+});
+
+window.addEventListener('resize', () => {
+  clampClaimDialogToViewport();
 });
 
 resetPlayerScores();
