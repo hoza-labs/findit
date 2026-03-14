@@ -57,6 +57,7 @@ const state = {
   totalConfirmationDialogOpenMs: 0,
   pendingConfirmedAction: null,
   playerScores: [],
+  claimHandPoints: [],
   claimDragOffsetX: 0,
   claimDragOffsetY: 0,
   claimDragging: false
@@ -163,6 +164,7 @@ function getPlayerNames() {
 
 function resetPlayerScores() {
   state.playerScores = getPlayerNames().map((name) => ({ name, score: 0 }));
+  state.claimHandPoints = state.playerScores.map(() => 0);
 }
 
 function renderPlayerClaimPrompt() {
@@ -191,7 +193,7 @@ function renderClaimPlayerList() {
 
     const score = document.createElement('div');
     score.className = 'claim-player-score';
-    score.textContent = `Score: ${player.score}`;
+    score.textContent = `Points for this hand: ${state.claimHandPoints[index] ?? 0}`;
 
     const controls = document.createElement('div');
     controls.className = 'claim-player-controls';
@@ -342,6 +344,7 @@ function openClaimDialog(message) {
   const settings = getHandSettings();
   state.claimDialogOpen = true;
   state.claimDialogOpenedAtMs = Date.now();
+  state.claimHandPoints = state.playerScores.map(() => 0);
   claimDialogMessage.textContent = message;
   claimDialogResultsButton.hidden = !isUnlimitedGame(settings);
   renderClaimPlayerList();
@@ -869,6 +872,7 @@ claimPlayerList.addEventListener('click', (event) => {
   }
 
   player.score += scoreDelta;
+  state.claimHandPoints[playerIndex] = (state.claimHandPoints[playerIndex] ?? 0) + scoreDelta;
   renderClaimPlayerList();
 });
 
