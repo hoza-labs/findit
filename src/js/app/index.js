@@ -193,11 +193,18 @@ async function renderExistingDecks() {
     const row = document.createElement('div');
     row.className = 'selected-ref';
 
-    const text = document.createElement('a');
-    text.href = '#';
-    text.className = 'link-primary text-decoration-none';
-    text.textContent = `${deck.name} (n=${deck.symbolsPerCard}, images=${deck.imageRefs.length})`;
-    text.addEventListener('click', (event) => {
+    const neededImageCount = deck.symbolsPerCard * (deck.symbolsPerCard - 1) + 1;
+    const selectedImageCount = deck.imageRefs.length;
+    const needsMoreImages = selectedImageCount < neededImageCount;
+
+    const textBlock = document.createElement('div');
+    textBlock.className = 'selected-ref-text';
+
+    const deckLink = document.createElement('a');
+    deckLink.href = '#';
+    deckLink.className = 'link-primary text-decoration-none fw-semibold';
+    deckLink.textContent = deck.name;
+    deckLink.addEventListener('click', (event) => {
       event.preventDefault();
       void (async () => {
         const choice = await maybeSaveBeforeNavigate('open', deck.name);
@@ -207,6 +214,12 @@ async function renderExistingDecks() {
         await openExistingDeck(deck.name);
       })();
     });
+
+    const detailLine = document.createElement('div');
+    detailLine.className = 'selected-ref-detail text-muted';
+    detailLine.textContent = `n=${deck.symbolsPerCard} c=${selectedImageCount}/${neededImageCount} ${needsMoreImages ? '🚧' : '✅'}`;
+
+    textBlock.append(deckLink, detailLine);
 
     const actionGroup = document.createElement('div');
     actionGroup.className = 'd-flex gap-2';
@@ -241,7 +254,7 @@ async function renderExistingDecks() {
     });
 
     actionGroup.append(openButton, deleteButton);
-    row.append(text, actionGroup);
+    row.append(textBlock, actionGroup);
     existingDecksElement.appendChild(row);
   }
 }

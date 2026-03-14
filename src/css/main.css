@@ -508,6 +508,14 @@ body.has-top-bar {
   align-items: center;
 }
 
+.selected-ref-text {
+  min-width: 0;
+}
+
+.selected-ref-detail {
+  font-size: 0.875rem;
+}
+
 .save-as-dialog {
   width: min(560px, 90vw);
   border: 1px solid var(--card-border);
