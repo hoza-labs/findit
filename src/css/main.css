@@ -301,6 +301,7 @@ body.has-top-bar {
   line-height: 1;
   padding: 0.1rem 0.2rem;
   font-size: 0.85rem;
+  color: #dc3545;
   cursor: pointer;
 }
 

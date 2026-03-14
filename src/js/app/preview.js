@@ -128,7 +128,7 @@ function createPatternItem({ slotIndex, slotTitle = '', topLabel = '', refIndex 
     const removeButton = document.createElement('button');
     removeButton.type = 'button';
     removeButton.className = 'preview-remove-button';
-    removeButton.textContent = 'X';
+    removeButton.textContent = '☒';
     removeButton.title = `Remove ${label}`;
     removeButton.setAttribute('aria-label', `Remove ${label}`);
     removeButton.addEventListener('click', async () => {
