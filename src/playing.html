@@ -82,7 +82,13 @@
 
     <section id="claim-dialog" class="claim-dialog" hidden aria-live="polite">
       <div id="claim-dialog-header" class="claim-dialog-header">
-        <h2 class="h5 mb-0">Claim Hand</h2>
+        <div class="claim-dialog-title-row">
+          <h2 class="h5 mb-0">Claim Hand</h2>
+          <div class="claim-dialog-peek-wrap">
+            <label for="claim-dialog-peek-slider" class="mb-0">Peek</label>
+            <input id="claim-dialog-peek-slider" type="range" min="20" max="100" value="100" class="form-range mb-0" />
+          </div>
+        </div>
       </div>
       <div class="claim-dialog-body">
         <p id="claim-dialog-message" class="mb-3"></p>

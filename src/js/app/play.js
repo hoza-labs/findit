@@ -23,6 +23,7 @@ const claimDialog = document.querySelector('#claim-dialog');
 const claimDialogHeader = document.querySelector('#claim-dialog-header');
 const claimDialogMessage = document.querySelector('#claim-dialog-message');
 const claimPlayerList = document.querySelector('#claim-player-list');
+const claimDialogPeekSlider = document.querySelector('#claim-dialog-peek-slider');
 const claimDialogResultsButton = document.querySelector('#claim-dialog-results-button');
 const claimDialogCancelButton = document.querySelector('#claim-dialog-cancel-button');
 const claimDialogNextHandButton = document.querySelector('#claim-dialog-next-hand-button');
@@ -285,6 +286,12 @@ function positionClaimDialogAtCenter() {
   clampClaimDialogToViewport();
 }
 
+function applyClaimDialogPeekState() {
+  const sliderValue = Number.parseInt(claimDialogPeekSlider.value, 10);
+  const clampedPercent = Number.isFinite(sliderValue) ? Math.max(20, Math.min(100, sliderValue)) : 100;
+  claimDialog.style.opacity = String(clampedPercent / 100);
+}
+
 function clampClaimDialogToViewport() {
   if (claimDialog.hidden) {
     return;
@@ -400,6 +407,8 @@ function closeClaimDialog(options = {}) {
   }
   state.claimDialogOpen = false;
   claimDialog.hidden = true;
+  claimDialogPeekSlider.value = '100';
+  applyClaimDialogPeekState();
 
   if (restoreButtons && !state.sessionEnded && !state.confirmationDialogOpen) {
     setPlayActionButtonsDisabled(false);
@@ -445,6 +454,8 @@ function openClaimDialog(message) {
   claimDialogResultsButton.hidden = !isUnlimitedGame(settings);
   renderClaimPlayerList();
   claimDialog.hidden = false;
+  claimDialogPeekSlider.value = '100';
+  applyClaimDialogPeekState();
   setPlayActionButtonsDisabled(true);
   positionClaimDialogAtCenter();
   pauseCountdownForDialog();
@@ -1050,6 +1061,14 @@ claimDialogCancelButton.addEventListener('click', () => {
   closeClaimDialog();
 });
 
+claimDialogPeekSlider.addEventListener('input', () => {
+  applyClaimDialogPeekState();
+});
+
+claimDialogPeekSlider.addEventListener('pointerdown', (event) => {
+  event.stopPropagation();
+});
+
 claimDialogNextHandButton.addEventListener('click', () => {
   closeClaimDialog({ resumeCountdown: false });
   void renderHand();
@@ -1069,6 +1088,10 @@ confirmationDialogOkButton.addEventListener('click', () => {
 });
 
 claimDialogHeader.addEventListener('pointerdown', (event) => {
+  if (event.target instanceof HTMLElement && event.target.closest('button')) {
+    return;
+  }
+
   state.claimDragging = true;
   const dialogRect = claimDialog.getBoundingClientRect();
   state.claimDragOffsetX = event.clientX - dialogRect.left;

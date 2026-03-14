@@ -756,6 +756,8 @@ body.has-top-bar {
   border-radius: 0.8rem;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
   z-index: 3000;
+  opacity: 1;
+  transition: opacity 0.15s ease;
 }
 
 .claim-dialog-header {
@@ -763,6 +765,26 @@ body.has-top-bar {
   border-bottom: 1px solid #edf0f2;
   cursor: move;
   background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+}
+
+.claim-dialog-title-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.claim-dialog-peek-wrap {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1 1 18rem;
+  max-width: 18rem;
+}
+
+.claim-dialog-peek-wrap .form-range {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .claim-dialog-body {
