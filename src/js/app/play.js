@@ -275,7 +275,11 @@ function setPlayActionButtonsDisabled(disabled) {
 }
 
 function openConfirmationDialog(action) {
-  if (state.sessionEnded || state.confirmationDialogOpen) {
+  if (state.confirmationDialogOpen) {
+    return;
+  }
+
+  if (action === 'results' && state.sessionEnded) {
     return;
   }
 
@@ -283,7 +287,9 @@ function openConfirmationDialog(action) {
   state.confirmationDialogOpenedAtMs = Date.now();
   state.pendingConfirmedAction = action;
   confirmationDialogMessage.textContent = action === 'restart'
-    ? 'Restart this game?'
+    ? (restartButton.textContent === 'New game'
+        ? 'Start a new game with the same options?'
+        : 'Restart this game?')
     : 'Show results and end this game?';
   confirmationDialog.hidden = false;
   pauseCountdownForDialog();
@@ -366,6 +372,7 @@ function performRestart() {
   resetPlayerScores();
   playBoardEmpty.hidden = true;
   resultsButton.hidden = true;
+  setRestartButtonLabel('Restart');
   setNextHandButtonLabel('Next hand');
   nextHandButton.disabled = false;
   void renderHand();
@@ -396,6 +403,10 @@ function setNextHandButtonLabel(label) {
   nextHandButton.textContent = label;
 }
 
+function setRestartButtonLabel(label) {
+  restartButton.textContent = label;
+}
+
 function renderCompletion(settings, players, reason = '') {
   stopCountdown();
   stopMinuteLimitTimer();
@@ -403,7 +414,9 @@ function renderCompletion(settings, players, reason = '') {
   state.sessionEnded = true;
   state.endedAtMs = Date.now();
   setNextHandButtonLabel('Next hand');
+  setRestartButtonLabel('New game');
   resultsButton.hidden = true;
+  restartButton.disabled = false;
   nextHandButton.disabled = true;
   if (state.hatState) {
     state.hatState = {
@@ -710,6 +723,7 @@ async function renderHand() {
   }
   commitPendingHand();
   updateHeader(players, settings);
+  setRestartButtonLabel('Restart');
   resultsButton.hidden = !isUnlimitedGame(settings);
   setNextHandButtonLabel('Next hand');
   nextHandButton.disabled = false;
