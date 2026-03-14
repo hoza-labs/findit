@@ -28,6 +28,7 @@ const claimDialogCancelButton = document.querySelector('#claim-dialog-cancel-but
 const claimDialogNextHandButton = document.querySelector('#claim-dialog-next-hand-button');
 const confirmationDialog = document.querySelector('#confirmation-dialog');
 const confirmationDialogMessage = document.querySelector('#confirmation-dialog-message');
+const confirmationDialogChangeOptionsButton = document.querySelector('#confirmation-dialog-change-options-button');
 const confirmationDialogCancelButton = document.querySelector('#confirmation-dialog-cancel-button');
 const confirmationDialogOkButton = document.querySelector('#confirmation-dialog-ok-button');
 
@@ -361,6 +362,7 @@ function openConfirmationDialog(action) {
   state.confirmationDialogOpen = true;
   state.confirmationDialogOpenedAtMs = Date.now();
   state.pendingConfirmedAction = action;
+  confirmationDialogChangeOptionsButton.hidden = action !== 'restart';
   confirmationDialogMessage.textContent = action === 'restart'
     ? (restartButton.textContent === 'New game'
         ? 'Start a new game with the same options?'
@@ -1035,6 +1037,11 @@ claimDialogNextHandButton.addEventListener('click', () => {
 
 confirmationDialogCancelButton.addEventListener('click', () => {
   closeConfirmationDialog({ resumeTimers: true });
+});
+
+confirmationDialogChangeOptionsButton.addEventListener('click', () => {
+  setNavigationConfirmationEnabled(false);
+  window.location.assign('./play.html');
 });
 
 confirmationDialogOkButton.addEventListener('click', () => {
