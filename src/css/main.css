@@ -751,20 +751,36 @@ body.has-top-bar {
   width: min(560px, calc(100vw - 2rem));
   max-height: calc(100vh - 5rem);
   overflow: auto;
-  background: #fff;
-  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, var(--claim-dialog-content-opacity, 1));
+  border: 1px solid rgba(208, 215, 222, var(--claim-dialog-content-opacity, 1));
   border-radius: 0.8rem;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, calc(0.2 * var(--claim-dialog-content-opacity, 1)));
   z-index: 3000;
-  opacity: 1;
-  transition: opacity 0.15s ease;
+  --claim-dialog-content-opacity: 1;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .claim-dialog-header {
   padding: 0.9rem 1rem;
-  border-bottom: 1px solid #edf0f2;
+  border-bottom: 1px solid rgba(237, 240, 242, var(--claim-dialog-content-opacity, 1));
   cursor: move;
-  background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(248, 251, 255, var(--claim-dialog-content-opacity, 1)) 0%,
+    rgba(238, 245, 255, var(--claim-dialog-content-opacity, 1)) 100%
+  );
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.claim-dialog-title-row > h2,
+.claim-dialog-body {
+  opacity: var(--claim-dialog-content-opacity);
+  transition: opacity 0.15s ease;
 }
 
 .claim-dialog-title-row {

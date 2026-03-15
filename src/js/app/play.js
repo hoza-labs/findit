@@ -289,7 +289,7 @@ function positionClaimDialogAtCenter() {
 function applyClaimDialogPeekState() {
   const sliderValue = Number.parseInt(claimDialogPeekSlider.value, 10);
   const clampedPercent = Number.isFinite(sliderValue) ? Math.max(20, Math.min(100, sliderValue)) : 100;
-  claimDialog.style.opacity = String(clampedPercent / 100);
+  claimDialog.style.setProperty('--claim-dialog-content-opacity', String(clampedPercent / 100));
 }
 
 function clampClaimDialogToViewport() {
