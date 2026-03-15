@@ -23,7 +23,7 @@ const claimDialog = document.querySelector('#claim-dialog');
 const claimDialogHeader = document.querySelector('#claim-dialog-header');
 const claimDialogMessage = document.querySelector('#claim-dialog-message');
 const claimPlayerList = document.querySelector('#claim-player-list');
-const claimDialogPeekSlider = document.querySelector('#claim-dialog-peek-slider');
+const claimDialogPeekButton = document.querySelector('#claim-dialog-peek-button');
 const claimDialogResultsButton = document.querySelector('#claim-dialog-results-button');
 const claimDialogCancelButton = document.querySelector('#claim-dialog-cancel-button');
 const claimDialogNextHandButton = document.querySelector('#claim-dialog-next-hand-button');
@@ -41,6 +41,7 @@ let objectUrls = [];
 let countdownTimerId = null;
 let minuteLimitTimerId = null;
 let scoreAnimationTimerId = null;
+let claimDialogPeekRestoreTimerId = null;
 const state = {
   completedHandsCount: 0,
   activeHandNumber: 0,
@@ -98,6 +99,13 @@ function stopScoreAnimation() {
   if (scoreAnimationTimerId !== null) {
     window.clearInterval(scoreAnimationTimerId);
     scoreAnimationTimerId = null;
+  }
+}
+
+function stopClaimDialogPeekTimer() {
+  if (claimDialogPeekRestoreTimerId !== null) {
+    window.clearTimeout(claimDialogPeekRestoreTimerId);
+    claimDialogPeekRestoreTimerId = null;
   }
 }
 
@@ -286,10 +294,17 @@ function positionClaimDialogAtCenter() {
   clampClaimDialogToViewport();
 }
 
-function applyClaimDialogPeekState() {
-  const sliderValue = Number.parseInt(claimDialogPeekSlider.value, 10);
-  const clampedPercent = Number.isFinite(sliderValue) ? Math.max(20, Math.min(100, sliderValue)) : 100;
-  claimDialog.style.setProperty('--claim-dialog-content-opacity', String(clampedPercent / 100));
+function setClaimDialogOpacity(opacity) {
+  claimDialog.style.setProperty('--claim-dialog-content-opacity', String(opacity));
+}
+
+function runClaimDialogPeek() {
+  stopClaimDialogPeekTimer();
+  setClaimDialogOpacity(0.2);
+  claimDialogPeekRestoreTimerId = window.setTimeout(() => {
+    setClaimDialogOpacity(1);
+    claimDialogPeekRestoreTimerId = null;
+  }, 3000);
 }
 
 function clampClaimDialogToViewport() {
@@ -406,9 +421,9 @@ function closeClaimDialog(options = {}) {
     state.claimDialogOpenedAtMs = 0;
   }
   state.claimDialogOpen = false;
+  stopClaimDialogPeekTimer();
   claimDialog.hidden = true;
-  claimDialogPeekSlider.value = '100';
-  applyClaimDialogPeekState();
+  setClaimDialogOpacity(1);
 
   if (restoreButtons && !state.sessionEnded && !state.confirmationDialogOpen) {
     setPlayActionButtonsDisabled(false);
@@ -454,8 +469,7 @@ function openClaimDialog(message) {
   claimDialogResultsButton.hidden = !isUnlimitedGame(settings);
   renderClaimPlayerList();
   claimDialog.hidden = false;
-  claimDialogPeekSlider.value = '100';
-  applyClaimDialogPeekState();
+  setClaimDialogOpacity(1);
   setPlayActionButtonsDisabled(true);
   positionClaimDialogAtCenter();
   pauseCountdownForDialog();
@@ -1061,11 +1075,11 @@ claimDialogCancelButton.addEventListener('click', () => {
   closeClaimDialog();
 });
 
-claimDialogPeekSlider.addEventListener('input', () => {
-  applyClaimDialogPeekState();
+claimDialogPeekButton.addEventListener('click', () => {
+  runClaimDialogPeek();
 });
 
-claimDialogPeekSlider.addEventListener('pointerdown', (event) => {
+claimDialogPeekButton.addEventListener('pointerdown', (event) => {
   event.stopPropagation();
 });
 
