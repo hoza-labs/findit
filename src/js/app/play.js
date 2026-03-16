@@ -1250,6 +1250,19 @@ document.addEventListener('pointerdown', (event) => {
 }, true);
 
 document.addEventListener('keydown', (event) => {
+  if (state.confirmationDialogOpen && event.key === 'Escape') {
+    event.preventDefault();
+    closeConfirmationDialog({ resumeTimers: true });
+    return;
+  }
+
+  if (state.claimDialogOpen && event.key === 'Escape') {
+    event.preventDefault();
+    cancelClaimHandPoints();
+    closeClaimDialog();
+    return;
+  }
+
   if (state.sessionEnded || state.claimDialogOpen || state.confirmationDialogOpen) {
     return;
   }
