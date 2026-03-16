@@ -194,6 +194,18 @@ body.has-top-bar.play-page {
   align-items: center;
 }
 
+.top-nav-play-close {
+  color: #dc3545;
+  text-decoration: none;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.top-nav-play-close:hover,
+.top-nav-play-close:focus {
+  color: #ff6b6b;
+}
+
 .play-info-menu {
   position: relative;
   display: none;
