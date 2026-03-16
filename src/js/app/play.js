@@ -408,11 +408,10 @@ function clampClaimDialogToViewport() {
   const minimumLeft = 8;
   const minimumTop = 56;
   const maximumLeft = Math.max(minimumLeft, window.innerWidth - claimDialog.offsetWidth - 8);
-  const maximumTop = Math.max(minimumTop, window.innerHeight - claimDialog.offsetHeight - 8);
   const currentLeft = Number.parseFloat(claimDialog.style.left || '');
   const currentTop = Number.parseFloat(claimDialog.style.top || '');
   const nextLeft = Number.isFinite(currentLeft) ? Math.min(Math.max(currentLeft, minimumLeft), maximumLeft) : minimumLeft;
-  const nextTop = Number.isFinite(currentTop) ? Math.min(Math.max(currentTop, minimumTop), maximumTop) : minimumTop;
+  const nextTop = Number.isFinite(currentTop) ? Math.max(currentTop, minimumTop) : minimumTop;
 
   claimDialog.style.left = `${nextLeft}px`;
   claimDialog.style.top = `${nextTop}px`;
@@ -1225,8 +1224,9 @@ claimDialogHeader.addEventListener('pointermove', (event) => {
     return;
   }
 
+  const clampedClientY = Math.min(event.clientY, window.innerHeight - 10);
   claimDialog.style.left = `${event.clientX - state.claimDragOffsetX}px`;
-  claimDialog.style.top = `${event.clientY - state.claimDragOffsetY}px`;
+  claimDialog.style.top = `${clampedClientY - state.claimDragOffsetY}px`;
   claimDialog.style.transform = 'none';
   clampClaimDialogToViewport();
 });
