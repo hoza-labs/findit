@@ -298,6 +298,13 @@ function setClaimDialogOpacity(opacity) {
   claimDialog.style.setProperty('--claim-dialog-content-opacity', String(opacity));
 }
 
+function isClaimDialogPeeking() {
+  const currentOpacity = Number.parseFloat(
+    claimDialog.style.getPropertyValue('--claim-dialog-content-opacity') || '1'
+  );
+  return claimDialogPeekRestoreTimerId !== null || currentOpacity < 1;
+}
+
 function runClaimDialogPeek() {
   stopClaimDialogPeekTimer();
   setClaimDialogOpacity(0.2);
@@ -1076,6 +1083,12 @@ claimDialogCancelButton.addEventListener('click', () => {
 });
 
 claimDialogPeekButton.addEventListener('click', () => {
+  if (isClaimDialogPeeking()) {
+    stopClaimDialogPeekTimer();
+    setClaimDialogOpacity(1);
+    return;
+  }
+
   runClaimDialogPeek();
 });
 
