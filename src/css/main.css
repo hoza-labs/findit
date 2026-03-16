@@ -15,6 +15,11 @@ body.has-top-bar {
   padding-top: 3.5rem;
 }
 
+body.has-top-bar.play-page {
+  padding-top: 4rem;
+  overflow: hidden;
+}
+
 .top-next-bar {
   --bs-navbar-padding-y: 0.35rem;
   min-height: 3rem;
@@ -147,6 +152,112 @@ body.has-top-bar {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+}
+
+.top-next-bar--playing .container-fluid {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.play-page .top-page-links {
+  display: none;
+}
+
+.play-page .top-page-menu-mobile {
+  display: block;
+}
+
+.top-nav-play-summary {
+  justify-self: center;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.top-nav-play-summary > p {
+  margin: 0;
+  max-width: 100%;
+  text-align: center;
+  color: #fff;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-nav-play-actions {
+  justify-self: end;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.play-info-menu {
+  position: relative;
+  display: none;
+}
+
+.play-info-menu summary {
+  list-style: none;
+  cursor: pointer;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.play-info-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.play-info-menu-panel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  background: #fff;
+  color: #212529;
+  border: 1px solid var(--card-border);
+  border-radius: 0.6rem;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  z-index: 2100;
+}
+
+.play-info-menu-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.play-info-menu-list li + li {
+  margin-top: 0.2rem;
+}
+
+.play-info-menu-list li {
+  white-space: nowrap;
+}
+
+.top-nav-play-summary.is-collapsed > p {
+  display: none;
+}
+
+.top-nav-play-summary.is-collapsed .play-info-menu {
+  display: block;
+}
+
+.top-nav-play-summary.is-icon-only #play-info-menu-summary {
+  width: auto;
+  height: auto;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 @media (max-width: 900px) {
@@ -640,29 +751,87 @@ body.has-top-bar {
   min-height: 100vh;
 }
 
-.play-header {
+.play-main-shell {
+  height: calc(100vh - 4rem);
   display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: end;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  overflow: hidden;
 }
 
-.play-meta-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
+.play-status-line {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.play-board {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .play-card-grid {
+  --play-card-size: 280px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(var(--play-card-size), var(--play-card-size)));
+  grid-auto-rows: var(--play-card-size);
+  justify-content: center;
+  align-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 
 .play-card-target {
-  width: min(100%, 320px);
+  width: 100%;
+  height: 100%;
   margin-inline: auto;
+}
+
+.play-card {
+  width: var(--play-card-size);
+  height: var(--play-card-size);
+}
+
+.play-card .card-body {
+  padding: 0.5rem;
+  width: 100%;
+  height: 100%;
+}
+
+#play-board-empty {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 900px) {
+  .top-next-bar--playing .container-fluid {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 768px) {
+  body.has-top-bar.play-page {
+    padding-top: 4.5rem;
+  }
+
+  .play-main-shell {
+    height: calc(100vh - 4.5rem);
+  }
+
+  .top-nav-play-actions {
+    gap: 0.35rem;
+  }
+
+  .top-nav-play-actions .btn {
+    padding-inline: 0.5rem;
+  }
 }
 
 #play-board-empty {

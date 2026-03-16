@@ -11,6 +11,10 @@ import { createPlayHatState, drawNextHand } from '../modules/playHat.js';
 import { parsePositiveNumberInput, parsePositiveWholeNumberInput } from '../modules/playNumberValidation.js';
 
 const playSubtitle = document.querySelector('#play-subtitle');
+const playInfoMenu = document.querySelector('#play-info-menu');
+const playInfoMenuSummary = document.querySelector('#play-info-menu-summary');
+const playInfoMenuList = document.querySelector('#play-info-menu-list');
+const playStatusLine = document.querySelector('#play-status-line');
 const handStatus = document.querySelector('#hand-status');
 const countdownStatus = document.querySelector('#countdown-status');
 const playerStatus = document.querySelector('#player-status');
@@ -281,10 +285,84 @@ function getRandomInteger(min, max) {
 
 function updateHeader(players, settings) {
   const deckName = tempDeck.deckName || '(new untitled deck)';
-  const limitText = describePlayLimit(settings);
-  const playersText = players.length > 0 ? `${players.length} player${players.length === 1 ? '' : 's'}` : 'no named players';
-  playSubtitle.textContent = `${deckName} | n=${tempDeck.symbolsPerCard} | ${limitText} | ${playersText}`;
+  const summaryItems = [
+    deckName,
+    `n=${tempDeck.symbolsPerCard}`,
+    describePlayLimit(settings),
+    players.length > 0 ? `${players.length} player${players.length === 1 ? '' : 's'}` : 'no named players'
+  ];
+  const summaryText = summaryItems.join(' | ');
+  playSubtitle.textContent = summaryText;
+  playInfoMenuList.innerHTML = '';
+  for (const item of summaryItems) {
+    const listItem = document.createElement('li');
+    listItem.textContent = item;
+    playInfoMenuList.appendChild(listItem);
+  }
+  updatePlayInfoSummaryLayout();
   document.title = `FindIt | Playing ${deckName}`;
+}
+
+function updatePlayCardGridSize(cardCount = state.currentCardsShownCount) {
+  if (!cardCount || cardCount <= 0) {
+    return;
+  }
+
+  const boardRect = playCardGrid.getBoundingClientRect();
+  const availableWidth = Math.max(0, boardRect.width);
+  const availableHeight = Math.max(0, boardRect.height);
+  if (!availableWidth || !availableHeight) {
+    return;
+  }
+
+  const gap = 12;
+  let bestSize = 0;
+
+  for (let columns = 1; columns <= cardCount; columns += 1) {
+    const rows = Math.ceil(cardCount / columns);
+    const widthSize = (availableWidth - gap * (columns - 1)) / columns;
+    const heightSize = (availableHeight - gap * (rows - 1)) / rows;
+    const candidateSize = Math.floor(Math.min(widthSize, heightSize));
+    if (candidateSize > bestSize) {
+      bestSize = candidateSize;
+    }
+  }
+
+  const clampedSize = Math.max(96, Math.min(320, availableWidth, availableHeight, bestSize));
+  playCardGrid.style.setProperty('--play-card-size', `${clampedSize}px`);
+}
+
+function updatePlayStatusLine() {
+  const handText = handStatus.textContent.trim();
+  const countdownText = countdownStatus.textContent.trim();
+  const parts = [handText, countdownText].filter(Boolean);
+  playStatusLine.textContent = parts.join(' | ');
+}
+
+function updatePlayInfoSummaryLayout() {
+  const summaryContainer = playSubtitle.parentElement;
+  if (!summaryContainer) {
+    return;
+  }
+
+  summaryContainer.classList.remove('is-collapsed', 'is-icon-only');
+  playInfoMenu.hidden = true;
+  playInfoMenu.open = false;
+  playInfoMenuSummary.textContent = 'Game info';
+  playInfoMenuSummary.setAttribute('aria-label', 'Open game information');
+
+  if (playSubtitle.scrollWidth <= playSubtitle.clientWidth) {
+    return;
+  }
+
+  summaryContainer.classList.add('is-collapsed');
+  playInfoMenu.hidden = false;
+
+  if (summaryContainer.clientWidth < 110) {
+    summaryContainer.classList.add('is-icon-only');
+    playInfoMenuSummary.textContent = 'ⓘ';
+    playInfoMenuSummary.setAttribute('aria-label', 'Open game information');
+  }
 }
 
 function positionClaimDialogAtCenter() {
@@ -341,6 +419,7 @@ function pauseCountdownForDialog() {
   state.countdownRemainingMs = Math.max(0, state.countdownEndsAtMs - Date.now());
   stopCountdown();
   countdownStatus.textContent = `Countdown paused at ${(state.countdownRemainingMs / 1000).toFixed(1)}s.`;
+  updatePlayStatusLine();
 }
 
 function setPlayActionButtonsDisabled(disabled) {
@@ -386,6 +465,7 @@ function resumeAfterNavigationPrompt() {
 
   if (settings.lengthOfPlayUnits === 'minutes' && settings.lengthOfPlay && state.currentCardsShownCount > 0) {
     handStatus.textContent = getMinuteHandStatus(settings, state.currentCardsShownCount);
+    updatePlayStatusLine();
     startMinuteLimitTimer(settings, players);
   }
 
@@ -572,6 +652,7 @@ function renderCompletion(settings, players, reason = '') {
   handStatus.textContent = getCompletionText(settings, reason);
   countdownStatus.textContent = `Elapsed: ${formatElapsedTime(getActiveElapsedMilliseconds())}`;
   playerStatus.textContent = `Total hands played: ${state.completedHandsCount}`;
+  updatePlayStatusLine();
 }
 
 function commitPendingHand() {
@@ -850,6 +931,7 @@ function startMinuteLimitTimer(settings, players) {
     }
 
     handStatus.textContent = getMinuteHandStatus(settings, state.currentCardsShownCount);
+    updatePlayStatusLine();
     if (hasReachedPlayLimit(settings)) {
       renderCompletion(settings, players, 'minutes');
     }
@@ -863,6 +945,7 @@ function startCountdown(settings) {
     countdownStatus.textContent = settings.countdownSeconds > 0
       ? 'Final hand. Countdown complete.'
       : 'No countdown. Advance manually.';
+    updatePlayStatusLine();
     return;
   }
 
@@ -871,6 +954,7 @@ function startCountdown(settings) {
     : settings.countdownSeconds * 1000;
   state.countdownEndsAtMs = Date.now() + state.countdownRemainingMs;
   countdownStatus.textContent = `Auto-advancing in ${(state.countdownRemainingMs / 1000).toFixed(1)}s.`;
+  updatePlayStatusLine();
   countdownTimerId = window.setInterval(() => {
     const remainingMs = Math.max(0, state.countdownEndsAtMs - Date.now());
     state.countdownRemainingMs = remainingMs;
@@ -882,11 +966,13 @@ function startCountdown(settings) {
         return;
       }
       countdownStatus.textContent = 'Advancing...';
+      updatePlayStatusLine();
       void renderHand();
       return;
     }
 
     countdownStatus.textContent = `Auto-advancing in ${(remainingMs / 1000).toFixed(1)}s.`;
+    updatePlayStatusLine();
   }, 100);
 }
 
@@ -948,6 +1034,7 @@ async function renderHand() {
   if (isFinalDeckExhausted(settings, state.hatState)) {
     handStatus.textContent = getCurrentHandStatus(settings, 0, state.hatState);
     countdownStatus.textContent = 'Final deck complete. Click Finished to view statistics.';
+    updatePlayStatusLine();
     playCardGrid.innerHTML = '';
     playBoardEmpty.hidden = true;
     setNextHandButtonLabel('Finished');
@@ -966,9 +1053,11 @@ async function renderHand() {
   state.hatState = drawResult.state;
   const cardIndices = state.hatState.displayedCardIndices;
   state.currentCardsShownCount = cardIndices.length;
+  updatePlayCardGridSize(cardIndices.length);
   const pattern = getPatternSources();
   handStatus.textContent = getCurrentHandStatus(settings, cardsToShow, state.hatState);
   renderPlayerClaimPrompt();
+  updatePlayStatusLine();
 
   for (let i = 0; i < cardIndices.length; i += 1) {
     const cardIndex = cardIndices[i];
@@ -981,14 +1070,10 @@ async function renderHand() {
     const cardBody = document.createElement('div');
     cardBody.className = 'card-body';
 
-    const title = document.createElement('h2');
-    title.className = 'h6 mb-2';
-    title.textContent = `Card ${cardIndex + 1}`;
-
     const target = document.createElement('div');
     target.className = 'sample-card-target play-card-target';
 
-    cardBody.append(title, target);
+    cardBody.append(target);
     card.appendChild(cardBody);
     playCardGrid.appendChild(card);
 
@@ -1029,6 +1114,7 @@ function showEmptyState(message) {
   handStatus.textContent = '';
   countdownStatus.textContent = '';
   playerStatus.textContent = '';
+  updatePlayStatusLine();
   resultsButton.hidden = true;
   resultsButton.disabled = true;
   nextHandButton.disabled = true;
@@ -1186,6 +1272,8 @@ window.addEventListener('pageshow', () => {
 
 window.addEventListener('resize', () => {
   clampClaimDialogToViewport();
+  updatePlayCardGridSize();
+  updatePlayInfoSummaryLayout();
 });
 
 resetPlayerScores();

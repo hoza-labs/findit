@@ -8,18 +8,8 @@
     <link rel="stylesheet" href="./css/main.css" />
   </head>
   <body class="has-top-bar play-page">
-    <nav class="top-next-bar navbar navbar-expand navbar-dark bg-primary fixed-top">
+    <nav class="top-next-bar top-next-bar--playing navbar navbar-expand navbar-dark bg-primary fixed-top">
       <div class="container-fluid">
-        <div class="top-page-links">
-          <a href="./index.html" class="nav-link fw-semibold">Home</a>
-          <a href="./basic-info.html" class="nav-link fw-semibold">Basic Info</a>
-          <a href="./standard-images.html" class="nav-link fw-semibold">Standard Images</a>
-          <a href="./user-images.html" class="nav-link fw-semibold">User Images</a>
-          <a href="./web-images.html" class="nav-link fw-semibold">Web Images</a>
-          <a href="./preview.html" class="nav-link fw-semibold">Preview</a>
-          <a href="./play.html" class="nav-link fw-semibold is-current">Play!</a>
-          <a href="./save.html" class="nav-link fw-semibold">Save</a>
-        </div>
         <details class="top-page-menu-mobile">
           <summary aria-label="Open page navigation">
             <span class="top-page-menu-icon" aria-hidden="true"><span></span><span></span><span></span></span>
@@ -35,44 +25,28 @@
             <li><a href="./save.html" class="top-page-menu-link">Save</a></li>
           </ul>
         </details>
-        <div class="top-nav-step-links">
-          <a href="./preview.html" class="btn btn-sm btn-outline-light">Prev</a>
-          <a href="./save.html" class="btn btn-sm btn-light top-nav-next-link">Next</a>
+        <div class="top-nav-play-summary">
+          <p id="play-subtitle" class="mb-0"></p>
+          <details id="play-info-menu" class="play-info-menu" hidden>
+            <summary id="play-info-menu-summary" aria-label="Open game information">Game info</summary>
+            <div class="play-info-menu-panel">
+              <ul id="play-info-menu-list" class="play-info-menu-list mb-0"></ul>
+            </div>
+          </details>
+        </div>
+        <div class="top-nav-play-actions">
+          <button id="results-button" type="button" class="btn btn-sm btn-outline-light" hidden>Results</button>
+          <button id="next-hand-button" type="button" class="btn btn-sm btn-light">Next hand</button>
+          <button id="restart-button" type="button" class="btn btn-sm btn-light">Restart</button>
         </div>
       </div>
     </nav>
 
-    <main class="container-fluid preview-page-shell py-4">
-      <header class="play-header mb-4">
-        <div>
-          <h1 class="display-6 mb-1">Playing</h1>
-          <p id="play-subtitle" class="text-muted mb-0"></p>
-        </div>
-        <div class="d-flex gap-2 flex-wrap">
-          <button id="results-button" type="button" class="btn btn-outline-secondary" hidden>Results</button>
-          <button id="next-hand-button" type="button" class="btn btn-outline-primary">Next hand</button>
-          <button id="restart-button" type="button" class="btn btn-primary">Restart</button>
-        </div>
-      </header>
-
-      <section class="card shadow-sm mb-3">
-        <div class="card-body">
-          <div class="play-meta-grid">
-            <div>
-              <h2 class="h6 mb-1">Current hand</h2>
-              <p id="hand-status" class="mb-0 text-muted"></p>
-            </div>
-            <div>
-              <h2 class="h6 mb-1">Countdown</h2>
-              <p id="countdown-status" class="mb-0 text-muted"></p>
-            </div>
-            <div>
-              <h2 class="h6 mb-1">Players</h2>
-              <p id="player-status" class="mb-0 text-muted"></p>
-            </div>
-          </div>
-        </div>
-      </section>
+    <main class="container-fluid preview-page-shell play-main-shell">
+      <p id="play-status-line" class="play-status-line text-muted mb-0"></p>
+      <p id="hand-status" class="visually-hidden" aria-hidden="true"></p>
+      <p id="countdown-status" class="visually-hidden" aria-hidden="true"></p>
+      <p id="player-status" class="visually-hidden" aria-hidden="true"></p>
 
       <section class="play-board">
         <div id="play-board-empty" class="alert alert-warning" hidden></div>
