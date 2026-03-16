@@ -20,6 +20,7 @@ const countdownStatus = document.querySelector('#countdown-status');
 const playerStatus = document.querySelector('#player-status');
 const playCardGrid = document.querySelector('#play-card-grid');
 const playBoardEmpty = document.querySelector('#play-board-empty');
+const playBoard = document.querySelector('.play-board');
 const resultsButton = document.querySelector('#results-button');
 const nextHandButton = document.querySelector('#next-hand-button');
 const restartButton = document.querySelector('#restart-button');
@@ -365,9 +366,16 @@ function updatePlayInfoSummaryLayout() {
   }
 }
 
-function positionClaimDialogAtCenter() {
-  claimDialog.style.left = `${Math.max(16, Math.round((window.innerWidth - claimDialog.offsetWidth) / 2))}px`;
-  claimDialog.style.top = `${Math.max(72, Math.round((window.innerHeight - claimDialog.offsetHeight) / 2))}px`;
+function positionClaimDialogOverPlayBoard() {
+  const playBoardRect = playBoard?.getBoundingClientRect();
+  if (!playBoardRect || playBoardRect.width <= 0 || playBoardRect.height <= 0) {
+    return;
+  }
+
+  claimDialog.style.left = `${Math.round(playBoardRect.left)}px`;
+  claimDialog.style.top = `${Math.round(playBoardRect.top)}px`;
+  claimDialog.style.width = `${Math.round(playBoardRect.width)}px`;
+  claimDialog.style.height = `${Math.round(playBoardRect.height)}px`;
   claimDialog.style.transform = 'none';
   clampClaimDialogToViewport();
 }
@@ -558,7 +566,7 @@ function openClaimDialog(message) {
   claimDialog.hidden = false;
   setClaimDialogOpacity(1);
   setPlayActionButtonsDisabled(true);
-  positionClaimDialogAtCenter();
+  positionClaimDialogOverPlayBoard();
   pauseCountdownForDialog();
 }
 
@@ -1271,7 +1279,11 @@ window.addEventListener('pageshow', () => {
 });
 
 window.addEventListener('resize', () => {
-  clampClaimDialogToViewport();
+  if (state.claimDialogOpen && !state.claimDragging) {
+    positionClaimDialogOverPlayBoard();
+  } else {
+    clampClaimDialogToViewport();
+  }
   updatePlayCardGridSize();
   updatePlayInfoSummaryLayout();
 });
