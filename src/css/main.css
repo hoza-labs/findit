@@ -547,6 +547,10 @@ body.has-top-bar.play-page {
   opacity: 0.7;
 }
 
+.image-tile.in-deck .image-preview-mask {
+  background: #e9ecef;
+}
+
 .image-menu {
   position: absolute;
   top: 0.35rem;
@@ -598,13 +602,23 @@ body.has-top-bar.play-page {
   background: #f1f3f5;
 }
 
-.image-preview {
+.image-preview-mask {
   width: 100%;
   aspect-ratio: 1 / 1;
-  object-fit: contain;
-  background: #f8f9fa;
-  border-radius: 0.25rem;
+  display: grid;
+  place-items: center;
   border: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.image-preview {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  -webkit-clip-path: circle(farthest-side at 50% 50%);
+  clip-path: circle(farthest-side at 50% 50%);
 }
 
 .image-meta {

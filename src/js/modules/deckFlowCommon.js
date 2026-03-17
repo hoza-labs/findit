@@ -64,6 +64,9 @@ export function createImageTile({
     tile.title = tooltipText;
   }
 
+  const imageFrame = document.createElement('div');
+  imageFrame.className = 'image-preview-mask';
+
   const image = document.createElement('img');
   image.className = 'image-preview';
   image.src = src;
@@ -116,7 +119,8 @@ export function createImageTile({
     tile.appendChild(menu);
   }
 
-  tile.append(image, meta, button);
+  imageFrame.appendChild(image);
+  tile.append(imageFrame, meta, button);
   // Keep menu as top-most clickable overlay.
   const menu = tile.querySelector('.image-menu');
   if (menu) {
