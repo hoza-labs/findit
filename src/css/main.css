@@ -629,14 +629,16 @@ body.has-top-bar.play-page {
   justify-content: space-between;
   gap: 0.5rem;
   align-items: center;
+  min-width: max-content;
 }
 
 .selected-ref-text {
-  min-width: 0;
+  min-width: max-content;
 }
 
 .selected-ref-detail {
   font-size: 0.875rem;
+  white-space: nowrap;
 }
 
 .save-as-dialog {
