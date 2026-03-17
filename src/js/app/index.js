@@ -7,6 +7,7 @@ const existingDecksElement = document.querySelector('#existing-decks');
 const newDeckButton = document.querySelector('#new-deck-button');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
+const homeNextLink = document.querySelector('#home-next-link');
 
 const saveChangesDialog = document.querySelector('#save-changes-dialog');
 const saveChangesYesButton = document.querySelector('#save-changes-yes');
@@ -273,4 +274,5 @@ const tempDeck = await repository.getTempDeck();
 const normalizedTempDeck = tempDeck ?? createEmptyTempDeck();
 renderDeckStatusLine(deckStatusLine, normalizedTempDeck);
 renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Home', tempDeck: normalizedTempDeck });
+homeNextLink.hidden = !normalizedTempDeck.dirty;
 await renderExistingDecks();
