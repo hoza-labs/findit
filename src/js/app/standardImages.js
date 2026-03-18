@@ -1,6 +1,7 @@
-﻿import { addImageRef, createImageRef, hasImageRef, removeImageRef } from '../modules/imageRefs.js';
+import { addImageRef, createImageRef, hasImageRef, removeImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
 import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { getStandardImageSrc } from '../modules/standardImageFiles.js';
 
 const standardImagesElement = document.querySelector('#standard-images');
 const deckStatusLine = document.querySelector('#deck-status-line');
@@ -23,7 +24,7 @@ function renderStandardImages(fileNames) {
   for (const fileName of fileNames) {
     const imageRef = createImageRef('standard', fileName);
     const isSelected = hasImageRef(tempDeck, imageRef);
-    const src = `./assets/deck-images/${fileName}`;
+    const src = getStandardImageSrc(fileName);
 
     standardImagesElement.appendChild(
       createImageTile({

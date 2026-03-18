@@ -3,6 +3,7 @@ import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, rende
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
 import { describeImageRef, removeImageRefAtIndex } from '../modules/imageRefs.js';
+import { getStandardImageSrc } from '../modules/standardImageFiles.js';
 
 const deckPatternElement = document.querySelector('#deck-pattern');
 const selectedImagesElement = document.querySelector('#selected-images');
@@ -53,7 +54,7 @@ function updateHeader() {
 
 function resolveImageSrc(ref, placeholderNumber) {
   if (ref.source === 'standard') {
-    return `./assets/deck-images/${ref.id}`;
+    return getStandardImageSrc(ref.id);
   }
 
   if (ref.source === 'user') {

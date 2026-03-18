@@ -1,0 +1,15 @@
+export const STANDARD_IMAGE_ALIASES = Object.freeze({
+  "birthday-cake.jpeg": "birthday-cake.png",
+  "blue-flower.jpeg": "blue-flower.png",
+  "brown-puppy.jpg": "brown-puppy.png",
+  "bunch-of-bananas.jpg": "bunch-of-bananas.png",
+  "grapes.jpeg": "grapes.png",
+  "ladybug-cuter.jpg": "ladybug-cuter.png",
+  "pink-candy.jpeg": "pink-candy.png",
+  "pumpkin.jpeg": "pumpkin.png",
+  "red-and-white-lollipop.jpeg": "red-and-white-lollipop.png",
+  "red-flower.jpeg": "red-flower.png",
+  "slice-of-pizza.jpeg": "slice-of-pizza.png",
+  "strawberry.jpg": "strawberry.png",
+  "yellow-flower.jpeg": "yellow-flower.png",
+});

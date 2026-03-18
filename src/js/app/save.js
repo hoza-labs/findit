@@ -2,6 +2,7 @@ import { createEmptyTempDeck, createTempDeckFromSavedDeck, markSaved } from '../
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
+import { getStandardImageSrc } from '../modules/standardImageFiles.js';
 
 const pageHeading = document.querySelector('header h1');
 const deckStatusLine = document.querySelector('#deck-status-line');
@@ -44,7 +45,7 @@ function updateHeader() {
 
 function resolveImageSrc(ref, placeholderNumber) {
   if (ref?.source === 'standard') {
-    return `./assets/deck-images/${ref.id}`;
+    return getStandardImageSrc(ref.id);
   }
 
   if (ref?.source === 'user') {

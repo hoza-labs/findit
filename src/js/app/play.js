@@ -9,6 +9,7 @@ import {
 } from '../modules/playDeckLimit.js';
 import { createPlayHatState, drawNextHand } from '../modules/playHat.js';
 import { parsePositiveNumberInput, parsePositiveWholeNumberInput } from '../modules/playNumberValidation.js';
+import { getStandardImageSrc } from '../modules/standardImageFiles.js';
 
 const playSubtitle = document.querySelector('#play-subtitle');
 const playInfoMenu = document.querySelector('#play-info-menu');
@@ -116,7 +117,7 @@ function stopClaimDialogPeekTimer() {
 
 function resolveImageSrc(ref, placeholderNumber) {
   if (ref?.source === 'standard') {
-    return `./assets/deck-images/${ref.id}`;
+    return getStandardImageSrc(ref.id);
   }
 
   if (ref?.source === 'user') {
