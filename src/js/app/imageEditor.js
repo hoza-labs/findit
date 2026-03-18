@@ -212,6 +212,22 @@ function bindEditorInteractions() {
 }
 
 function openConfirmation(action) {
+  if (action === 'save' && masksEqual(currentMask, savedMask)) {
+    void performSave();
+    return;
+  }
+
+  if (action === 'cancel' && masksEqual(currentMask, savedMask)) {
+    navigateBack();
+    return;
+  }
+
+  if (action === 'reset' && isDefaultMask(currentMask)) {
+    currentMask = clampCurrentMask(getDefaultImageMask());
+    renderOverlay();
+    return;
+  }
+
   pendingAction = action;
   const { title, message, confirmLabel, confirmClassName } = getConfirmationCopy(action);
   confirmationTitle.textContent = title;
@@ -231,20 +247,7 @@ async function performConfirmedAction() {
   closeConfirmation();
 
   if (action === 'save') {
-    if (!imageRecord) {
-      return;
-    }
-
-    const maskToSave = clampCurrentMask(currentMask);
-    if (source === 'user') {
-      await repository.saveUserImageMask(imageRecord.id, maskToSave);
-    } else {
-      await repository.saveWebImageMask(imageRecord.id, maskToSave);
-    }
-
-    savedMask = maskToSave;
-    allowNavigation = true;
-    window.location.assign(returnHref);
+    await performSave();
     return;
   }
 
@@ -255,8 +258,7 @@ async function performConfirmedAction() {
   }
 
   if (action === 'cancel') {
-    allowNavigation = true;
-    window.location.assign(returnHref);
+    navigateBack();
   }
 }
 
@@ -411,6 +413,31 @@ function masksEqual(left, right) {
   return Math.abs(left.centerX - right.centerX) < 0.0001
     && Math.abs(left.centerY - right.centerY) < 0.0001
     && Math.abs(left.radius - right.radius) < 0.0001;
+}
+
+function isDefaultMask(mask) {
+  return masksEqual(clampCurrentMask(mask), clampCurrentMask(getDefaultImageMask()));
+}
+
+async function performSave() {
+  if (!imageRecord) {
+    return;
+  }
+
+  const maskToSave = clampCurrentMask(currentMask);
+  if (source === 'user') {
+    await repository.saveUserImageMask(imageRecord.id, maskToSave);
+  } else {
+    await repository.saveWebImageMask(imageRecord.id, maskToSave);
+  }
+
+  savedMask = maskToSave;
+  navigateBack();
+}
+
+function navigateBack() {
+  allowNavigation = true;
+  window.location.assign(returnHref);
 }
 
 function showError(message) {
