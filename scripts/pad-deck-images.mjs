@@ -1,3 +1,5 @@
+// Pads standard deck images with transparent margin when circular canvas rendering would clip them.
+// Uses canvas first and falls back to ImageMagick for WebP/AVIF decode via MAGICK_PATH or `magick`.
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
