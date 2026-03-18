@@ -128,21 +128,22 @@ function bindActionButtons() {
 
 function bindEditorInteractions() {
   editorStage.addEventListener('pointerdown', (event) => {
-    if (!imageRecord || editorImage.clientWidth === 0 || editorImage.clientHeight === 0) {
+    const metrics = getEditorMetrics();
+    if (!imageRecord || !metrics) {
       return;
     }
 
-    const point = getPointerPoint(event);
+    const point = getPointerPoint(event, { clampToStage: false });
     if (!point) {
       return;
     }
 
-    const hitMode = getHitMode(point);
+    const hitMode = getHitMode(point, metrics);
     if (!hitMode) {
       return;
     }
 
-    const maskPixels = imageMaskToPixels(currentMask, editorImage.clientWidth, editorImage.clientHeight);
+    const maskPixels = getDisplayMaskPixels(currentMask, metrics);
     dragState = {
       mode: hitMode,
       pointerId: event.pointerId,
@@ -155,33 +156,32 @@ function bindEditorInteractions() {
   });
 
   editorStage.addEventListener('pointermove', (event) => {
-    const point = getPointerPoint(event);
+    const metrics = getEditorMetrics();
+    const point = getPointerPoint(event, { clampToStage: Boolean(dragState) });
     if (!point) {
       return;
     }
 
     if (!dragState || dragState.pointerId !== event.pointerId) {
-      updateCursor(point);
+      updateCursor(point, metrics);
       return;
     }
 
-    const width = editorImage.clientWidth;
-    const height = editorImage.clientHeight;
     const deltaX = point.x - dragState.startPoint.x;
     const deltaY = point.y - dragState.startPoint.y;
 
     if (dragState.mode === 'move') {
-      currentMask = clampCurrentMask(imageMaskFromPixels({
+      currentMask = clampCurrentMask(displayMaskPixelsToMask({
         centerX: dragState.startMaskPixels.centerX + deltaX,
         centerY: dragState.startMaskPixels.centerY + deltaY,
         radius: dragState.startMaskPixels.radius
-      }, width, height));
+      }, metrics));
     } else if (dragState.mode === 'resize') {
-      currentMask = clampCurrentMask(imageMaskFromPixels({
+      currentMask = clampCurrentMask(displayMaskPixelsToMask({
         centerX: dragState.startMaskPixels.centerX,
         centerY: dragState.startMaskPixels.centerY,
         radius: Math.hypot(point.x - dragState.startMaskPixels.centerX, point.y - dragState.startMaskPixels.centerY)
-      }, width, height));
+      }, metrics));
     }
 
     renderOverlay();
@@ -193,7 +193,7 @@ function bindEditorInteractions() {
       editorStage.releasePointerCapture(event.pointerId);
     }
 
-    updateCursor(getPointerPoint(event));
+    updateCursor(getPointerPoint(event, { clampToStage: false }), getEditorMetrics());
   });
 
   editorStage.addEventListener('pointercancel', () => {
@@ -202,7 +202,7 @@ function bindEditorInteractions() {
   });
 
   window.addEventListener('resize', () => {
-    if (!imageRecord || editorImage.clientWidth === 0 || editorImage.clientHeight === 0) {
+    if (!imageRecord || !getEditorMetrics()) {
       return;
     }
 
@@ -261,24 +261,23 @@ async function performConfirmedAction() {
 }
 
 function renderOverlay() {
-  const width = editorImage.clientWidth;
-  const height = editorImage.clientHeight;
-  if (!width || !height) {
+  const metrics = getEditorMetrics();
+  if (!metrics) {
     return;
   }
 
   currentMask = clampCurrentMask(currentMask);
-  const maskPixels = imageMaskToPixels(currentMask, width, height);
-  const handleWidth = getHandleWidth(width, height);
-  const visibleStrokeWidth = getVisibleStrokeWidth(width, height);
+  const maskPixels = getDisplayMaskPixels(currentMask, metrics);
+  const handleWidth = getHandleWidth(metrics.stageWidth, metrics.stageHeight);
+  const visibleStrokeWidth = getVisibleStrokeWidth(metrics.stageWidth, metrics.stageHeight);
   const path = [
-    `M0 0 H${width} V${height} H0 Z`,
+    `M0 0 H${metrics.stageWidth} V${metrics.stageHeight} H0 Z`,
     `M ${maskPixels.centerX} ${maskPixels.centerY} m -${maskPixels.radius}, 0`,
     `a ${maskPixels.radius} ${maskPixels.radius} 0 1 0 ${maskPixels.radius * 2} 0`,
     `a ${maskPixels.radius} ${maskPixels.radius} 0 1 0 -${maskPixels.radius * 2} 0`
   ].join(' ');
 
-  editorOverlay.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  editorOverlay.setAttribute('viewBox', `0 0 ${metrics.stageWidth} ${metrics.stageHeight}`);
   editorDimPath.setAttribute('d', path);
   editorHitRing.setAttribute('cx', String(maskPixels.centerX));
   editorHitRing.setAttribute('cy', String(maskPixels.centerY));
@@ -299,7 +298,8 @@ function renderOverlay() {
 }
 
 function clampCurrentMask(mask) {
-  return clampImageMask(mask, editorImage.clientWidth || editorImage.naturalWidth, editorImage.clientHeight || editorImage.naturalHeight, {
+  const metrics = getEditorMetrics();
+  return clampImageMask(mask, metrics?.imageWidth || editorImage.naturalWidth, metrics?.imageHeight || editorImage.naturalHeight, {
     minRadius: 10
   });
 }
@@ -331,12 +331,14 @@ function getConfirmationCopy(action) {
   };
 }
 
-function getHitMode(point) {
-  const width = editorImage.clientWidth;
-  const height = editorImage.clientHeight;
-  const maskPixels = imageMaskToPixels(currentMask, width, height);
+function getHitMode(point, metrics = getEditorMetrics()) {
+  if (!metrics) {
+    return '';
+  }
+
+  const maskPixels = getDisplayMaskPixels(currentMask, metrics);
   const distance = Math.hypot(point.x - maskPixels.centerX, point.y - maskPixels.centerY);
-  const edgeWidth = getHandleWidth(width, height);
+  const edgeWidth = getHandleWidth(metrics.stageWidth, metrics.stageHeight);
 
   if (Math.abs(distance - maskPixels.radius) <= edgeWidth / 2) {
     return 'resize';
@@ -349,13 +351,13 @@ function getHitMode(point) {
   return '';
 }
 
-function updateCursor(point) {
+function updateCursor(point, metrics = getEditorMetrics()) {
   if (!point) {
     editorStage.style.cursor = 'default';
     return;
   }
 
-  const hitMode = dragState?.mode ?? getHitMode(point);
+  const hitMode = dragState?.mode ?? getHitMode(point, metrics);
   editorStage.style.cursor = hitMode === 'resize'
     ? 'nwse-resize'
     : hitMode === 'move'
@@ -363,19 +365,22 @@ function updateCursor(point) {
       : 'default';
 }
 
-function getPointerPoint(event) {
-  const rect = editorImage.getBoundingClientRect();
+function getPointerPoint(event, { clampToStage }) {
+  const rect = editorStage.getBoundingClientRect();
   if (!rect.width || !rect.height) {
     return null;
   }
 
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-  if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
+  const rawX = event.clientX - rect.left;
+  const rawY = event.clientY - rect.top;
+  if (!clampToStage && (rawX < 0 || rawY < 0 || rawX > rect.width || rawY > rect.height)) {
     return null;
   }
 
-  return { x, y };
+  return {
+    x: clamp(rawX, 0, rect.width),
+    y: clamp(rawY, 0, rect.height)
+  };
 }
 
 function getHandleWidth(width, height) {
@@ -411,6 +416,46 @@ function showError(message) {
   pageStatus.textContent = 'Image Editor is unavailable.';
   pageHeading.textContent = 'Image Editor';
   editorStage.hidden = true;
+}
+
+function getEditorMetrics() {
+  const stageWidth = editorStage.clientWidth;
+  const stageHeight = editorStage.clientHeight;
+  const imageWidth = editorImage.clientWidth;
+  const imageHeight = editorImage.clientHeight;
+  if (!stageWidth || !stageHeight || !imageWidth || !imageHeight) {
+    return null;
+  }
+
+  return {
+    stageWidth,
+    stageHeight,
+    imageWidth,
+    imageHeight,
+    imageLeft: (stageWidth - imageWidth) / 2,
+    imageTop: (stageHeight - imageHeight) / 2
+  };
+}
+
+function getDisplayMaskPixels(mask, metrics) {
+  const imageMaskPixels = imageMaskToPixels(mask, metrics.imageWidth, metrics.imageHeight);
+  return {
+    centerX: metrics.imageLeft + imageMaskPixels.centerX,
+    centerY: metrics.imageTop + imageMaskPixels.centerY,
+    radius: imageMaskPixels.radius
+  };
+}
+
+function displayMaskPixelsToMask(maskPixels, metrics) {
+  return imageMaskFromPixels({
+    centerX: maskPixels.centerX - metrics.imageLeft,
+    centerY: maskPixels.centerY - metrics.imageTop,
+    radius: maskPixels.radius
+  }, metrics.imageWidth, metrics.imageHeight);
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function waitForImage(image) {
