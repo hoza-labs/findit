@@ -38,6 +38,36 @@ export async function drawImagesOnSquareTarget(targetElement, imageSources) {
   targetElement.appendChild(canvas);
 }
 
+export function calculateMaskedImagePlacement({ imageWidth, imageHeight, mask, cellSize }) {
+  if (!Number.isFinite(imageWidth) || imageWidth <= 0) {
+    throw new Error('imageWidth must be a positive number.');
+  }
+  if (!Number.isFinite(imageHeight) || imageHeight <= 0) {
+    throw new Error('imageHeight must be a positive number.');
+  }
+  if (!Number.isFinite(cellSize) || cellSize <= 0) {
+    throw new Error('cellSize must be a positive number.');
+  }
+
+  const padding = Math.max(2, Math.floor(cellSize * 0.08));
+  const availableSize = cellSize - padding * 2;
+  const availableRadius = availableSize / 2;
+  const clampedMask = clampImageMask(mask, Math.round(imageWidth), Math.round(imageHeight));
+  const maskPixels = imageMaskToPixels(clampedMask, Math.round(imageWidth), Math.round(imageHeight));
+  const scale = availableRadius / maskPixels.radius;
+
+  return {
+    padding,
+    availableSize,
+    availableRadius,
+    scale,
+    drawWidth: imageWidth * scale,
+    drawHeight: imageHeight * scale,
+    offsetX: -maskPixels.centerX * scale,
+    offsetY: -maskPixels.centerY * scale
+  };
+}
+
 function getTargetSideLength(targetElement) {
   const rect = targetElement.getBoundingClientRect();
   const side = Math.floor(Math.min(rect.width || 400, rect.height || 400));
@@ -77,29 +107,22 @@ async function loadImages(imageSources) {
 }
 
 function drawImageInCell(context, imageEntry, cell, cellSize) {
-  const { image, mask } = imageEntry;
-  const padding = Math.max(2, Math.floor(cellSize * 0.08));
-  const availableSize = cellSize - padding * 2;
-  const scale = Math.min(availableSize / image.width, availableSize / image.height);
-  const drawWidth = image.width * scale;
-  const drawHeight = image.height * scale;
-  const x = cell.column * cellSize + (cellSize - drawWidth) / 2;
-  const y = cell.row * cellSize + (cellSize - drawHeight) / 2;
-
-  const clampedMask = clampImageMask(mask, image.width, image.height);
-  const maskPixels = imageMaskToPixels(clampedMask, image.width, image.height);
+  const placement = calculateMaskedImagePlacement({
+    imageWidth: imageEntry.image.width,
+    imageHeight: imageEntry.image.height,
+    mask: imageEntry.mask,
+    cellSize
+  });
+  const cellCenterX = cell.column * cellSize + cellSize / 2;
+  const cellCenterY = cell.row * cellSize + cellSize / 2;
+  const x = cellCenterX + placement.offsetX;
+  const y = cellCenterY + placement.offsetY;
 
   context.save();
   context.beginPath();
-  context.arc(
-    x + maskPixels.centerX * scale,
-    y + maskPixels.centerY * scale,
-    maskPixels.radius * scale,
-    0,
-    Math.PI * 2
-  );
+  context.arc(cellCenterX, cellCenterY, placement.availableRadius, 0, Math.PI * 2);
   context.clip();
-  context.drawImage(image, x, y, drawWidth, drawHeight);
+  context.drawImage(imageEntry.image, x, y, placement.drawWidth, placement.drawHeight);
   context.restore();
 }
 
