@@ -15,6 +15,7 @@ const editorStage = document.querySelector('#image-editor-stage');
 const editorImage = document.querySelector('#image-editor-image');
 const editorOverlay = document.querySelector('#image-editor-overlay');
 const editorDimPath = document.querySelector('#image-editor-dim-path');
+const editorHitRing = document.querySelector('#image-editor-hit-ring');
 const editorOutline = document.querySelector('#image-editor-outline');
 const editorOutlineShadow = document.querySelector('#image-editor-outline-shadow');
 const editorCloseButton = document.querySelector('#editor-close-button');
@@ -269,6 +270,7 @@ function renderOverlay() {
   currentMask = clampCurrentMask(currentMask);
   const maskPixels = imageMaskToPixels(currentMask, width, height);
   const handleWidth = getHandleWidth(width, height);
+  const visibleStrokeWidth = getVisibleStrokeWidth(width, height);
   const path = [
     `M0 0 H${width} V${height} H0 Z`,
     `M ${maskPixels.centerX} ${maskPixels.centerY} m -${maskPixels.radius}, 0`,
@@ -278,14 +280,18 @@ function renderOverlay() {
 
   editorOverlay.setAttribute('viewBox', `0 0 ${width} ${height}`);
   editorDimPath.setAttribute('d', path);
+  editorHitRing.setAttribute('cx', String(maskPixels.centerX));
+  editorHitRing.setAttribute('cy', String(maskPixels.centerY));
+  editorHitRing.setAttribute('r', String(maskPixels.radius));
+  editorHitRing.setAttribute('stroke-width', String(handleWidth));
   editorOutlineShadow.setAttribute('cx', String(maskPixels.centerX));
   editorOutlineShadow.setAttribute('cy', String(maskPixels.centerY));
   editorOutlineShadow.setAttribute('r', String(maskPixels.radius));
-  editorOutlineShadow.setAttribute('stroke-width', String(handleWidth + 6));
+  editorOutlineShadow.setAttribute('stroke-width', String(visibleStrokeWidth + 2));
   editorOutline.setAttribute('cx', String(maskPixels.centerX));
   editorOutline.setAttribute('cy', String(maskPixels.centerY));
   editorOutline.setAttribute('r', String(maskPixels.radius));
-  editorOutline.setAttribute('stroke-width', String(handleWidth));
+  editorOutline.setAttribute('stroke-width', String(visibleStrokeWidth));
 
   pageStatus.textContent = masksEqual(currentMask, savedMask)
     ? 'Mask saved. Drag inside the circle to move it, or drag the edge to resize it.'
@@ -374,6 +380,10 @@ function getPointerPoint(event) {
 
 function getHandleWidth(width, height) {
   return Math.max(14, Math.min(28, Math.min(width, height) * 0.06));
+}
+
+function getVisibleStrokeWidth(width, height) {
+  return Math.max(2, Math.min(4, Math.min(width, height) * 0.008));
 }
 
 function getImageLabel(record) {

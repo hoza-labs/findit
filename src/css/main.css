@@ -1080,6 +1080,10 @@ body.has-top-bar.play-page {
   fill: none;
 }
 
+#image-editor-hit-ring {
+  stroke: transparent;
+}
+
 #image-editor-outline-shadow {
   stroke: rgba(15, 23, 42, 0.5);
 }
