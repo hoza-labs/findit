@@ -77,6 +77,7 @@ async function renderWebImages() {
     webImagesElement.appendChild(
       createImageTile({
         src: image.url,
+        mask: image.mask,
         label: getWebImageCaption(image),
         tooltipText: image.url,
         buttonText: isSelected ? 'Remove from deck' : 'Add to deck',
@@ -90,6 +91,12 @@ async function renderWebImages() {
           await renderWebImages();
         },
         menuActions: [
+          {
+            label: 'Edit...',
+            onClick: async () => {
+              window.location.assign(`./image-editor.html?source=web&id=${encodeURIComponent(image.id)}`);
+            }
+          },
           {
             label: 'Rename...',
             onClick: async () => {

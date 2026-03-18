@@ -48,6 +48,7 @@ export function renderDeckHeaderAndTitle({ headingElement, pageLabel, tempDeck }
 
 export function createImageTile({
   src,
+  mask = undefined,
   label,
   buttonText,
   onClick,
@@ -119,7 +120,7 @@ export function createImageTile({
 
   tile.append(imageFrame, meta, button);
   queueMicrotask(() => {
-    void renderTilePreview(imageFrame, src);
+    void renderTilePreview(imageFrame, src, mask);
   });
   // Keep menu as top-most clickable overlay.
   const menu = tile.querySelector('.image-menu');
@@ -129,9 +130,9 @@ export function createImageTile({
   return tile;
 }
 
-async function renderTilePreview(targetElement, src) {
+async function renderTilePreview(targetElement, src, mask) {
   try {
-    await drawImagesOnSquareTarget(targetElement, [src]);
+    await drawImagesOnSquareTarget(targetElement, [{ src, mask }]);
   } catch {
     targetElement.textContent = 'Preview unavailable.';
   }

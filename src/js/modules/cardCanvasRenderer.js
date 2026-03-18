@@ -1,3 +1,5 @@
+import { clampImageMask, imageMaskToPixels } from './imageMasking.js';
+
 export async function drawImagesOnSquareTarget(targetElement, imageSources) {
   if (!targetElement) {
     throw new Error('targetElement is required.');
@@ -28,9 +30,9 @@ export async function drawImagesOnSquareTarget(targetElement, imageSources) {
   const cellSize = sideLength / r;
 
   for (let i = 0; i < q; i += 1) {
-    const image = images[i];
+    const imageEntry = images[i];
     const cell = cells[i];
-    drawImageInCell(context, image, cell, cellSize);
+    drawImageInCell(context, imageEntry, cell, cellSize);
   }
 
   targetElement.appendChild(canvas);
@@ -61,32 +63,54 @@ function buildShuffledCells(r) {
 async function loadImages(imageSources) {
   return Promise.all(
     imageSources.map(
-      (source) =>
-        new Promise((resolve, reject) => {
+      (candidate) => {
+        const source = normalizeImageSource(candidate);
+        return new Promise((resolve, reject) => {
           const image = new Image();
-          image.onload = () => resolve(image);
-          image.onerror = () => reject(new Error(`Failed to load image: ${source}`));
-          image.src = source;
-        })
+          image.onload = () => resolve({ image, mask: source.mask });
+          image.onerror = () => reject(new Error(`Failed to load image: ${source.src}`));
+          image.src = source.src;
+        });
+      }
     )
   );
 }
 
-function drawImageInCell(context, image, cell, cellSize) {
+function drawImageInCell(context, imageEntry, cell, cellSize) {
+  const { image, mask } = imageEntry;
   const padding = Math.max(2, Math.floor(cellSize * 0.08));
   const availableSize = cellSize - padding * 2;
   const scale = Math.min(availableSize / image.width, availableSize / image.height);
   const drawWidth = image.width * scale;
   const drawHeight = image.height * scale;
-
   const x = cell.column * cellSize + (cellSize - drawWidth) / 2;
   const y = cell.row * cellSize + (cellSize - drawHeight) / 2;
-  const radius = Math.max(drawWidth, drawHeight) / 2;
+
+  const clampedMask = clampImageMask(mask, image.width, image.height);
+  const maskPixels = imageMaskToPixels(clampedMask, image.width, image.height);
 
   context.save();
   context.beginPath();
-  context.arc(x + drawWidth / 2, y + drawHeight / 2, radius, 0, Math.PI * 2);
+  context.arc(
+    x + maskPixels.centerX * scale,
+    y + maskPixels.centerY * scale,
+    maskPixels.radius * scale,
+    0,
+    Math.PI * 2
+  );
   context.clip();
   context.drawImage(image, x, y, drawWidth, drawHeight);
   context.restore();
+}
+
+function normalizeImageSource(candidate) {
+  if (typeof candidate === 'string') {
+    return { src: candidate, mask: undefined };
+  }
+
+  if (!candidate || typeof candidate.src !== 'string') {
+    throw new Error('image source must be a string or an object with a src string.');
+  }
+
+  return candidate;
 }

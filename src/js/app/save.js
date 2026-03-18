@@ -45,26 +45,28 @@ function updateHeader() {
 
 function resolveImageSrc(ref, placeholderNumber) {
   if (ref?.source === 'standard') {
-    return getStandardImageSrc(ref.id);
+    return { src: getStandardImageSrc(ref.id) };
   }
 
   if (ref?.source === 'user') {
     const userImage = userImages.find((item) => item.id === ref.id);
     if (!userImage) {
-      return `./assets/placeholder-images/${placeholderNumber}.png`;
+      return { src: `./assets/placeholder-images/${placeholderNumber}.png` };
     }
 
     const url = URL.createObjectURL(userImage.blob);
     objectUrls.push(url);
-    return url;
+    return { src: url, mask: userImage.mask };
   }
 
   if (ref?.source === 'web') {
     const webImage = webImages.find((item) => item.id === ref.id);
-    return webImage ? webImage.url : `./assets/placeholder-images/${placeholderNumber}.png`;
+    return webImage
+      ? { src: webImage.url, mask: webImage.mask }
+      : { src: `./assets/placeholder-images/${placeholderNumber}.png` };
   }
 
-  return `./assets/placeholder-images/${placeholderNumber}.png`;
+  return { src: `./assets/placeholder-images/${placeholderNumber}.png` };
 }
 
 function getPatternSources() {
