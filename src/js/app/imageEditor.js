@@ -270,6 +270,9 @@ function renderOverlay() {
   const maskPixels = getDisplayMaskPixels(currentMask, metrics);
   const handleWidth = getHandleWidth(metrics.stageWidth, metrics.stageHeight);
   const visibleStrokeWidth = getVisibleStrokeWidth(metrics.stageWidth, metrics.stageHeight);
+  const visibleOutlineRadius = maskPixels.radius + (visibleStrokeWidth / 2);
+  const shadowStrokeWidth = visibleStrokeWidth + 2;
+  const shadowOutlineRadius = maskPixels.radius + (shadowStrokeWidth / 2);
   const path = [
     `M0 0 H${metrics.stageWidth} V${metrics.stageHeight} H0 Z`,
     `M ${maskPixels.centerX} ${maskPixels.centerY} m -${maskPixels.radius}, 0`,
@@ -285,11 +288,11 @@ function renderOverlay() {
   editorHitRing.setAttribute('stroke-width', String(handleWidth));
   editorOutlineShadow.setAttribute('cx', String(maskPixels.centerX));
   editorOutlineShadow.setAttribute('cy', String(maskPixels.centerY));
-  editorOutlineShadow.setAttribute('r', String(maskPixels.radius));
-  editorOutlineShadow.setAttribute('stroke-width', String(visibleStrokeWidth + 2));
+  editorOutlineShadow.setAttribute('r', String(shadowOutlineRadius));
+  editorOutlineShadow.setAttribute('stroke-width', String(shadowStrokeWidth));
   editorOutline.setAttribute('cx', String(maskPixels.centerX));
   editorOutline.setAttribute('cy', String(maskPixels.centerY));
-  editorOutline.setAttribute('r', String(maskPixels.radius));
+  editorOutline.setAttribute('r', String(visibleOutlineRadius));
   editorOutline.setAttribute('stroke-width', String(visibleStrokeWidth));
 
   pageStatus.textContent = masksEqual(currentMask, savedMask)
