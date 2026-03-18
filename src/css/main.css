@@ -403,6 +403,8 @@ body.has-top-bar.play-page {
   border: 1px solid #d0d7de;
   background: #fff;
   border-radius: 0.3rem;
+  -webkit-clip-path: circle(farthest-side at 50% 50%);
+  clip-path: circle(farthest-side at 50% 50%);
 }
 
 .deck-pattern-label {

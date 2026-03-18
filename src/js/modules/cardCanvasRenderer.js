@@ -81,6 +81,12 @@ function drawImageInCell(context, image, cell, cellSize) {
 
   const x = cell.column * cellSize + (cellSize - drawWidth) / 2;
   const y = cell.row * cellSize + (cellSize - drawHeight) / 2;
+  const radius = Math.max(drawWidth, drawHeight) / 2;
 
+  context.save();
+  context.beginPath();
+  context.arc(x + drawWidth / 2, y + drawHeight / 2, radius, 0, Math.PI * 2);
+  context.clip();
   context.drawImage(image, x, y, drawWidth, drawHeight);
+  context.restore();
 }
