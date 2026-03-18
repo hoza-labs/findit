@@ -1,5 +1,6 @@
 import { createEmptyTempDeck, normalizeTempDeck } from './deckSession.js';
 import { createIndexedDbRepository } from './indexedDbRepository.js';
+import { drawImagesOnSquareTarget } from './cardCanvasRenderer.js';
 
 export const repository = createIndexedDbRepository();
 
@@ -47,6 +48,7 @@ export function renderDeckHeaderAndTitle({ headingElement, pageLabel, tempDeck }
 
 export function createImageTile({
   src,
+  mask = undefined,
   label,
   buttonText,
   onClick,
@@ -64,12 +66,12 @@ export function createImageTile({
     tile.title = tooltipText;
   }
 
-  const image = document.createElement('img');
-  image.className = 'image-preview';
-  image.src = src;
-  image.alt = label;
+  const imageFrame = document.createElement('div');
+  imageFrame.className = 'image-preview-mask';
+  imageFrame.setAttribute('role', 'img');
+  imageFrame.setAttribute('aria-label', label);
   if (tooltipText) {
-    image.title = tooltipText;
+    imageFrame.title = tooltipText;
   }
 
   const meta = document.createElement('div');
@@ -116,11 +118,22 @@ export function createImageTile({
     tile.appendChild(menu);
   }
 
-  tile.append(image, meta, button);
+  tile.append(imageFrame, meta, button);
+  queueMicrotask(() => {
+    void renderTilePreview(imageFrame, src, mask);
+  });
   // Keep menu as top-most clickable overlay.
   const menu = tile.querySelector('.image-menu');
   if (menu) {
     tile.appendChild(menu);
   }
   return tile;
+}
+
+async function renderTilePreview(targetElement, src, mask) {
+  try {
+    await drawImagesOnSquareTarget(targetElement, [{ src, mask }]);
+  } catch {
+    targetElement.textContent = 'Preview unavailable.';
+  }
 }

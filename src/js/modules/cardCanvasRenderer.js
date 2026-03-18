@@ -1,3 +1,5 @@
+import { clampImageMask, imageMaskToPixels } from './imageMasking.js';
+
 export async function drawImagesOnSquareTarget(targetElement, imageSources) {
   if (!targetElement) {
     throw new Error('targetElement is required.');
@@ -28,12 +30,42 @@ export async function drawImagesOnSquareTarget(targetElement, imageSources) {
   const cellSize = sideLength / r;
 
   for (let i = 0; i < q; i += 1) {
-    const image = images[i];
+    const imageEntry = images[i];
     const cell = cells[i];
-    drawImageInCell(context, image, cell, cellSize);
+    drawImageInCell(context, imageEntry, cell, cellSize);
   }
 
   targetElement.appendChild(canvas);
+}
+
+export function calculateMaskedImagePlacement({ imageWidth, imageHeight, mask, cellSize }) {
+  if (!Number.isFinite(imageWidth) || imageWidth <= 0) {
+    throw new Error('imageWidth must be a positive number.');
+  }
+  if (!Number.isFinite(imageHeight) || imageHeight <= 0) {
+    throw new Error('imageHeight must be a positive number.');
+  }
+  if (!Number.isFinite(cellSize) || cellSize <= 0) {
+    throw new Error('cellSize must be a positive number.');
+  }
+
+  const padding = Math.max(2, Math.floor(cellSize * 0.08));
+  const availableSize = cellSize - padding * 2;
+  const availableRadius = availableSize / 2;
+  const clampedMask = clampImageMask(mask, Math.round(imageWidth), Math.round(imageHeight));
+  const maskPixels = imageMaskToPixels(clampedMask, Math.round(imageWidth), Math.round(imageHeight));
+  const scale = availableRadius / maskPixels.radius;
+
+  return {
+    padding,
+    availableSize,
+    availableRadius,
+    scale,
+    drawWidth: imageWidth * scale,
+    drawHeight: imageHeight * scale,
+    offsetX: -maskPixels.centerX * scale,
+    offsetY: -maskPixels.centerY * scale
+  };
 }
 
 function getTargetSideLength(targetElement) {
@@ -61,26 +93,47 @@ function buildShuffledCells(r) {
 async function loadImages(imageSources) {
   return Promise.all(
     imageSources.map(
-      (source) =>
-        new Promise((resolve, reject) => {
+      (candidate) => {
+        const source = normalizeImageSource(candidate);
+        return new Promise((resolve, reject) => {
           const image = new Image();
-          image.onload = () => resolve(image);
-          image.onerror = () => reject(new Error(`Failed to load image: ${source}`));
-          image.src = source;
-        })
+          image.onload = () => resolve({ image, mask: source.mask });
+          image.onerror = () => reject(new Error(`Failed to load image: ${source.src}`));
+          image.src = source.src;
+        });
+      }
     )
   );
 }
 
-function drawImageInCell(context, image, cell, cellSize) {
-  const padding = Math.max(2, Math.floor(cellSize * 0.08));
-  const availableSize = cellSize - padding * 2;
-  const scale = Math.min(availableSize / image.width, availableSize / image.height);
-  const drawWidth = image.width * scale;
-  const drawHeight = image.height * scale;
+function drawImageInCell(context, imageEntry, cell, cellSize) {
+  const placement = calculateMaskedImagePlacement({
+    imageWidth: imageEntry.image.width,
+    imageHeight: imageEntry.image.height,
+    mask: imageEntry.mask,
+    cellSize
+  });
+  const cellCenterX = cell.column * cellSize + cellSize / 2;
+  const cellCenterY = cell.row * cellSize + cellSize / 2;
+  const x = cellCenterX + placement.offsetX;
+  const y = cellCenterY + placement.offsetY;
 
-  const x = cell.column * cellSize + (cellSize - drawWidth) / 2;
-  const y = cell.row * cellSize + (cellSize - drawHeight) / 2;
+  context.save();
+  context.beginPath();
+  context.arc(cellCenterX, cellCenterY, placement.availableRadius, 0, Math.PI * 2);
+  context.clip();
+  context.drawImage(imageEntry.image, x, y, placement.drawWidth, placement.drawHeight);
+  context.restore();
+}
 
-  context.drawImage(image, x, y, drawWidth, drawHeight);
+function normalizeImageSource(candidate) {
+  if (typeof candidate === 'string') {
+    return { src: candidate, mask: undefined };
+  }
+
+  if (!candidate || typeof candidate.src !== 'string') {
+    throw new Error('image source must be a string or an object with a src string.');
+  }
+
+  return candidate;
 }

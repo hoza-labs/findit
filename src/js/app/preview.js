@@ -3,6 +3,7 @@ import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, rende
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
 import { describeImageRef, removeImageRefAtIndex } from '../modules/imageRefs.js';
+import { getStandardImageSrc } from '../modules/standardImageFiles.js';
 
 const deckPatternElement = document.querySelector('#deck-pattern');
 const selectedImagesElement = document.querySelector('#selected-images');
@@ -53,22 +54,24 @@ function updateHeader() {
 
 function resolveImageSrc(ref, placeholderNumber) {
   if (ref.source === 'standard') {
-    return `./assets/deck-images/${ref.id}`;
+    return { src: getStandardImageSrc(ref.id) };
   }
 
   if (ref.source === 'user') {
     const userImage = userImages.find((item) => item.id === ref.id);
     if (!userImage) {
-      return `./assets/placeholder-images/${placeholderNumber}.png`;
+      return { src: `./assets/placeholder-images/${placeholderNumber}.png` };
     }
 
     const url = URL.createObjectURL(userImage.blob);
     objectUrls.push(url);
-    return url;
+    return { src: url, mask: userImage.mask };
   }
 
   const webImage = webImages.find((item) => item.id === ref.id);
-  return webImage ? webImage.url : `./assets/placeholder-images/${placeholderNumber}.png`;
+  return webImage
+    ? { src: webImage.url, mask: webImage.mask }
+    : { src: `./assets/placeholder-images/${placeholderNumber}.png` };
 }
 
 function applyPatternScale() {
@@ -89,12 +92,14 @@ function createPatternItem({ slotIndex, slotTitle = '', topLabel = '', refIndex 
 
   const selectedRef = refIndex !== null ? tempDeck.selectedImageRefs[refIndex] : null;
   const fallbackNumber = slotIndex + 1;
-  const src = selectedRef ? resolveImageSrc(selectedRef, fallbackNumber) : `./assets/placeholder-images/${fallbackNumber}.png`;
+  const renderSource = selectedRef
+    ? resolveImageSrc(selectedRef, fallbackNumber)
+    : { src: `./assets/placeholder-images/${fallbackNumber}.png` };
   const label = selectedRef ? describeImageRef(selectedRef, userImages, webImages) : `placeholder ${fallbackNumber}`;
   const tooltipText = slotTitle ? `${label} | slot ${slotTitle}` : label;
 
   item.dataset.kind = kind;
-  item.dataset.renderSrc = src;
+  item.renderSource = renderSource;
   if (row !== null) {
     item.dataset.row = String(row);
   }
@@ -112,10 +117,10 @@ function createPatternItem({ slotIndex, slotTitle = '', topLabel = '', refIndex 
     item.appendChild(topLabelElement);
   }
 
-  const image = document.createElement('img');
+  const image = document.createElement('div');
   image.className = 'deck-pattern-image';
-  image.src = src;
-  image.alt = label;
+  image.setAttribute('role', 'img');
+  image.setAttribute('aria-label', label);
   image.title = tooltipText;
 
   const imageWrap = document.createElement('div');
@@ -123,6 +128,9 @@ function createPatternItem({ slotIndex, slotTitle = '', topLabel = '', refIndex 
   imageWrap.title = tooltipText;
   imageWrap.append(image);
   item.append(imageWrap);
+  queueMicrotask(() => {
+    void renderPatternItemPreview(image, renderSource);
+  });
 
   if (selectedRef) {
     const removeButton = document.createElement('button');
@@ -200,13 +208,13 @@ function getDeckPlayerPatternItems() {
   return {
     slopeItems: slopePatternItems.map((element, index) => ({
       element,
-      src: element.dataset.renderSrc,
+      source: element.renderSource,
       slopeIndex: index
     })),
     grid: gridPatternItems.map((row) =>
       row.map((element) => ({
         element,
-        src: element.dataset.renderSrc,
+        source: element.renderSource,
         row: Number(element.dataset.row),
         column: Number(element.dataset.column)
       }))
@@ -236,7 +244,7 @@ async function renderDeckPlayerCard(slopeItems, grid, s, r) {
 
   await drawImagesOnSquareTarget(
     previewSampleCardTarget,
-    selectedItems.map((item) => item.src)
+    selectedItems.map((item) => item.source)
   );
 }
 
@@ -351,10 +359,11 @@ async function renderSelectedImages() {
       const refIndex = requiredCount + index;
       const ref = extraRefs[index];
       const label = describeImageRef(ref, userImages, webImages);
-      const src = resolveImageSrc(ref, ((refIndex % 133) + 1));
+      const imageSource = resolveImageSrc(ref, ((refIndex % 133) + 1));
       selectedImagesElement.appendChild(
         createImageTile({
-          src,
+          src: imageSource.src,
+          mask: imageSource.mask,
           label: '',
           tooltipText: label,
           buttonText: 'Remove',
@@ -374,6 +383,14 @@ async function renderSelectedImages() {
   deckPlayerSlider.max = String(cardCount);
   await renderDeckPlayerAt(Math.min(deckPlayerIndex, cardCount - 1));
   updateHeader();
+}
+
+async function renderPatternItemPreview(targetElement, imageSource) {
+  try {
+    await drawImagesOnSquareTarget(targetElement, [imageSource]);
+  } catch {
+    targetElement.textContent = 'Preview unavailable.';
+  }
 }
 
 window.addEventListener('resize', () => {

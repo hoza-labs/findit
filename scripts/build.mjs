@@ -1,4 +1,5 @@
-﻿import { cp, mkdir, rm } from 'node:fs/promises';
+// Rebuilds docs/ from src/ so the generated static site stays in sync with source files.
+import { cp, mkdir, rm } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 

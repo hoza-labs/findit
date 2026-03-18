@@ -1,3 +1,4 @@
+// Regenerates the numbered placeholder image set used when a deck slot has no selected image yet.
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

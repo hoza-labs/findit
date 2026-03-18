@@ -46,6 +46,7 @@ async function renderUserImages() {
     userImagesElement.appendChild(
       createImageTile({
         src,
+        mask: image.mask,
         label: image.name || image.fileName,
         buttonText: isSelected ? 'Remove from deck' : 'Add to deck',
         buttonVariant: isSelected ? 'outline-danger' : 'outline-primary',
@@ -58,6 +59,12 @@ async function renderUserImages() {
           await renderUserImages();
         },
         menuActions: [
+          {
+            label: 'Edit...',
+            onClick: async () => {
+              window.location.assign(`./image-editor.html?source=user&id=${encodeURIComponent(image.id)}`);
+            }
+          },
           {
             label: 'Rename...',
             onClick: async () => {

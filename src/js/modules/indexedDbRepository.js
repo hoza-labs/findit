@@ -1,4 +1,5 @@
 import { getDefaultWebImageName, normalizeWebContentType, trimWebImageName } from './webImageMetadata.js';
+import { DEFAULT_IMAGE_MASK, normalizeImageMask } from './imageMasking.js';
 
 const DATABASE_NAME = 'findit-db';
 const DATABASE_VERSION = 2;
@@ -17,8 +18,13 @@ export function createIndexedDbRepository() {
       const records = await getAllRecords(await dbPromise, STORE_USER_IMAGES);
       return records.map((record) => ({
         ...record,
-        name: trimWebImageName(record.name) || record.fileName
+        name: trimWebImageName(record.name) || record.fileName,
+        mask: normalizeStoredImageMask(record)
       }));
+    },
+    async getUserImage(id) {
+      const record = await getRecord(await dbPromise, STORE_USER_IMAGES, id);
+      return record ? normalizeUserImageRecord(record) : null;
     },
     async addUserImage(file) {
       const now = new Date().toISOString();
@@ -28,15 +34,22 @@ export function createIndexedDbRepository() {
         name: file.name,
         mimeType: file.type || 'application/octet-stream',
         blob: file,
+        mask: normalizeImageMask(DEFAULT_IMAGE_MASK),
         createdAt: now
       };
       await putRecord(await dbPromise, STORE_USER_IMAGES, record);
-      return record;
+      return normalizeUserImageRecord(record);
     },
     async renameUserImage(id, name) {
       await patchRecord(await dbPromise, STORE_USER_IMAGES, id, (record) => ({
         ...record,
         name: trimWebImageName(name) || record.fileName
+      }));
+    },
+    async saveUserImageMask(id, mask) {
+      await patchRecord(await dbPromise, STORE_USER_IMAGES, id, (record) => ({
+        ...record,
+        mask: normalizeImageMask(mask)
       }));
     },
     async deleteUserImage(id) {
@@ -47,8 +60,13 @@ export function createIndexedDbRepository() {
       return records.map((record) => ({
         ...record,
         name: trimWebImageName(record.name) || getDefaultWebImageName(record.url),
-        contentType: normalizeWebContentType(record.contentType)
+        contentType: normalizeWebContentType(record.contentType),
+        mask: normalizeStoredImageMask(record)
       }));
+    },
+    async getWebImage(id) {
+      const record = await getRecord(await dbPromise, STORE_WEB_IMAGES, id);
+      return record ? normalizeWebImageRecord(record) : null;
     },
     async addWebImage({ url, name, contentType }) {
       const now = new Date().toISOString();
@@ -57,15 +75,22 @@ export function createIndexedDbRepository() {
         url,
         name: trimWebImageName(name) || getDefaultWebImageName(url),
         contentType: normalizeWebContentType(contentType),
+        mask: normalizeImageMask(DEFAULT_IMAGE_MASK),
         createdAt: now
       };
       await putRecord(await dbPromise, STORE_WEB_IMAGES, record);
-      return record;
+      return normalizeWebImageRecord(record);
     },
     async renameWebImage(id, name) {
       await patchRecord(await dbPromise, STORE_WEB_IMAGES, id, (record) => ({
         ...record,
         name: trimWebImageName(name) || getDefaultWebImageName(record.url)
+      }));
+    },
+    async saveWebImageMask(id, mask) {
+      await patchRecord(await dbPromise, STORE_WEB_IMAGES, id, (record) => ({
+        ...record,
+        mask: normalizeImageMask(mask)
       }));
     },
     async deleteWebImage(id) {
@@ -169,4 +194,25 @@ function createId(prefix) {
     return `${prefix}-${crypto.randomUUID()}`;
   }
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
+}
+
+function normalizeUserImageRecord(record) {
+  return {
+    ...record,
+    name: trimWebImageName(record.name) || record.fileName,
+    mask: normalizeStoredImageMask(record)
+  };
+}
+
+function normalizeWebImageRecord(record) {
+  return {
+    ...record,
+    name: trimWebImageName(record.name) || getDefaultWebImageName(record.url),
+    contentType: normalizeWebContentType(record.contentType),
+    mask: normalizeStoredImageMask(record)
+  };
+}
+
+function normalizeStoredImageMask(record) {
+  return normalizeImageMask(record.mask);
 }

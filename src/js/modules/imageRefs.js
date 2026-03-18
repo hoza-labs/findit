@@ -1,7 +1,8 @@
 import { getWebImageCaption } from './webImageMetadata.js';
+import { resolveStandardImageId } from './standardImageFiles.js';
 
 export function createImageRef(source, id) {
-  return { source, id };
+  return { source, id: getComparableImageId(source, id) };
 }
 
 export function addImageRef(tempDeck, imageRef) {
@@ -13,7 +14,7 @@ export function addImageRef(tempDeck, imageRef) {
 
 export function hasImageRef(tempDeck, imageRef) {
   return tempDeck.selectedImageRefs.some(
-    (candidate) => candidate.source === imageRef.source && candidate.id === imageRef.id
+    (candidate) => candidate.source === imageRef.source && getComparableImageId(candidate.source, candidate.id) === imageRef.id
   );
 }
 
@@ -22,7 +23,11 @@ export function removeImageRef(tempDeck, imageRef) {
   return {
     ...tempDeck,
     selectedImageRefs: tempDeck.selectedImageRefs.filter((candidate) => {
-      if (!removed && candidate.source === imageRef.source && candidate.id === imageRef.id) {
+      if (
+        !removed
+        && candidate.source === imageRef.source
+        && getComparableImageId(candidate.source, candidate.id) === imageRef.id
+      ) {
         removed = true;
         return false;
       }
@@ -35,7 +40,10 @@ export function removeAllImageRefs(tempDeck, imageRef) {
   return {
     ...tempDeck,
     selectedImageRefs: tempDeck.selectedImageRefs.filter(
-      (candidate) => !(candidate.source === imageRef.source && candidate.id === imageRef.id)
+      (candidate) => !(
+        candidate.source === imageRef.source
+        && getComparableImageId(candidate.source, candidate.id) === imageRef.id
+      )
     )
   };
 }
@@ -59,4 +67,8 @@ export function describeImageRef(imageRef, userImages, webImages) {
 
   const web = webImages.find((item) => item.id === imageRef.id);
   return web ? getWebImageCaption(web) : `web:${imageRef.id}`;
+}
+
+function getComparableImageId(source, id) {
+  return source === 'standard' ? resolveStandardImageId(id) : id;
 }

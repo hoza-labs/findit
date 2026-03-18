@@ -1,3 +1,4 @@
+// Serves src/ over HTTP for local browser testing, including module imports and fetch-based assets.
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
