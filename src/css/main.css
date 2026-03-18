@@ -381,12 +381,22 @@ body.has-top-bar.play-page {
 
 .deck-pattern-item.is-active .deck-pattern-image {
   border-color: #b026ff;
-  outline: var(--pattern-active-outline-width) solid #b026ff;
-  outline-offset: var(--pattern-active-outline-offset);
 }
 
 .deck-pattern-image-wrap {
   position: relative;
+  width: var(--pattern-item-size);
+  height: var(--pattern-item-size);
+  border-radius: 50%;
+}
+
+.deck-pattern-item.is-active .deck-pattern-image-wrap::after {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * (var(--pattern-active-outline-width) + var(--pattern-active-outline-offset)));
+  border: var(--pattern-active-outline-width) solid #b026ff;
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 .deck-pattern-top-label {
@@ -397,8 +407,8 @@ body.has-top-bar.play-page {
 }
 
 .deck-pattern-image {
-  width: var(--pattern-item-size);
-  height: var(--pattern-item-size);
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   border: 1px solid #d0d7de;
   background: #fff;
