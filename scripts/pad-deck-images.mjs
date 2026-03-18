@@ -1,5 +1,8 @@
-import { access, readFile, rm, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, extname, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { createCanvas, loadImage } from 'canvas';
 
@@ -12,6 +15,8 @@ const rootDir = resolve(import.meta.dirname, '..');
 const deckImagesDir = resolve(rootDir, 'src/assets/deck-images');
 const manifestPath = resolve(deckImagesDir, 'manifest.json');
 const aliasesModulePath = resolve(rootDir, 'src/js/modules/standardImageAliases.js');
+const magickCommand = process.env.MAGICK_PATH ?? 'magick';
+const execFileAsync = promisify(execFile);
 
 const manifestEntries = JSON.parse((await readFile(manifestPath, 'utf8')).replace(/^\uFEFF/, ''));
 const existingAliases = await loadExistingAliases();
@@ -25,7 +30,7 @@ for (const entry of manifestEntries) {
   const sourcePath = resolve(deckImagesDir, resolvedEntry);
 
   try {
-    const image = await loadImage(sourcePath);
+    const image = await loadImageWithFallback(sourcePath);
     const imageData = getImageData(image);
     const maxOpaqueDistance = getMaxOpaquePixelDistance(imageData);
     const padding = getRequiredTransparentMargin({
@@ -116,4 +121,35 @@ async function writeAliasesModule(aliases) {
 
 function dedupe(entries) {
   return [...new Set(entries)];
+}
+
+async function loadImageWithFallback(sourcePath) {
+  try {
+    return await loadImage(sourcePath);
+  } catch (error) {
+    if (!shouldUseMagickFallback(sourcePath, error)) {
+      throw error;
+    }
+
+    return loadImageViaMagick(sourcePath);
+  }
+}
+
+function shouldUseMagickFallback(sourcePath, error) {
+  const extension = extname(sourcePath).toLowerCase();
+  return (extension === '.webp' || extension === '.avif') && /unsupported image type/i.test(error.message);
+}
+
+async function loadImageViaMagick(sourcePath) {
+  const tempDir = await mkdtemp(resolve(tmpdir(), 'findit-magick-'));
+  const tempPath = resolve(tempDir, `${basename(sourcePath, extname(sourcePath))}.png`);
+
+  try {
+    await execFileAsync(magickCommand, [sourcePath, '-alpha', 'set', `png32:${tempPath}`], {
+      windowsHide: true
+    });
+    return await loadImage(tempPath);
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
 }
