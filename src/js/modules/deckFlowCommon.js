@@ -1,5 +1,6 @@
 import { createEmptyTempDeck, normalizeTempDeck } from './deckSession.js';
 import { createIndexedDbRepository } from './indexedDbRepository.js';
+import { drawImagesOnSquareTarget } from './cardCanvasRenderer.js';
 
 export const repository = createIndexedDbRepository();
 
@@ -66,13 +67,10 @@ export function createImageTile({
 
   const imageFrame = document.createElement('div');
   imageFrame.className = 'image-preview-mask';
-
-  const image = document.createElement('img');
-  image.className = 'image-preview';
-  image.src = src;
-  image.alt = label;
+  imageFrame.setAttribute('role', 'img');
+  imageFrame.setAttribute('aria-label', label);
   if (tooltipText) {
-    image.title = tooltipText;
+    imageFrame.title = tooltipText;
   }
 
   const meta = document.createElement('div');
@@ -119,12 +117,22 @@ export function createImageTile({
     tile.appendChild(menu);
   }
 
-  imageFrame.appendChild(image);
   tile.append(imageFrame, meta, button);
+  queueMicrotask(() => {
+    void renderTilePreview(imageFrame, src);
+  });
   // Keep menu as top-most clickable overlay.
   const menu = tile.querySelector('.image-menu');
   if (menu) {
     tile.appendChild(menu);
   }
   return tile;
+}
+
+async function renderTilePreview(targetElement, src) {
+  try {
+    await drawImagesOnSquareTarget(targetElement, [src]);
+  } catch {
+    targetElement.textContent = 'Preview unavailable.';
+  }
 }
