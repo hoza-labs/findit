@@ -32,7 +32,7 @@ export async function drawImagesOnSquareTarget(targetElement, imageSources, opti
   const renderPlan = planCardRender(normalizedSources, generationOptions);
   const images = await loadImages(normalizedSources);
   applyCardShape(targetElement, generationOptions.cardShape);
-  applyCardRotation(targetElement, renderPlan.cardRotation);
+  applyCardTransform(targetElement, renderPlan.cardRotation, renderPlan.cardFlip);
 
   for (const plannedItem of renderPlan.items) {
     drawImageAtPlacement(
@@ -60,13 +60,15 @@ export function planCardRender(imageSources, options = undefined, random = Math.
 
   return {
     cardRotation: getCardRotation(generationOptions, random),
+    cardFlip: getRandomFlip(generationOptions, random),
     items: layout.items.map((layoutItem, index) => ({
       sourceIndex: sourceOrder[index],
       layoutItem: {
         ...layoutItem,
         rotation: generationOptions.imageRotation === 'random'
           ? random() * Math.PI * 2
-          : 0
+          : 0,
+        flipX: getRandomFlip(generationOptions, random)
       }
     }))
   };
@@ -153,6 +155,14 @@ function getCardRotation(generationOptions, random) {
   return random() * Math.PI * 2;
 }
 
+function getRandomFlip(generationOptions, random) {
+  if (generationOptions.imageRotation !== 'random') {
+    return false;
+  }
+
+  return random() >= 0.5;
+}
+
 function drawImageAtPlacement(context, imageEntry, layoutItem, sideLength) {
   const centerX = layoutItem.centerX * sideLength;
   const centerY = layoutItem.centerY * sideLength;
@@ -167,6 +177,9 @@ function drawImageAtPlacement(context, imageEntry, layoutItem, sideLength) {
   context.save();
   context.translate(centerX, centerY);
   context.rotate(layoutItem.rotation);
+  if (layoutItem.flipX) {
+    context.scale(-1, 1);
+  }
   context.beginPath();
   context.arc(0, 0, imagePlacement.availableRadius, 0, Math.PI * 2);
   context.clip();
@@ -197,7 +210,14 @@ function applyCardShape(targetElement, cardShape) {
   targetElement.classList.add(cardShape === 'round' ? 'is-round-card' : 'is-square-card');
 }
 
-function applyCardRotation(targetElement, rotation) {
+function applyCardTransform(targetElement, rotation, flipX) {
   targetElement.style.transformOrigin = 'center';
-  targetElement.style.transform = rotation ? `rotate(${rotation}rad)` : '';
+  const transforms = [];
+  if (rotation) {
+    transforms.push(`rotate(${rotation}rad)`);
+  }
+  if (flipX) {
+    transforms.push('scaleX(-1)');
+  }
+  targetElement.style.transform = transforms.join(' ');
 }
