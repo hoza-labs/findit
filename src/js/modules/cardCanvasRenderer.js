@@ -1,6 +1,8 @@
 import { clampImageMask, imageMaskToPixels } from './imageMasking.js';
+import { normalizeGenerationOptions } from './cardGenerationOptions.js';
+import { getCardLayout } from './cardLayout.js';
 
-export async function drawImagesOnSquareTarget(targetElement, imageSources) {
+export async function drawImagesOnSquareTarget(targetElement, imageSources, options = undefined) {
   if (!targetElement) {
     throw new Error('targetElement is required.');
   }
@@ -14,44 +16,86 @@ export async function drawImagesOnSquareTarget(targetElement, imageSources) {
     return;
   }
 
-  const r = Math.ceil(Math.sqrt(q));
+  const generationOptions = normalizeGenerationOptions(options);
+  const normalizedSources = imageSources.map(normalizeImageSource);
   const sideLength = getTargetSideLength(targetElement);
   const canvas = document.createElement('canvas');
   canvas.width = sideLength;
   canvas.height = sideLength;
   canvas.style.width = '100%';
   canvas.style.height = '100%';
+  canvas.style.display = 'block';
+  canvas.style.borderRadius = generationOptions.cardShape === 'round' ? '50%' : '0';
 
   const context = canvas.getContext('2d');
   context.clearRect(0, 0, sideLength, sideLength);
+  const renderPlan = planCardRender(normalizedSources, generationOptions);
+  const images = await loadImages(normalizedSources);
+  applyCardShape(targetElement, generationOptions.cardShape);
+  applyCardTransform(targetElement, renderPlan.cardRotation, renderPlan.cardFlip);
 
-  const cells = buildShuffledCells(r);
-  const images = await loadImages(imageSources);
-  const cellSize = sideLength / r;
-
-  for (let i = 0; i < q; i += 1) {
-    const imageEntry = images[i];
-    const cell = cells[i];
-    drawImageInCell(context, imageEntry, cell, cellSize);
+  for (const plannedItem of renderPlan.items) {
+    drawImageAtPlacement(
+      context,
+      images[plannedItem.sourceIndex],
+      plannedItem.layoutItem,
+      sideLength
+    );
   }
 
   targetElement.appendChild(canvas);
 }
 
-export function calculateMaskedImagePlacement({ imageWidth, imageHeight, mask, cellSize }) {
+export function planCardRender(imageSources, options = undefined, random = Math.random) {
+  if (!Array.isArray(imageSources)) {
+    throw new Error('imageSources must be an array.');
+  }
+  if (typeof random !== 'function') {
+    throw new Error('random must be a function.');
+  }
+
+  const generationOptions = normalizeGenerationOptions(options);
+  const layout = getCardLayout(imageSources.length, generationOptions);
+  const sourceOrder = buildShuffledIndices(imageSources.length, random);
+
+  return {
+    cardRotation: getCardRotation(generationOptions, random),
+    cardFlip: getRandomFlip(generationOptions, random),
+    items: layout.items.map((layoutItem, index) => ({
+      sourceIndex: sourceOrder[index],
+      layoutItem: {
+        ...layoutItem,
+        rotation: generationOptions.imageRotation === 'random'
+          ? random() * Math.PI * 2
+          : 0,
+        flipX: getRandomFlip(generationOptions, random)
+      }
+    }))
+  };
+}
+
+export function planCardRenderItems(imageSources, options = undefined, random = Math.random) {
+  return planCardRender(imageSources, options, random).items;
+}
+
+export function calculateMaskedImagePlacement({ imageWidth, imageHeight, mask, cellSize, targetRadius }) {
   if (!Number.isFinite(imageWidth) || imageWidth <= 0) {
     throw new Error('imageWidth must be a positive number.');
   }
   if (!Number.isFinite(imageHeight) || imageHeight <= 0) {
     throw new Error('imageHeight must be a positive number.');
   }
-  if (!Number.isFinite(cellSize) || cellSize <= 0) {
-    throw new Error('cellSize must be a positive number.');
+  if (
+    (!Number.isFinite(cellSize) || cellSize <= 0)
+    && (!Number.isFinite(targetRadius) || targetRadius <= 0)
+  ) {
+    throw new Error('cellSize or targetRadius must be a positive number.');
   }
 
-  const padding = Math.max(2, Math.floor(cellSize * 0.08));
-  const availableSize = cellSize - padding * 2;
-  const availableRadius = availableSize / 2;
+  const hasExplicitRadius = Number.isFinite(targetRadius) && targetRadius > 0;
+  const padding = hasExplicitRadius ? 0 : Math.max(2, Math.floor(cellSize * 0.08));
+  const availableSize = hasExplicitRadius ? targetRadius * 2 : cellSize - padding * 2;
+  const availableRadius = hasExplicitRadius ? targetRadius : availableSize / 2;
   const clampedMask = clampImageMask(mask, Math.round(imageWidth), Math.round(imageHeight));
   const maskPixels = imageMaskToPixels(clampedMask, Math.round(imageWidth), Math.round(imageHeight));
   const scale = availableRadius / maskPixels.radius;
@@ -74,22 +118,6 @@ function getTargetSideLength(targetElement) {
   return Math.max(24, side);
 }
 
-function buildShuffledCells(r) {
-  const cells = [];
-  for (let row = 0; row < r; row += 1) {
-    for (let column = 0; column < r; column += 1) {
-      cells.push({ row, column });
-    }
-  }
-
-  for (let i = cells.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [cells[i], cells[j]] = [cells[j], cells[i]];
-  }
-
-  return cells;
-}
-
 async function loadImages(imageSources) {
   return Promise.all(
     imageSources.map(
@@ -106,23 +134,62 @@ async function loadImages(imageSources) {
   );
 }
 
-function drawImageInCell(context, imageEntry, cell, cellSize) {
-  const placement = calculateMaskedImagePlacement({
+function buildShuffledIndices(length, random) {
+  const indices = Array.from({ length }, (_, index) => index);
+  for (let index = length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [indices[index], indices[swapIndex]] = [indices[swapIndex], indices[index]];
+  }
+  return indices;
+}
+
+function getCardRotation(generationOptions, random) {
+  if (generationOptions.imageRotation !== 'random') {
+    return 0;
+  }
+
+  if (generationOptions.cardShape === 'square') {
+    return Math.floor(random() * 4) * (Math.PI / 2);
+  }
+
+  return random() * Math.PI * 2;
+}
+
+function getRandomFlip(generationOptions, random) {
+  if (generationOptions.imageRotation !== 'random') {
+    return false;
+  }
+
+  return random() >= 0.5;
+}
+
+function drawImageAtPlacement(context, imageEntry, layoutItem, sideLength) {
+  const centerX = layoutItem.centerX * sideLength;
+  const centerY = layoutItem.centerY * sideLength;
+  const radius = layoutItem.radius * sideLength;
+  const imagePlacement = calculateMaskedImagePlacement({
     imageWidth: imageEntry.image.width,
     imageHeight: imageEntry.image.height,
     mask: imageEntry.mask,
-    cellSize
+    targetRadius: radius
   });
-  const cellCenterX = cell.column * cellSize + cellSize / 2;
-  const cellCenterY = cell.row * cellSize + cellSize / 2;
-  const x = cellCenterX + placement.offsetX;
-  const y = cellCenterY + placement.offsetY;
 
   context.save();
+  context.translate(centerX, centerY);
+  context.rotate(layoutItem.rotation);
+  if (layoutItem.flipX) {
+    context.scale(-1, 1);
+  }
   context.beginPath();
-  context.arc(cellCenterX, cellCenterY, placement.availableRadius, 0, Math.PI * 2);
+  context.arc(0, 0, imagePlacement.availableRadius, 0, Math.PI * 2);
   context.clip();
-  context.drawImage(imageEntry.image, x, y, placement.drawWidth, placement.drawHeight);
+  context.drawImage(
+    imageEntry.image,
+    imagePlacement.offsetX,
+    imagePlacement.offsetY,
+    imagePlacement.drawWidth,
+    imagePlacement.drawHeight
+  );
   context.restore();
 }
 
@@ -136,4 +203,21 @@ function normalizeImageSource(candidate) {
   }
 
   return candidate;
+}
+
+function applyCardShape(targetElement, cardShape) {
+  targetElement.classList.remove('is-round-card', 'is-square-card');
+  targetElement.classList.add(cardShape === 'round' ? 'is-round-card' : 'is-square-card');
+}
+
+function applyCardTransform(targetElement, rotation, flipX) {
+  targetElement.style.transformOrigin = 'center';
+  const transforms = [];
+  if (rotation) {
+    transforms.push(`rotate(${rotation}rad)`);
+  }
+  if (flipX) {
+    transforms.push('scaleX(-1)');
+  }
+  targetElement.style.transform = transforms.join(' ');
 }

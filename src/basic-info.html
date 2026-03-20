@@ -50,15 +50,43 @@
     <main class="container-fluid preview-page-shell pb-5">
       <section class="card shadow-sm mb-3">
         <div class="card-body">
-          <label for="symbols-select" class="form-label">Pictures per card (n)</label>
-          <select id="symbols-select" class="form-select w-auto" required>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="6">6</option>
-            <option value="8">8</option>
-            <option value="12">12</option>
-          </select>
-          <div class="form-text">Allowed values satisfy n-1 = p, where p is prime.</div>
+          <div class="basic-info-options">
+            <div>
+              <label for="symbols-select" class="form-label">Pictures per card (n)</label>
+              <select id="symbols-select" class="form-select" required>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="6">6</option>
+                <option value="8">8</option>
+                <option value="12">12</option>
+              </select>
+              <div class="form-text">Allowed values satisfy n-1 = p, where p is prime.</div>
+            </div>
+
+            <div>
+              <label for="card-shape-select" class="form-label">Card Shape</label>
+              <select id="card-shape-select" class="form-select">
+                <option value="round">Round</option>
+                <option value="square">Square</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="image-rotation-select" class="form-label">Image Rotation</label>
+              <select id="image-rotation-select" class="form-select">
+                <option value="random">Random</option>
+                <option value="none">Do not rotate</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="image-size-select" class="form-label">Image Size</label>
+              <select id="image-size-select" class="form-select">
+                <option value="various">Various</option>
+                <option value="uniform">Uniform</option>
+              </select>
+            </div>
+          </div>
         </div>
       </section>
 

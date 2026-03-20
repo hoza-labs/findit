@@ -1,6 +1,7 @@
 import { createEmptyTempDeck, normalizeTempDeck } from './deckSession.js';
 import { createIndexedDbRepository } from './indexedDbRepository.js';
 import { drawImagesOnSquareTarget } from './cardCanvasRenderer.js';
+import { NEUTRAL_PREVIEW_GENERATION_OPTIONS } from './cardGenerationOptions.js';
 
 export const repository = createIndexedDbRepository();
 
@@ -132,7 +133,7 @@ export function createImageTile({
 
 async function renderTilePreview(targetElement, src, mask) {
   try {
-    await drawImagesOnSquareTarget(targetElement, [{ src, mask }]);
+    await drawImagesOnSquareTarget(targetElement, [{ src, mask }], NEUTRAL_PREVIEW_GENERATION_OPTIONS);
   } catch {
     targetElement.textContent = 'Preview unavailable.';
   }

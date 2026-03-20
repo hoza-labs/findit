@@ -6,6 +6,11 @@ import { createEmptyTempDeck, createTempDeckFromSavedDeck, normalizeTempDeck } f
 test('given empty temp deck, play options are initialized with defaults', () => {
   const deck = createEmptyTempDeck();
 
+  assert.deepEqual(deck.generationOptions, {
+    cardShape: 'round',
+    imageRotation: 'random',
+    imageSize: 'various'
+  });
   assert.deepEqual(deck.playOptions, {
     cardsToShowCounts: '2',
     countdownSeconds: '',
@@ -20,6 +25,11 @@ test('given saved deck with play options, temp deck preserves normalized play op
     name: 'Demo',
     symbolsPerCard: 4,
     imageRefs: [{ source: 'standard', id: '1.png' }],
+    generationOptions: {
+      cardShape: 'square',
+      imageRotation: 'none',
+      imageSize: 'uniform'
+    },
     playOptions: {
       cardsToShowCounts: ' 2, 4, 3 ',
       countdownSeconds: '05',
@@ -29,6 +39,11 @@ test('given saved deck with play options, temp deck preserves normalized play op
     }
   });
 
+  assert.deepEqual(tempDeck.generationOptions, {
+    cardShape: 'square',
+    imageRotation: 'none',
+    imageSize: 'uniform'
+  });
   assert.deepEqual(tempDeck.playOptions, {
     cardsToShowCounts: '2, 4, 3',
     countdownSeconds: '5',
@@ -42,6 +57,11 @@ test('given legacy handsToPlay option, normalize maps it to lengthOfPlay in hand
   const normalized = normalizeTempDeck({
     symbolsPerCard: 4,
     selectedImageRefs: [],
+    generationOptions: {
+      cardShape: 'triangle',
+      imageRotation: 'sometimes',
+      imageSize: 'mixed'
+    },
     playOptions: {
       cardsToShowMin: '',
       cardsToShowMax: '',
@@ -51,6 +71,11 @@ test('given legacy handsToPlay option, normalize maps it to lengthOfPlay in hand
     }
   });
 
+  assert.deepEqual(normalized.generationOptions, {
+    cardShape: 'round',
+    imageRotation: 'random',
+    imageSize: 'various'
+  });
   assert.deepEqual(normalized.playOptions, {
     cardsToShowCounts: '',
     countdownSeconds: '',
@@ -68,6 +93,11 @@ test('given legacy temp deck without play options, normalizeTempDeck adds defaul
     dirty: true
   });
 
+  assert.deepEqual(normalized.generationOptions, {
+    cardShape: 'round',
+    imageRotation: 'random',
+    imageSize: 'various'
+  });
   assert.deepEqual(normalized.playOptions, {
     cardsToShowCounts: '2',
     countdownSeconds: '',
