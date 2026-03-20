@@ -127,7 +127,7 @@ async function renderDeckCards() {
     card.appendChild(cardBody);
     deckCardsElement.appendChild(card);
 
-    await drawImagesOnSquareTarget(target, sources);
+    await drawImagesOnSquareTarget(target, sources, tempDeck.generationOptions);
   }
 }
 
@@ -171,6 +171,7 @@ async function saveDeckWithName(name, confirmReplace) {
     name,
     symbolsPerCard: tempDeck.symbolsPerCard,
     imageRefs: [...tempDeck.selectedImageRefs],
+    generationOptions: { ...tempDeck.generationOptions },
     playOptions: { ...tempDeck.playOptions },
     updatedAt: new Date().toISOString()
   });

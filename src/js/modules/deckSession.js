@@ -1,3 +1,5 @@
+import { createDefaultGenerationOptions, normalizeGenerationOptions } from './cardGenerationOptions.js';
+
 const DEFAULT_SYMBOLS_PER_CARD = 4;
 const DEFAULT_PLAY_OPTIONS = Object.freeze({
   cardsToShowCounts: '2',
@@ -12,6 +14,7 @@ export function createEmptyTempDeck() {
     deckName: '',
     symbolsPerCard: DEFAULT_SYMBOLS_PER_CARD,
     selectedImageRefs: [],
+    generationOptions: createDefaultGenerationOptions(),
     playOptions: createDefaultPlayOptions(),
     dirty: false,
     updatedAt: new Date().toISOString()
@@ -23,6 +26,7 @@ export function createTempDeckFromSavedDeck(deck) {
     deckName: deck.name,
     symbolsPerCard: deck.symbolsPerCard,
     selectedImageRefs: Array.isArray(deck.imageRefs) ? [...deck.imageRefs] : [],
+    generationOptions: normalizeGenerationOptions(deck.generationOptions),
     playOptions: normalizePlayOptions(deck.playOptions),
     dirty: false,
     updatedAt: new Date().toISOString()
@@ -38,6 +42,7 @@ export function normalizeTempDeck(tempDeck) {
     deckName: tempDeck.deckName ?? '',
     symbolsPerCard: Number.isInteger(tempDeck.symbolsPerCard) ? tempDeck.symbolsPerCard : DEFAULT_SYMBOLS_PER_CARD,
     selectedImageRefs: Array.isArray(tempDeck.selectedImageRefs) ? [...tempDeck.selectedImageRefs] : [],
+    generationOptions: normalizeGenerationOptions(tempDeck.generationOptions),
     playOptions: normalizePlayOptions(tempDeck.playOptions),
     dirty: Boolean(tempDeck.dirty),
     updatedAt: tempDeck.updatedAt ?? new Date().toISOString()

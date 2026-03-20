@@ -4,6 +4,9 @@ import { loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, 
 import { getAllowedSymbolsPerCard } from '../modules/stepOnePreview.js';
 
 const symbolsSelect = document.querySelector('#symbols-select');
+const cardShapeSelect = document.querySelector('#card-shape-select');
+const imageRotationSelect = document.querySelector('#image-rotation-select');
+const imageSizeSelect = document.querySelector('#image-size-select');
 const sampleCardTarget = document.querySelector('#sample-card-target');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
@@ -12,9 +15,12 @@ let tempDeck = await loadTempDeckOrDefault();
 let resizeTimeout = null;
 
 symbolsSelect.value = String(tempDeck.symbolsPerCard);
+cardShapeSelect.value = tempDeck.generationOptions.cardShape;
+imageRotationSelect.value = tempDeck.generationOptions.imageRotation;
+imageSizeSelect.value = tempDeck.generationOptions.imageSize;
 renderDeckStatusLine(deckStatusLine, tempDeck);
 renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Basic Info', tempDeck });
-await renderSampleCard(tempDeck.symbolsPerCard);
+await renderSampleCard();
 
 symbolsSelect.addEventListener('change', async () => {
   const nextValue = Number.parseInt(symbolsSelect.value, 10);
@@ -26,7 +32,19 @@ symbolsSelect.addEventListener('change', async () => {
   await saveTempDeck(tempDeck);
   renderDeckStatusLine(deckStatusLine, tempDeck);
   renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Basic Info', tempDeck });
-  await renderSampleCard(nextValue);
+  await renderSampleCard();
+});
+
+cardShapeSelect.addEventListener('change', () => {
+  void updateGenerationOptions({ cardShape: cardShapeSelect.value });
+});
+
+imageRotationSelect.addEventListener('change', () => {
+  void updateGenerationOptions({ imageRotation: imageRotationSelect.value });
+});
+
+imageSizeSelect.addEventListener('change', () => {
+  void updateGenerationOptions({ imageSize: imageSizeSelect.value });
 });
 
 window.addEventListener('resize', () => {
@@ -35,15 +53,29 @@ window.addEventListener('resize', () => {
   }
 
   resizeTimeout = setTimeout(() => {
-    void renderSampleCard(tempDeck.symbolsPerCard);
+    void renderSampleCard();
   }, 100);
 });
 
-async function renderSampleCard(symbolsPerCard) {
+async function updateGenerationOptions(nextOptions) {
+  tempDeck = markDirty({
+    ...tempDeck,
+    generationOptions: {
+      ...tempDeck.generationOptions,
+      ...nextOptions
+    }
+  });
+  await saveTempDeck(tempDeck);
+  renderDeckStatusLine(deckStatusLine, tempDeck);
+  renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Basic Info', tempDeck });
+  await renderSampleCard();
+}
+
+async function renderSampleCard() {
   const placeholderSources = [];
-  for (let i = 1; i <= symbolsPerCard; i += 1) {
+  for (let i = 1; i <= tempDeck.symbolsPerCard; i += 1) {
     placeholderSources.push(`./assets/placeholder-images/${i}.png`);
   }
 
-  await drawImagesOnSquareTarget(sampleCardTarget, placeholderSources);
+  await drawImagesOnSquareTarget(sampleCardTarget, placeholderSources, tempDeck.generationOptions);
 }

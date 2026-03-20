@@ -1087,7 +1087,7 @@ async function renderHand() {
     card.appendChild(cardBody);
     playCardGrid.appendChild(card);
 
-    await drawImagesOnSquareTarget(target, sources);
+    await drawImagesOnSquareTarget(target, sources, tempDeck.generationOptions);
     if (state.sessionEnded) {
       return;
     }

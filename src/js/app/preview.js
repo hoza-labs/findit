@@ -1,6 +1,7 @@
 import { markDirty } from '../modules/deckSession.js';
 import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
+import { NEUTRAL_PREVIEW_GENERATION_OPTIONS } from '../modules/cardGenerationOptions.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
 import { describeImageRef, removeImageRefAtIndex } from '../modules/imageRefs.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
@@ -244,7 +245,8 @@ async function renderDeckPlayerCard(slopeItems, grid, s, r) {
 
   await drawImagesOnSquareTarget(
     previewSampleCardTarget,
-    selectedItems.map((item) => item.source)
+    selectedItems.map((item) => item.source),
+    tempDeck.generationOptions
   );
 }
 
@@ -387,7 +389,7 @@ async function renderSelectedImages() {
 
 async function renderPatternItemPreview(targetElement, imageSource) {
   try {
-    await drawImagesOnSquareTarget(targetElement, [imageSource]);
+    await drawImagesOnSquareTarget(targetElement, [imageSource], NEUTRAL_PREVIEW_GENERATION_OPTIONS);
   } catch {
     targetElement.textContent = 'Preview unavailable.';
   }

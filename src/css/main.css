@@ -322,8 +322,23 @@ body.has-top-bar.play-page {
   width: min(100%, 400px);
   aspect-ratio: 1 / 1;
   border: 1px solid var(--card-border);
-  border-radius: 0.5rem;
   background: #fff;
+  overflow: hidden;
+}
+
+.sample-card-target.is-round-card {
+  border-radius: 50%;
+}
+
+.sample-card-target.is-square-card {
+  border-radius: 0;
+}
+
+.basic-info-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  align-items: start;
 }
 
 .step-one-canvas {
