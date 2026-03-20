@@ -29,11 +29,12 @@ export async function drawImagesOnSquareTarget(targetElement, imageSources, opti
 
   const context = canvas.getContext('2d');
   context.clearRect(0, 0, sideLength, sideLength);
-  const plannedItems = planCardRenderItems(normalizedSources, generationOptions);
+  const renderPlan = planCardRender(normalizedSources, generationOptions);
   const images = await loadImages(normalizedSources);
   applyCardShape(targetElement, generationOptions.cardShape);
+  applyCardRotation(targetElement, renderPlan.cardRotation);
 
-  for (const plannedItem of plannedItems) {
+  for (const plannedItem of renderPlan.items) {
     drawImageAtPlacement(
       context,
       images[plannedItem.sourceIndex],
@@ -45,7 +46,7 @@ export async function drawImagesOnSquareTarget(targetElement, imageSources, opti
   targetElement.appendChild(canvas);
 }
 
-export function planCardRenderItems(imageSources, options = undefined, random = Math.random) {
+export function planCardRender(imageSources, options = undefined, random = Math.random) {
   if (!Array.isArray(imageSources)) {
     throw new Error('imageSources must be an array.');
   }
@@ -57,15 +58,22 @@ export function planCardRenderItems(imageSources, options = undefined, random = 
   const layout = getCardLayout(imageSources.length, generationOptions);
   const sourceOrder = buildShuffledIndices(imageSources.length, random);
 
-  return layout.items.map((layoutItem, index) => ({
-    sourceIndex: sourceOrder[index],
-    layoutItem: {
-      ...layoutItem,
-      rotation: generationOptions.imageRotation === 'random'
-        ? random() * Math.PI * 2
-        : 0
-    }
-  }));
+  return {
+    cardRotation: getCardRotation(generationOptions, random),
+    items: layout.items.map((layoutItem, index) => ({
+      sourceIndex: sourceOrder[index],
+      layoutItem: {
+        ...layoutItem,
+        rotation: generationOptions.imageRotation === 'random'
+          ? random() * Math.PI * 2
+          : 0
+      }
+    }))
+  };
+}
+
+export function planCardRenderItems(imageSources, options = undefined, random = Math.random) {
+  return planCardRender(imageSources, options, random).items;
 }
 
 export function calculateMaskedImagePlacement({ imageWidth, imageHeight, mask, cellSize, targetRadius }) {
@@ -133,6 +141,18 @@ function buildShuffledIndices(length, random) {
   return indices;
 }
 
+function getCardRotation(generationOptions, random) {
+  if (generationOptions.imageRotation !== 'random') {
+    return 0;
+  }
+
+  if (generationOptions.cardShape === 'square') {
+    return Math.floor(random() * 4) * (Math.PI / 2);
+  }
+
+  return random() * Math.PI * 2;
+}
+
 function drawImageAtPlacement(context, imageEntry, layoutItem, sideLength) {
   const centerX = layoutItem.centerX * sideLength;
   const centerY = layoutItem.centerY * sideLength;
@@ -175,4 +195,9 @@ function normalizeImageSource(candidate) {
 function applyCardShape(targetElement, cardShape) {
   targetElement.classList.remove('is-round-card', 'is-square-card');
   targetElement.classList.add(cardShape === 'round' ? 'is-round-card' : 'is-square-card');
+}
+
+function applyCardRotation(targetElement, rotation) {
+  targetElement.style.transformOrigin = 'center';
+  targetElement.style.transform = rotation ? `rotate(${rotation}rad)` : '';
 }

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { calculateMaskedImagePlacement, planCardRenderItems } from '../src/js/modules/cardCanvasRenderer.js';
+import { calculateMaskedImagePlacement, planCardRender, planCardRenderItems } from '../src/js/modules/cardCanvasRenderer.js';
 
 test('given a masked image, placement centers the saved mask and scales it to the inscribed circle', () => {
   const placement = calculateMaskedImagePlacement({
@@ -35,19 +35,40 @@ test('given a card render, image placement order is shuffled every time the card
 });
 
 test('given random image rotation, each planned image receives a fresh random angle', () => {
-  const plannedItems = planCardRenderItems(
+  const planned = planCardRender(
     ['a.png', 'b.png', 'c.png'],
     { cardShape: 'square', imageRotation: 'random', imageSize: 'uniform' },
-    sequenceRandom([0.6, 0.2, 0.1, 0.4, 0.8])
+    sequenceRandom([0.6, 0.2, 0.1, 0.4, 0.8, 0.3])
   );
 
   assert.deepEqual(
-    plannedItems.map((item) => item.sourceIndex),
+    planned.items.map((item) => item.sourceIndex),
     [2, 0, 1]
   );
-  assert.ok(Math.abs(plannedItems[0].layoutItem.rotation - (0.1 * Math.PI * 2)) < 0.0001);
-  assert.ok(Math.abs(plannedItems[1].layoutItem.rotation - (0.4 * Math.PI * 2)) < 0.0001);
-  assert.ok(Math.abs(plannedItems[2].layoutItem.rotation - (0.8 * Math.PI * 2)) < 0.0001);
+  assert.equal(planned.cardRotation, 0);
+  assert.ok(Math.abs(planned.items[0].layoutItem.rotation - (0.4 * Math.PI * 2)) < 0.0001);
+  assert.ok(Math.abs(planned.items[1].layoutItem.rotation - (0.8 * Math.PI * 2)) < 0.0001);
+  assert.ok(Math.abs(planned.items[2].layoutItem.rotation - (0.3 * Math.PI * 2)) < 0.0001);
+});
+
+test('given round cards with random rotation, the whole card gets an arbitrary angle', () => {
+  const planned = planCardRender(
+    ['a.png', 'b.png'],
+    { cardShape: 'round', imageRotation: 'random', imageSize: 'uniform' },
+    sequenceRandom([0.75, 0.25, 0.5, 0.125])
+  );
+
+  assert.ok(Math.abs(planned.cardRotation - (0.25 * Math.PI * 2)) < 0.0001);
+});
+
+test('given non-random rotation, the whole card is not rotated', () => {
+  const planned = planCardRender(
+    ['a.png', 'b.png'],
+    { cardShape: 'square', imageRotation: 'none', imageSize: 'uniform' },
+    sequenceRandom([0.75])
+  );
+
+  assert.equal(planned.cardRotation, 0);
 });
 
 function sequenceRandom(values) {
