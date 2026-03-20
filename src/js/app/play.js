@@ -7,6 +7,13 @@ import {
   getDeckLimitedHandStatus,
   isFinalDeckExhausted
 } from '../modules/playDeckLimit.js';
+import {
+  createCountdownClock,
+  pauseCountdownClock,
+  readCountdownTick,
+  resetCountdownClock,
+  startCountdownClock
+} from '../modules/playCountdown.js';
 import { createPlayHatState, drawNextHand } from '../modules/playHat.js';
 import { parsePositiveNumberInput, parsePositiveWholeNumberInput } from '../modules/playNumberValidation.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
@@ -59,6 +66,7 @@ const state = {
   pendingHandCount: false,
   countdownRemainingMs: 0,
   countdownEndsAtMs: 0,
+  countdownRunId: createCountdownClock().runId,
   claimDialogOpen: false,
   claimDialogOpenedAtMs: 0,
   totalClaimDialogOpenMs: 0,
@@ -92,6 +100,36 @@ function stopCountdown() {
   }
 
   state.countdownEndsAtMs = 0;
+}
+
+function resetCountdownState() {
+  const nextClock = resetCountdownClock(getCountdownClock());
+  applyCountdownClock(nextClock);
+}
+
+function pauseCountdownState() {
+  const nextClock = pauseCountdownClock(getCountdownClock(), Date.now());
+  applyCountdownClock(nextClock);
+}
+
+function startCountdownState(durationMs) {
+  const nextClock = startCountdownClock(getCountdownClock(), durationMs, Date.now());
+  applyCountdownClock(nextClock);
+  return nextClock.runId;
+}
+
+function getCountdownClock() {
+  return {
+    remainingMs: state.countdownRemainingMs,
+    endsAtMs: state.countdownEndsAtMs,
+    runId: state.countdownRunId
+  };
+}
+
+function applyCountdownClock(clock) {
+  state.countdownRemainingMs = clock.remainingMs;
+  state.countdownEndsAtMs = clock.endsAtMs;
+  state.countdownRunId = clock.runId;
 }
 
 function stopMinuteLimitTimer() {
@@ -426,7 +464,7 @@ function pauseCountdownForDialog() {
     return;
   }
 
-  state.countdownRemainingMs = Math.max(0, state.countdownEndsAtMs - Date.now());
+  pauseCountdownState();
   stopCountdown();
   countdownStatus.textContent = `Countdown paused at ${(state.countdownRemainingMs / 1000).toFixed(1)}s.`;
   updatePlayStatusLine();
@@ -952,6 +990,7 @@ function startCountdown(settings) {
   stopCountdown();
 
   if (settings.countdownSeconds <= 0 || hasReachedPlayLimit(settings)) {
+    resetCountdownState();
     countdownStatus.textContent = settings.countdownSeconds > 0
       ? 'Final hand. Countdown complete.'
       : 'No countdown. Advance manually.';
@@ -959,17 +998,19 @@ function startCountdown(settings) {
     return;
   }
 
-  state.countdownRemainingMs = state.countdownRemainingMs > 0
-    ? state.countdownRemainingMs
-    : settings.countdownSeconds * 1000;
-  state.countdownEndsAtMs = Date.now() + state.countdownRemainingMs;
+  const runId = startCountdownState(settings.countdownSeconds * 1000);
   countdownStatus.textContent = `Auto-advancing in ${(state.countdownRemainingMs / 1000).toFixed(1)}s.`;
   updatePlayStatusLine();
   countdownTimerId = window.setInterval(() => {
-    const remainingMs = Math.max(0, state.countdownEndsAtMs - Date.now());
-    state.countdownRemainingMs = remainingMs;
-    if (remainingMs <= 0) {
+    const tick = readCountdownTick(getCountdownClock(), Date.now(), runId);
+    if (tick.ignored) {
+      return;
+    }
+
+    state.countdownRemainingMs = tick.remainingMs;
+    if (tick.expired) {
       stopCountdown();
+      resetCountdownState();
       const players = getPlayerNames();
       if (hasReachedPlayLimit(settings)) {
         renderCompletion(settings, players, settings.lengthOfPlayUnits === 'minutes' ? 'minutes' : 'hands');
@@ -981,7 +1022,7 @@ function startCountdown(settings) {
       return;
     }
 
-    countdownStatus.textContent = `Auto-advancing in ${(remainingMs / 1000).toFixed(1)}s.`;
+    countdownStatus.textContent = `Auto-advancing in ${(tick.remainingMs / 1000).toFixed(1)}s.`;
     updatePlayStatusLine();
   }, 100);
 }
@@ -1015,6 +1056,8 @@ async function renderHand() {
   if (state.sessionEnded) {
     return;
   }
+  stopCountdown();
+  resetCountdownState();
   if (state.startedAtMs === 0) {
     state.startedAtMs = Date.now();
   }
@@ -1034,7 +1077,6 @@ async function renderHand() {
   if (state.activeHandNumber >= 2) {
     setNavigationConfirmationEnabled(true);
   }
-  state.countdownRemainingMs = 0;
   playCardGrid.innerHTML = '';
   playBoardEmpty.hidden = true;
 
