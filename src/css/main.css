@@ -1344,6 +1344,13 @@ body.has-top-bar.play-page {
   margin-top: 1rem;
 }
 
+.claim-dialog-shortcuts {
+  margin-top: 0.35rem;
+  text-align: left;
+  font-size: 0.875rem;
+  line-height: 1.25;
+}
+
 .confirmation-dialog {
   position: fixed;
   inset: 0;

@@ -49,6 +49,7 @@ const claimDialog = document.querySelector('#claim-dialog');
 const claimDialogHeader = document.querySelector('#claim-dialog-header');
 const claimDialogMessage = document.querySelector('#claim-dialog-message');
 const claimPlayerList = document.querySelector('#claim-player-list');
+const claimDialogShortcuts = document.querySelector('#claim-dialog-shortcuts');
 const claimDialogPeekButton = document.querySelector('#claim-dialog-peek-button');
 const claimDialogResultsButton = document.querySelector('#claim-dialog-results-button');
 const claimDialogCancelButton = document.querySelector('#claim-dialog-cancel-button');
@@ -494,16 +495,30 @@ function renderPlayerClaimPrompt() {
   playerStatus.textContent = 'Any player can click anywhere or press any key to claim the hand.';
 }
 
+function getClaimDialogShortcutsText() {
+  const shortcutPlayerCount = Math.min(state.playerScores.length, 9);
+  if (shortcutPlayerCount <= 0) {
+    return 'Press Enter for Next hand or Escape to cancel.';
+  }
+
+  return 'Press 1-' + String(shortcutPlayerCount)
+    + ' to add a point, Shift+1-' + String(shortcutPlayerCount)
+    + ' to remove a point, Enter for Next hand, or Escape to cancel.';
+}
+
 function renderClaimPlayerList() {
   claimPlayerList.innerHTML = '';
 
   if (state.playerScores.length === 0) {
+    claimDialogShortcuts.textContent = getClaimDialogShortcutsText();
     const emptyRow = document.createElement('p');
     emptyRow.className = 'mb-0 text-muted';
     emptyRow.textContent = 'No player names are configured for scoring.';
     claimPlayerList.appendChild(emptyRow);
     return;
   }
+
+  claimDialogShortcuts.textContent = getClaimDialogShortcutsText();
 
   for (let index = 0; index < state.playerScores.length; index += 1) {
     const player = state.playerScores[index];
@@ -1426,7 +1441,7 @@ function startCountdown(settings) {
 function getClaimEventMessage(event) {
   if (event instanceof KeyboardEvent) {
     const keyLabel = event.key === ' ' ? 'Space' : event.key;
-    return `The ${keyLabel} key was pressed!`;
+    return `The ${keyLabel} key was pressed! But who spoke first? (and said the right thing!)`;
   }
 
   if (event instanceof PointerEvent) {
