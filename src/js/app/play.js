@@ -500,14 +500,7 @@ function renderPlayerClaimPrompt() {
 }
 
 function getClaimDialogShortcutsText() {
-  const shortcutPlayerCount = Math.min(state.playerScores.length, 9);
-  if (shortcutPlayerCount <= 0) {
-    return 'Press Enter for Next hand or Escape to cancel.';
-  }
-
-  return 'Press 1-' + String(shortcutPlayerCount)
-    + ' to add a point, Shift+1-' + String(shortcutPlayerCount)
-    + ' to remove a point, Enter for Next hand, or Escape to cancel.';
+  return 'Press number keys or click to give points. Press Enter when done or Escape to cancel.';
 }
 
 function renderClaimPlayerList() {
@@ -528,6 +521,7 @@ function renderClaimPlayerList() {
     const player = state.playerScores[index];
     const row = document.createElement('div');
     row.className = 'claim-player-row';
+    row.dataset.playerIndex = String(index);
 
     const name = document.createElement('div');
     name.className = 'claim-player-name';
@@ -573,6 +567,13 @@ function renderClaimPlayerList() {
     decreaseButton.dataset.scoreDelta = '-1';
     decreaseButton.textContent = '-';
 
+    const resetButton = document.createElement('button');
+    resetButton.type = 'button';
+    resetButton.className = 'btn btn-outline-secondary claim-player-button';
+    resetButton.dataset.playerIndex = String(index);
+    resetButton.dataset.scoreSet = '0';
+    resetButton.textContent = '0';
+
     const increaseButton = document.createElement('button');
     increaseButton.type = 'button';
     increaseButton.className = 'btn btn-outline-primary claim-player-button';
@@ -581,7 +582,7 @@ function renderClaimPlayerList() {
     increaseButton.textContent = '+';
 
     name.appendChild(score);
-    controls.append(decreaseButton, increaseButton);
+    controls.append(decreaseButton, resetButton, increaseButton);
     row.append(name, controls);
     claimPlayerList.appendChild(row);
   }
@@ -597,16 +598,27 @@ function cancelClaimHandPoints() {
   state.claimHandPoints = state.playerScores.map(() => 0);
 }
 
-function applyClaimHandScore(playerIndex, scoreDelta) {
+function setClaimHandScore(playerIndex, nextHandPoints) {
   const player = state.playerScores[playerIndex];
-  if (!player || Number.isNaN(scoreDelta)) {
+  if (!player || !Number.isInteger(nextHandPoints)) {
     return false;
   }
 
+  const currentHandPoints = state.claimHandPoints[playerIndex] ?? 0;
+  const scoreDelta = nextHandPoints - currentHandPoints;
   player.score += scoreDelta;
-  state.claimHandPoints[playerIndex] = (state.claimHandPoints[playerIndex] ?? 0) + scoreDelta;
+  state.claimHandPoints[playerIndex] = nextHandPoints;
   renderClaimPlayerList();
   return true;
+}
+
+function applyClaimHandScore(playerIndex, scoreDelta) {
+  if (Number.isNaN(scoreDelta)) {
+    return false;
+  }
+
+  const currentHandPoints = state.claimHandPoints[playerIndex] ?? 0;
+  return setClaimHandScore(playerIndex, currentHandPoints + scoreDelta);
 }
 
 function handleClaimDialogShortcut(shortcut, event) {
@@ -1457,27 +1469,31 @@ function startCountdown(settings) {
   }, 100);
 }
 
+function appendClaimInstructions(message) {
+  return message + ' Hand out points (or penalties!) using the options below.';
+}
+
 function getClaimEventMessage(event) {
   if (event instanceof KeyboardEvent) {
     const keyLabel = event.key === ' ' ? 'Space' : event.key;
-    return `The ${keyLabel} key was pressed! But who spoke first? (and said the right thing!)`;
+    return appendClaimInstructions(`The ${keyLabel} key was pressed! But who spoke first? (and said the right thing!)`);
   }
 
   if (event instanceof PointerEvent) {
     if (event.pointerType === 'mouse') {
-      return 'Mouse click detected!';
+      return appendClaimInstructions('Mouse click detected!');
     }
 
     if (event.pointerType === 'touch') {
-      return 'Screen was touched!';
+      return appendClaimInstructions('Screen was touched!');
     }
 
     if (event.pointerType === 'pen') {
-      return 'Pen touch detected!';
+      return appendClaimInstructions('Pen touch detected!');
     }
   }
 
-  return 'Input detected!';
+  return appendClaimInstructions('Input detected!');
 }
 
 async function renderHand() {
@@ -1639,14 +1655,32 @@ restartButton.addEventListener('click', () => {
 });
 
 claimPlayerList.addEventListener('click', (event) => {
-  const button = event.target instanceof HTMLElement ? event.target.closest('button[data-player-index]') : null;
-  if (!button) {
+  const target = event.target instanceof HTMLElement ? event.target : null;
+  if (!target) {
     return;
   }
 
-  const playerIndex = Number.parseInt(button.dataset.playerIndex ?? '', 10);
-  const scoreDelta = Number.parseInt(button.dataset.scoreDelta ?? '', 10);
-  applyClaimHandScore(playerIndex, scoreDelta);
+  const button = target.closest('button[data-player-index]');
+  if (button) {
+    const playerIndex = Number.parseInt(button.dataset.playerIndex ?? '', 10);
+    const scoreSet = Number.parseInt(button.dataset.scoreSet ?? '', 10);
+    if (!Number.isNaN(scoreSet)) {
+      setClaimHandScore(playerIndex, scoreSet);
+      return;
+    }
+
+    const scoreDelta = Number.parseInt(button.dataset.scoreDelta ?? '', 10);
+    applyClaimHandScore(playerIndex, scoreDelta);
+    return;
+  }
+
+  const row = target.closest('.claim-player-row[data-player-index]');
+  if (!row) {
+    return;
+  }
+
+  const playerIndex = Number.parseInt(row.dataset.playerIndex ?? '', 10);
+  applyClaimHandScore(playerIndex, 1);
 });
 
 claimDialogCancelButton.addEventListener('click', () => {

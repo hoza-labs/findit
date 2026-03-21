@@ -1291,6 +1291,7 @@ body.has-top-bar.play-page {
   border: 1px solid var(--card-border);
   border-radius: 0.6rem;
   background: #fafbfc;
+  cursor: pointer;
 }
 
 .claim-player-name {
@@ -1351,6 +1352,10 @@ body.has-top-bar.play-page {
 .claim-player-controls {
   display: flex;
   gap: 0.4rem;
+}
+
+.claim-player-controls .claim-player-button {
+  cursor: pointer;
 }
 
 .claim-player-button {
