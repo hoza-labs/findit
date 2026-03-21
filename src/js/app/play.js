@@ -510,7 +510,11 @@ function renderPlayerClaimPrompt() {
 }
 
 function getClaimDialogShortcutsText() {
-  return 'Press number keys or click to give points. Press Enter when done or Escape to cancel.';
+  const shortcutPlayerCount = Math.min(9, state.playerScores.length);
+  const playerShortcutText = shortcutPlayerCount > 0
+    ? ' 1-' + String(shortcutPlayerCount) + '=[player]'
+    : '';
+  return 'Keyboard shortcuts: s=[Star Wand] t=[Tomato Wand]' + playerShortcutText + ' Enter=[Next hand] Esc=[Cancel]';
 }
 
 function renderClaimPointsMode() {
@@ -641,7 +645,16 @@ function handleClaimDialogShortcut(shortcut, event) {
     return true;
   }
 
-  return applyClaimHandScore(shortcut.playerIndex, shortcut.scoreDelta);
+  if (shortcut.type === 'points-mode') {
+    setClaimPointsMode(shortcut.mode);
+    return true;
+  }
+
+  if (shortcut.type === 'player-row') {
+    return stepClaimHandScore(shortcut.playerIndex, getClaimPointsModeRowAction(state.claimPointsMode));
+  }
+
+  return false;
 }
 
 function isClaimDialogActionKeyAllowed(nowMs = Date.now()) {

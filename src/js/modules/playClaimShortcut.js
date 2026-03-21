@@ -11,6 +11,23 @@ export function getClaimDialogShortcut(event, maxPlayers = 9) {
     };
   }
 
+  if (!event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey) {
+    const normalizedKey = typeof event.key === 'string' ? event.key.toLowerCase() : '';
+    if (normalizedKey === 's') {
+      return {
+        type: 'points-mode',
+        mode: 'star'
+      };
+    }
+
+    if (normalizedKey === 't') {
+      return {
+        type: 'points-mode',
+        mode: 'tomato'
+      };
+    }
+  }
+
   if (typeof event.code !== 'string' || !event.code.startsWith('Digit')) {
     return null;
   }
@@ -25,9 +42,8 @@ export function getClaimDialogShortcut(event, maxPlayers = 9) {
   }
 
   return {
-    type: 'score',
-    playerIndex: playerNumber - 1,
-    scoreDelta: event.shiftKey ? -1 : 1
+    type: 'player-row',
+    playerIndex: playerNumber - 1
   };
 }
 
