@@ -52,13 +52,48 @@
       <section class="play-board">
         <div id="play-board-empty" class="alert alert-warning" hidden></div>
         <div id="play-card-grid" class="play-card-grid"></div>
+        <div id="play-reveal-overlay" class="play-reveal-overlay" hidden aria-hidden="true">
+          <span id="play-reveal-number" class="play-reveal-number"></span>
+        </div>
       </section>
     </main>
+
+    <section
+      id="play-start-dialog"
+      class="claim-dialog play-start-dialog"
+      hidden
+      aria-live="polite"
+      aria-labelledby="play-start-dialog-title"
+      aria-modal="true"
+      role="dialog"
+    >
+      <div class="claim-dialog-header play-start-dialog-header">
+        <div class="claim-dialog-title-row">
+          <h2 id="play-start-dialog-title" class="h4 mb-0">Get Ready to Play!</h2>
+        </div>
+      </div>
+      <div class="claim-dialog-body play-start-dialog-body">
+        <p class="play-start-dialog-intro mb-0">Here&rsquo;s how the game works:</p>
+        <ul class="play-start-dialog-list mb-0">
+          <li>Players will be shown one hand at a time.</li>
+          <li>The first player to find the right image for that hand should say the name of the image and press any key on the keyboard to claim the hand.</li>
+          <li>The game will indicate which key was pressed first, though most people prefer to give credit to the player who managed to say the name of the image first.</li>
+          <li>Once someone presses a key, everyone can relax and decide who gets to claim the point(s) for that hand.</li>
+          <li>The game will let you add points to the chosen player(s) but keep the total score secret until the end of the game.</li>
+          <li>Everyone then goes on to the next hand until the game is over and the final scores are shown.</li>
+        </ul>
+        <p class="play-start-dialog-shortcuts text-muted mb-0">Press Enter for OK or Escape for Cancel.</p>
+        <div class="claim-dialog-actions">
+          <button id="play-start-dialog-cancel-button" type="button" class="btn btn-outline-secondary">Cancel</button>
+          <button id="play-start-dialog-ok-button" type="button" class="btn btn-primary">OK</button>
+        </div>
+      </div>
+    </section>
 
     <section id="claim-dialog" class="claim-dialog" hidden aria-live="polite">
       <div id="claim-dialog-header" class="claim-dialog-header">
         <div class="claim-dialog-title-row">
-          <h2 class="h5 mb-0">Claim Hand</h2>
+          <h2 class="h5 mb-0">Claim Hand - who gets the point(s) for this hand?</h2>
           <div class="claim-dialog-peek-wrap">
             <button id="claim-dialog-peek-button" type="button" class="btn btn-sm btn-outline-secondary">Peek</button>
           </div>
@@ -66,7 +101,16 @@
       </div>
       <div class="claim-dialog-body">
         <p id="claim-dialog-message" class="mb-3"></p>
-        <div id="claim-player-list" class="claim-player-list"></div>
+        <div id="claim-points-mode" class="claim-points-mode" role="radiogroup" aria-label="Points Mode">
+          <button id="claim-points-mode-star-button" type="button" class="claim-points-mode-button is-selected" role="radio" aria-checked="true" aria-label="Star Mode">
+            <img src="./assets/images/star-wand.svg" alt="" class="claim-points-mode-icon" />
+          </button>
+          <button id="claim-points-mode-tomato-button" type="button" class="claim-points-mode-button" role="radio" aria-checked="false" aria-label="Tomato Mode">
+            <img src="./assets/images/tomato-wand.svg" alt="" class="claim-points-mode-icon" />
+          </button>
+        </div>
+        <div id="claim-player-list" class="claim-player-list is-star-mode"></div>
+        <p id="claim-dialog-shortcuts" class="claim-dialog-shortcuts text-muted mb-0"></p>
         <div class="claim-dialog-actions">
           <button id="claim-dialog-results-button" type="button" class="btn btn-outline-secondary me-auto" hidden>Results</button>
           <button id="claim-dialog-cancel-button" type="button" class="btn btn-outline-secondary">Cancel</button>
@@ -89,3 +133,5 @@
     <script type="module" src="./js/app/play.js"></script>
   </body>
 </html>
+
+
