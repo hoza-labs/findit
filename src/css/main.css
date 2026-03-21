@@ -1329,10 +1329,23 @@ body.has-top-bar.play-page {
 
 .claim-player-score {
   min-height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
   text-align: left;
   font-size: 1.05rem;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
+}
+
+.claim-player-score-icons {
+  white-space: nowrap;
+}
+
+.claim-player-score-summary {
+  font-size: 0.875rem;
+  color: #495057;
 }
 
 .claim-player-controls {

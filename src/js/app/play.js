@@ -22,7 +22,10 @@ import {
   getClaimDialogShortcut,
   isClaimDialogActionKeyEnabled
 } from '../modules/playClaimShortcut.js';
-import { formatClaimHandPoints } from '../modules/playClaimScoreDisplay.js';
+import {
+  formatClaimHandPoints,
+  formatClaimHandPointsSummary
+} from '../modules/playClaimScoreDisplay.js';
 import { createPlayHatState, drawNextHand } from '../modules/playHat.js';
 import { parsePositiveNumberInput, parsePositiveWholeNumberInput } from '../modules/playNumberValidation.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
@@ -545,7 +548,19 @@ function renderClaimPlayerList() {
     const score = document.createElement('div');
     score.className = 'claim-player-score';
     const handPoints = state.claimHandPoints[index] ?? 0;
-    score.textContent = formatClaimHandPoints(handPoints);
+    const scoreIcons = document.createElement('span');
+    scoreIcons.className = 'claim-player-score-icons';
+    scoreIcons.textContent = formatClaimHandPoints(handPoints);
+    score.appendChild(scoreIcons);
+
+    const scoreSummaryText = formatClaimHandPointsSummary(handPoints, player.name);
+    if (scoreSummaryText) {
+      const scoreSummary = document.createElement('span');
+      scoreSummary.className = 'claim-player-score-summary';
+      scoreSummary.textContent = scoreSummaryText;
+      score.appendChild(scoreSummary);
+    }
+
     score.setAttribute('aria-label', 'Points for this hand: ' + String(handPoints));
 
     const controls = document.createElement('div');

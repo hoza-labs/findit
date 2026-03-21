@@ -14,3 +14,14 @@ export function formatClaimHandPoints(points) {
   const absolutePoints = Math.abs(points);
   return absolutePoints <= MAX_INLINE_ICONS ? TOMATO.repeat(absolutePoints) : TOMATO + 'x' + String(absolutePoints);
 }
+
+export function formatClaimHandPointsSummary(points, playerName) {
+  if (!Number.isInteger(points) || points === 0) {
+    return '';
+  }
+
+  const absolutePoints = Math.abs(points);
+  const pointLabel = absolutePoints === 1 ? 'point' : 'points';
+  const verb = points > 0 ? 'added to' : 'subtracted from';
+  return '(' + String(absolutePoints) + ' ' + pointLabel + ' will be ' + verb + ' ' + String(playerName) + "'s score)";
+}
