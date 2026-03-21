@@ -18,7 +18,10 @@ import {
   getPlayRevealTotalDurationMs,
   readPlayRevealStep
 } from '../modules/playRevealCountdown.js';
-import { getClaimDialogShortcut } from '../modules/playClaimShortcut.js';
+import {
+  getClaimDialogShortcut,
+  isClaimDialogActionKeyEnabled
+} from '../modules/playClaimShortcut.js';
 import { createPlayHatState, drawNextHand } from '../modules/playHat.js';
 import { parsePositiveNumberInput, parsePositiveWholeNumberInput } from '../modules/playNumberValidation.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
@@ -560,8 +563,7 @@ function applyClaimHandScore(playerIndex, scoreDelta) {
   return true;
 }
 
-function handleClaimDialogShortcut(event) {
-  const shortcut = getClaimDialogShortcut(event, state.playerScores.length);
+function handleClaimDialogShortcut(shortcut, event) {
   if (!shortcut) {
     return false;
   }
@@ -574,6 +576,10 @@ function handleClaimDialogShortcut(event) {
   }
 
   return applyClaimHandScore(shortcut.playerIndex, shortcut.scoreDelta);
+}
+
+function isClaimDialogActionKeyAllowed(nowMs = Date.now()) {
+  return isClaimDialogActionKeyEnabled(state.claimDialogOpenedAtMs, nowMs);
 }
 
 function getHandSettings() {
@@ -1692,14 +1698,21 @@ document.addEventListener('keydown', (event) => {
     return;
   }
 
-  if (state.claimDialogOpen && event.key === 'Escape') {
-    event.preventDefault();
-    resumePlayAfterClaimCancel();
-    return;
-  }
-
   if (state.claimDialogOpen) {
-    if (handleClaimDialogShortcut(event)) {
+    const shortcut = getClaimDialogShortcut(event, state.playerScores.length);
+    const isClaimActionKey = event.key === 'Escape' || shortcut !== null;
+    if (isClaimActionKey && !isClaimDialogActionKeyAllowed()) {
+      event.preventDefault();
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      resumePlayAfterClaimCancel();
+      return;
+    }
+
+    if (handleClaimDialogShortcut(shortcut, event)) {
       return;
     }
   }

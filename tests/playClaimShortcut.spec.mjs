@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { getClaimDialogShortcut } from '../src/js/modules/playClaimShortcut.js';
+import {
+  CLAIM_DIALOG_ACTION_KEY_DELAY_MS,
+  getClaimDialogShortcut,
+  isClaimDialogActionKeyEnabled
+} from '../src/js/modules/playClaimShortcut.js';
 
 test('given Enter in the claim dialog, the shortcut advances to the next hand', () => {
   assert.deepEqual(getClaimDialogShortcut({ key: 'Enter' }), {
@@ -37,4 +41,13 @@ test('given a number key beyond the configured player count, the shortcut is ign
 test('given modifier keys other than Shift, the shortcut is ignored', () => {
   assert.equal(getClaimDialogShortcut({ key: '1', code: 'Digit1', ctrlKey: true }, 9), null);
   assert.equal(getClaimDialogShortcut({ key: 'Enter', metaKey: true }, 9), null);
+});
+
+test('given a freshly opened claim dialog, action keys stay disabled for one second', () => {
+  assert.equal(isClaimDialogActionKeyEnabled(5000, 5000 + CLAIM_DIALOG_ACTION_KEY_DELAY_MS - 1), false);
+  assert.equal(isClaimDialogActionKeyEnabled(5000, 5000 + CLAIM_DIALOG_ACTION_KEY_DELAY_MS), true);
+});
+
+test('given no valid open timestamp, claim dialog action keys are enabled', () => {
+  assert.equal(isClaimDialogActionKeyEnabled(0, 1000), true);
 });

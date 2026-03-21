@@ -1,3 +1,5 @@
+export const CLAIM_DIALOG_ACTION_KEY_DELAY_MS = 1000;
+
 export function getClaimDialogShortcut(event, maxPlayers = 9) {
   if (!event || typeof event !== 'object') {
     return null;
@@ -27,4 +29,12 @@ export function getClaimDialogShortcut(event, maxPlayers = 9) {
     playerIndex: playerNumber - 1,
     scoreDelta: event.shiftKey ? -1 : 1
   };
+}
+
+export function isClaimDialogActionKeyEnabled(openedAtMs, nowMs, delayMs = CLAIM_DIALOG_ACTION_KEY_DELAY_MS) {
+  if (!Number.isFinite(openedAtMs) || openedAtMs <= 0) {
+    return true;
+  }
+
+  return nowMs - openedAtMs >= delayMs;
 }
