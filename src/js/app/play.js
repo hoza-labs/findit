@@ -809,7 +809,7 @@ function isClaimDialogPeeking() {
 
 function runClaimDialogPeek() {
   stopClaimDialogPeekTimer();
-  setClaimDialogOpacity(0.2);
+  setClaimDialogOpacity(0);
   claimDialogPeekRestoreTimerId = window.setTimeout(() => {
     setClaimDialogOpacity(1);
     claimDialogPeekRestoreTimerId = null;
