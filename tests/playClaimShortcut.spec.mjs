@@ -34,6 +34,11 @@ test('given Shift plus a number key, the shortcut removes one point from the mat
   });
 });
 
+test('given an auto-repeated keydown, the claim dialog shortcut is ignored', () => {
+  assert.equal(getClaimDialogShortcut({ key: 'Enter', repeat: true }, 9), null);
+  assert.equal(getClaimDialogShortcut({ key: '1', code: 'Digit1', repeat: true }, 9), null);
+});
+
 test('given a number key beyond the configured player count, the shortcut is ignored', () => {
   assert.equal(getClaimDialogShortcut({ key: '4', code: 'Digit4', shiftKey: false }, 3), null);
 });

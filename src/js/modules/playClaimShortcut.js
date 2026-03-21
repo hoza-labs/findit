@@ -1,7 +1,7 @@
 export const CLAIM_DIALOG_ACTION_KEY_DELAY_MS = 1000;
 
 export function getClaimDialogShortcut(event, maxPlayers = 9) {
-  if (!event || typeof event !== 'object') {
+  if (!event || typeof event !== 'object' || event.repeat) {
     return null;
   }
 

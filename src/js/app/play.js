@@ -1701,7 +1701,7 @@ document.addEventListener('keydown', (event) => {
   if (state.claimDialogOpen) {
     const shortcut = getClaimDialogShortcut(event, state.playerScores.length);
     const isClaimActionKey = event.key === 'Escape' || shortcut !== null;
-    if (isClaimActionKey && !isClaimDialogActionKeyAllowed()) {
+    if (isClaimActionKey && (event.repeat || !isClaimDialogActionKeyAllowed())) {
       event.preventDefault();
       return;
     }
