@@ -1280,7 +1280,7 @@ body.has-top-bar.play-page {
 
 .claim-player-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.75rem;
   align-items: center;
   padding: 0.6rem 0.75rem;
@@ -1292,6 +1292,7 @@ body.has-top-bar.play-page {
 .claim-player-name {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.65rem;
   min-width: 0;
   font-weight: 600;
@@ -1323,8 +1324,10 @@ body.has-top-bar.play-page {
 }
 
 .claim-player-score {
-  min-width: 4rem;
-  text-align: center;
+  min-height: 1.5rem;
+  text-align: left;
+  font-size: 1.05rem;
+  line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1380,9 +1383,6 @@ body.has-top-bar.play-page {
     grid-template-columns: 1fr;
   }
 
-  .claim-player-score {
-    text-align: left;
-  }
 }
 
 .save-deck-grid {

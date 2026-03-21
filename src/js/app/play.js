@@ -22,6 +22,7 @@ import {
   getClaimDialogShortcut,
   isClaimDialogActionKeyEnabled
 } from '../modules/playClaimShortcut.js';
+import { formatClaimHandPoints } from '../modules/playClaimScoreDisplay.js';
 import { createPlayHatState, drawNextHand } from '../modules/playHat.js';
 import { parsePositiveNumberInput, parsePositiveWholeNumberInput } from '../modules/playNumberValidation.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
@@ -543,7 +544,9 @@ function renderClaimPlayerList() {
 
     const score = document.createElement('div');
     score.className = 'claim-player-score';
-    score.textContent = `Points for this hand: ${state.claimHandPoints[index] ?? 0}`;
+    const handPoints = state.claimHandPoints[index] ?? 0;
+    score.textContent = formatClaimHandPoints(handPoints);
+    score.setAttribute('aria-label', 'Points for this hand: ' + String(handPoints));
 
     const controls = document.createElement('div');
     controls.className = 'claim-player-controls';
@@ -562,8 +565,9 @@ function renderClaimPlayerList() {
     increaseButton.dataset.scoreDelta = '1';
     increaseButton.textContent = '+';
 
+    name.appendChild(score);
     controls.append(decreaseButton, increaseButton);
-    row.append(name, score, controls);
+    row.append(name, controls);
     claimPlayerList.appendChild(row);
   }
 }
