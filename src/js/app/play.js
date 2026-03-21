@@ -554,42 +554,45 @@ function renderClaimPlayerList() {
     row.className = 'claim-player-row';
     row.dataset.playerIndex = String(index);
 
-    const name = document.createElement('div');
-    name.className = 'claim-player-name';
+    const content = document.createElement('p');
+    content.className = 'claim-player-content mb-0';
+
+    const identity = document.createElement('span');
+    identity.className = 'claim-player-identity';
 
     if (index < 9) {
       const keycap = document.createElement('span');
       keycap.className = 'claim-player-keycap';
       keycap.textContent = String(index + 1);
       keycap.setAttribute('aria-label', 'Player ' + String(index + 1) + ' shortcut key');
-      name.appendChild(keycap);
+      identity.appendChild(keycap);
     }
 
     const nameText = document.createElement('span');
     nameText.className = 'claim-player-name-text';
     nameText.textContent = player.name;
-    name.appendChild(nameText);
+    identity.appendChild(nameText);
+    content.appendChild(identity);
 
-    const score = document.createElement('div');
-    score.className = 'claim-player-score';
     const handPoints = state.claimHandPoints[index] ?? 0;
-    const scoreIcons = document.createElement('span');
-    scoreIcons.className = 'claim-player-score-icons';
-    scoreIcons.textContent = formatClaimHandPoints(handPoints);
-    score.appendChild(scoreIcons);
+    const scoreIconsText = formatClaimHandPoints(handPoints);
+    if (scoreIconsText) {
+      const scoreIcons = document.createElement('span');
+      scoreIcons.className = 'claim-player-score-icons';
+      scoreIcons.textContent = scoreIconsText;
+      scoreIcons.setAttribute('aria-label', 'Points for this hand: ' + String(handPoints));
+      content.appendChild(scoreIcons);
+    }
 
     const scoreSummaryText = formatClaimHandPointsSummary(handPoints, player.name);
     if (scoreSummaryText) {
       const scoreSummary = document.createElement('span');
       scoreSummary.className = 'claim-player-score-summary';
       scoreSummary.textContent = scoreSummaryText;
-      score.appendChild(scoreSummary);
+      content.appendChild(scoreSummary);
     }
 
-    score.setAttribute('aria-label', 'Points for this hand: ' + String(handPoints));
-
-    name.appendChild(score);
-    row.appendChild(name);
+    row.appendChild(content);
     claimPlayerList.appendChild(row);
   }
 }
