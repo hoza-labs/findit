@@ -26,6 +26,7 @@ import {
   formatClaimHandPoints,
   formatClaimHandPointsSummary
 } from '../modules/playClaimScoreDisplay.js';
+import { stepClaimHandPoints } from '../modules/playClaimHandPoints.js';
 import { createPlayHatState, drawNextHand } from '../modules/playHat.js';
 import { parsePositiveNumberInput, parsePositiveWholeNumberInput } from '../modules/playNumberValidation.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
@@ -564,22 +565,22 @@ function renderClaimPlayerList() {
     decreaseButton.type = 'button';
     decreaseButton.className = 'btn btn-outline-secondary claim-player-button';
     decreaseButton.dataset.playerIndex = String(index);
-    decreaseButton.dataset.scoreDelta = '-1';
-    decreaseButton.textContent = '-';
+    decreaseButton.dataset.scoreAction = 'decrease';
+    decreaseButton.textContent = String.fromCodePoint(0x1F345);
 
     const resetButton = document.createElement('button');
     resetButton.type = 'button';
     resetButton.className = 'btn btn-outline-secondary claim-player-button';
     resetButton.dataset.playerIndex = String(index);
-    resetButton.dataset.scoreSet = '0';
-    resetButton.textContent = '0';
+    resetButton.dataset.scoreAction = 'reset';
+    resetButton.textContent = String.fromCodePoint(0x1F4A4);
 
     const increaseButton = document.createElement('button');
     increaseButton.type = 'button';
     increaseButton.className = 'btn btn-outline-primary claim-player-button';
     increaseButton.dataset.playerIndex = String(index);
-    increaseButton.dataset.scoreDelta = '1';
-    increaseButton.textContent = '+';
+    increaseButton.dataset.scoreAction = 'increase';
+    increaseButton.textContent = String.fromCodePoint(0x2B50);
 
     name.appendChild(score);
     controls.append(decreaseButton, resetButton, increaseButton);
@@ -610,6 +611,11 @@ function setClaimHandScore(playerIndex, nextHandPoints) {
   state.claimHandPoints[playerIndex] = nextHandPoints;
   renderClaimPlayerList();
   return true;
+}
+
+function stepClaimHandScore(playerIndex, action) {
+  const currentHandPoints = state.claimHandPoints[playerIndex] ?? 0;
+  return setClaimHandScore(playerIndex, stepClaimHandPoints(currentHandPoints, action));
 }
 
 function applyClaimHandScore(playerIndex, scoreDelta) {
@@ -1663,14 +1669,10 @@ claimPlayerList.addEventListener('click', (event) => {
   const button = target.closest('button[data-player-index]');
   if (button) {
     const playerIndex = Number.parseInt(button.dataset.playerIndex ?? '', 10);
-    const scoreSet = Number.parseInt(button.dataset.scoreSet ?? '', 10);
-    if (!Number.isNaN(scoreSet)) {
-      setClaimHandScore(playerIndex, scoreSet);
-      return;
+    const scoreAction = button.dataset.scoreAction;
+    if (scoreAction) {
+      stepClaimHandScore(playerIndex, scoreAction);
     }
-
-    const scoreDelta = Number.parseInt(button.dataset.scoreDelta ?? '', 10);
-    applyClaimHandScore(playerIndex, scoreDelta);
     return;
   }
 
@@ -1680,7 +1682,7 @@ claimPlayerList.addEventListener('click', (event) => {
   }
 
   const playerIndex = Number.parseInt(row.dataset.playerIndex ?? '', 10);
-  applyClaimHandScore(playerIndex, 1);
+  stepClaimHandScore(playerIndex, 'row');
 });
 
 claimDialogCancelButton.addEventListener('click', () => {
