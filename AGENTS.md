@@ -2,6 +2,18 @@
 
 These instructions apply to all future work in this repository.
 
+## Encoding Safety
+
+Always add the following commands to your powershell profile:
+
+```powershell
+# Set default encoding to UTF-8 for all cmdlets that support -Encoding (e.g., Get-Content, Set-Content, Out-File)
+$PSDefaultParameterValues['*:Encoding'] = 'utf8'
+
+# Set console input and output encoding to UTF-8 for compatibility with external programs
+[Console]::InputEncoding = [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding
+```
+
 ## Purpose
 
 Build and maintain a browser-only static website that explains Spot It (Dobble) and allows users to create, save, export, and print custom decks.
