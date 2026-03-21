@@ -512,7 +512,19 @@ function renderClaimPlayerList() {
 
     const name = document.createElement('div');
     name.className = 'claim-player-name';
-    name.textContent = player.name;
+
+    if (index < 9) {
+      const keycap = document.createElement('span');
+      keycap.className = 'claim-player-keycap';
+      keycap.textContent = String(index + 1);
+      keycap.setAttribute('aria-label', 'Player ' + String(index + 1) + ' shortcut key');
+      name.appendChild(keycap);
+    }
+
+    const nameText = document.createElement('span');
+    nameText.className = 'claim-player-name-text';
+    nameText.textContent = player.name;
+    name.appendChild(nameText);
 
     const score = document.createElement('div');
     score.className = 'claim-player-score';

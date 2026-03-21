@@ -1290,7 +1290,36 @@ body.has-top-bar.play-page {
 }
 
 .claim-player-name {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
   font-weight: 600;
+}
+
+.claim-player-name-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.claim-player-keycap {
+  flex: 0 0 auto;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.5rem;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid #adb5bd;
+  border-radius: 0.45rem;
+  background: linear-gradient(180deg, #ffffff 0%, #edf2f7 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 2px 4px rgba(15, 23, 42, 0.08);
+  color: #334155;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .claim-player-score {
