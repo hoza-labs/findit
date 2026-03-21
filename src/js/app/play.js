@@ -1,4 +1,4 @@
-import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
+﻿import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { loadTempDeckOrDefault, repository } from '../modules/deckFlowCommon.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
 import {
@@ -32,6 +32,9 @@ const playBoard = document.querySelector('.play-board');
 const resultsButton = document.querySelector('#results-button');
 const nextHandButton = document.querySelector('#next-hand-button');
 const restartButton = document.querySelector('#restart-button');
+const playStartDialog = document.querySelector('#play-start-dialog');
+const playStartDialogOkButton = document.querySelector('#play-start-dialog-ok-button');
+const playStartDialogCancelButton = document.querySelector('#play-start-dialog-cancel-button');
 const claimDialog = document.querySelector('#claim-dialog');
 const claimDialogHeader = document.querySelector('#claim-dialog-header');
 const claimDialogMessage = document.querySelector('#claim-dialog-message');
@@ -67,6 +70,7 @@ const state = {
   countdownRemainingMs: 0,
   countdownEndsAtMs: 0,
   countdownRunId: createCountdownClock().runId,
+  playStartDialogOpen: false,
   claimDialogOpen: false,
   claimDialogOpenedAtMs: 0,
   totalClaimDialogOpenMs: 0,
@@ -407,17 +411,25 @@ function updatePlayInfoSummaryLayout() {
   }
 }
 
-function positionClaimDialogOverPlayBoard() {
+function positionDialogOverPlayBoard(dialog) {
   const playBoardRect = playBoard?.getBoundingClientRect();
   if (!playBoardRect || playBoardRect.width <= 0 || playBoardRect.height <= 0) {
     return;
   }
 
-  claimDialog.style.left = `${Math.round(playBoardRect.left)}px`;
-  claimDialog.style.top = `${Math.round(playBoardRect.top)}px`;
-  claimDialog.style.width = `${Math.round(playBoardRect.width)}px`;
-  claimDialog.style.height = `${Math.round(playBoardRect.height)}px`;
-  claimDialog.style.transform = 'none';
+  dialog.style.left = `${Math.round(playBoardRect.left)}px`;
+  dialog.style.top = `${Math.round(playBoardRect.top)}px`;
+  dialog.style.width = `${Math.round(playBoardRect.width)}px`;
+  dialog.style.height = `${Math.round(playBoardRect.height)}px`;
+  dialog.style.transform = 'none';
+}
+
+function positionPlayStartDialogOverPlayBoard() {
+  positionDialogOverPlayBoard(playStartDialog);
+}
+
+function positionClaimDialogOverPlayBoard() {
+  positionDialogOverPlayBoard(claimDialog);
   clampClaimDialogToViewport();
 }
 
@@ -486,7 +498,7 @@ function pauseForNavigationPrompt() {
   }
 
   state.navigationPromptOpenedAtMs = Date.now();
-  state.navigationPromptOverlapsDialog = state.claimDialogOpen || state.confirmationDialogOpen;
+  state.navigationPromptOverlapsDialog = state.playStartDialogOpen || state.claimDialogOpen || state.confirmationDialogOpen;
   pauseCountdownForDialog();
   stopMinuteLimitTimer();
 }
@@ -519,6 +531,7 @@ function resumeAfterNavigationPrompt() {
 
   if (
     state.countdownRemainingMs > 0
+    && !state.playStartDialogOpen
     && !state.claimDialogOpen
     && !state.confirmationDialogOpen
     && state.currentCardsShownCount > 0
@@ -583,6 +596,7 @@ function closeConfirmationDialog(options = {}) {
   if (
     resumeTimers
     && !state.sessionEnded
+    && !state.playStartDialogOpen
     && !state.claimDialogOpen
     && state.countdownRemainingMs > 0
   ) {
@@ -590,8 +604,70 @@ function closeConfirmationDialog(options = {}) {
   }
 }
 
+function navigateToPlayPage() {
+  setNavigationConfirmationEnabled(false);
+  window.location.assign('./play.html');
+}
+
+function openPlayStartDialog() {
+  if (state.playStartDialogOpen) {
+    return;
+  }
+
+  state.playStartDialogOpen = true;
+  playStartDialog.hidden = false;
+  setPlayActionButtonsDisabled(true);
+  positionPlayStartDialogOverPlayBoard();
+  window.requestAnimationFrame(() => {
+    playStartDialogOkButton.focus();
+  });
+}
+
+function closePlayStartDialog(options = {}) {
+  const { restoreButtons = true } = options;
+  state.playStartDialogOpen = false;
+  playStartDialog.hidden = true;
+
+  if (restoreButtons && !state.sessionEnded && !state.claimDialogOpen && !state.confirmationDialogOpen) {
+    setPlayActionButtonsDisabled(false);
+  }
+}
+
+async function startGame() {
+  closePlayStartDialog({ restoreButtons: false });
+  await renderHand();
+}
+
+function prepareGameStart() {
+  const players = getPlayerNames();
+  const settings = getHandSettings();
+
+  updateHeader(players, settings);
+  clearObjectUrls();
+  playCardGrid.innerHTML = '';
+  playBoardEmpty.hidden = true;
+  playBoardEmpty.textContent = '';
+  handStatus.textContent = '';
+  countdownStatus.textContent = '';
+  playerStatus.textContent = '';
+  updatePlayStatusLine();
+  resultsButton.hidden = true;
+  resultsButton.disabled = true;
+  setRestartButtonLabel('Restart');
+  restartButton.disabled = false;
+  setNextHandButtonLabel('Next hand');
+  nextHandButton.disabled = true;
+  openPlayStartDialog();
+}
+
 function openClaimDialog(message) {
-  if (state.sessionEnded || state.claimDialogOpen || state.confirmationDialogOpen || state.currentCardsShownCount === 0) {
+  if (
+    state.sessionEnded
+    || state.playStartDialogOpen
+    || state.claimDialogOpen
+    || state.confirmationDialogOpen
+    || state.currentCardsShownCount === 0
+  ) {
     return;
   }
 
@@ -614,8 +690,10 @@ function performRestart() {
   stopCountdown();
   stopMinuteLimitTimer();
   stopScoreAnimation();
+  clearObjectUrls();
   closeConfirmationDialog({ resumeTimers: false });
   closeClaimDialog({ resumeCountdown: false, restoreButtons: false });
+  closePlayStartDialog({ restoreButtons: false });
   state.completedHandsCount = 0;
   state.activeHandNumber = 0;
   state.startedAtMs = 0;
@@ -630,6 +708,7 @@ function performRestart() {
   state.navigationPromptOverlapsDialog = false;
   state.totalNavigationPromptOverlapMs = 0;
   state.countdownRemainingMs = 0;
+  state.playStartDialogOpen = false;
   state.claimDialogOpenedAtMs = 0;
   state.totalClaimDialogOpenMs = 0;
   state.confirmationDialogOpenedAtMs = 0;
@@ -639,8 +718,8 @@ function performRestart() {
   resultsButton.hidden = true;
   setRestartButtonLabel('Restart');
   setNextHandButtonLabel('Next hand');
-  nextHandButton.disabled = false;
-  void renderHand();
+  nextHandButton.disabled = true;
+  prepareGameStart();
 }
 
 function performResults() {
@@ -676,6 +755,7 @@ function renderCompletion(settings, players, reason = '') {
   stopCountdown();
   stopMinuteLimitTimer();
   stopScoreAnimation();
+  closePlayStartDialog({ restoreButtons: false });
   closeClaimDialog({ resumeCountdown: false });
   state.sessionEnded = true;
   setNavigationConfirmationEnabled(false);
@@ -1064,7 +1144,9 @@ async function renderHand() {
   commitPendingHand();
   updateHeader(players, settings);
   setRestartButtonLabel('Restart');
+  restartButton.disabled = false;
   resultsButton.hidden = !isUnlimitedGame(settings);
+  resultsButton.disabled = resultsButton.hidden;
   setNextHandButtonLabel('Next hand');
   nextHandButton.disabled = false;
 
@@ -1180,6 +1262,14 @@ claimDialogResultsButton.addEventListener('click', () => {
   openConfirmationDialog('results');
 });
 
+playStartDialogCancelButton.addEventListener('click', () => {
+  navigateToPlayPage();
+});
+
+playStartDialogOkButton.addEventListener('click', () => {
+  void startGame();
+});
+
 nextHandButton.addEventListener('click', () => {
   const settings = getHandSettings();
   const players = getPlayerNames();
@@ -1244,8 +1334,7 @@ confirmationDialogCancelButton.addEventListener('click', () => {
 });
 
 confirmationDialogChangeOptionsButton.addEventListener('click', () => {
-  setNavigationConfirmationEnabled(false);
-  window.location.assign('./play.html');
+  navigateToPlayPage();
 });
 
 confirmationDialogOkButton.addEventListener('click', () => {
@@ -1282,7 +1371,7 @@ claimDialogHeader.addEventListener('pointerup', (event) => {
 });
 
 document.addEventListener('pointerdown', (event) => {
-  if (state.sessionEnded || state.claimDialogOpen || state.confirmationDialogOpen) {
+  if (state.sessionEnded || state.playStartDialogOpen || state.claimDialogOpen || state.confirmationDialogOpen) {
     return;
   }
 
@@ -1295,6 +1384,17 @@ document.addEventListener('pointerdown', (event) => {
 }, true);
 
 document.addEventListener('keydown', (event) => {
+  if (state.playStartDialogOpen) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      navigateToPlayPage();
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      void startGame();
+    }
+    return;
+  }
+
   if (state.confirmationDialogOpen && event.key === 'Escape') {
     event.preventDefault();
     closeConfirmationDialog({ resumeTimers: true });
@@ -1308,7 +1408,7 @@ document.addEventListener('keydown', (event) => {
     return;
   }
 
-  if (state.sessionEnded || state.claimDialogOpen || state.confirmationDialogOpen) {
+  if (state.sessionEnded || state.playStartDialogOpen || state.claimDialogOpen || state.confirmationDialogOpen) {
     return;
   }
 
@@ -1337,6 +1437,10 @@ window.addEventListener('pageshow', () => {
 });
 
 window.addEventListener('resize', () => {
+  if (state.playStartDialogOpen) {
+    positionPlayStartDialogOverPlayBoard();
+  }
+
   if (state.claimDialogOpen && !state.claimDragging) {
     positionClaimDialogOverPlayBoard();
   } else {
@@ -1347,4 +1451,5 @@ window.addEventListener('resize', () => {
 });
 
 resetPlayerScores();
-await renderHand();
+prepareGameStart();
+

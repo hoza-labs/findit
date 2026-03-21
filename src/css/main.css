@@ -1211,6 +1211,29 @@ body.has-top-bar.play-page {
   padding: 1rem;
 }
 
+.play-start-dialog-header {
+  cursor: default;
+}
+
+.play-start-dialog-body {
+  display: grid;
+  gap: 1rem;
+}
+
+.play-start-dialog-intro {
+  font-weight: 600;
+}
+
+.play-start-dialog-list {
+  display: grid;
+  gap: 0.75rem;
+  padding-left: 1.4rem;
+}
+
+.play-start-dialog-shortcuts {
+  font-size: 0.95rem;
+}
+
 .claim-player-list {
   display: grid;
   gap: 0.75rem;
@@ -1302,3 +1325,4 @@ body.has-top-bar.play-page {
   max-width: 100%;
   margin-inline: auto;
 }
+

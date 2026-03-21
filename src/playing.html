@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -55,6 +55,38 @@
       </section>
     </main>
 
+    <section
+      id="play-start-dialog"
+      class="claim-dialog play-start-dialog"
+      hidden
+      aria-live="polite"
+      aria-labelledby="play-start-dialog-title"
+      aria-modal="true"
+      role="dialog"
+    >
+      <div class="claim-dialog-header play-start-dialog-header">
+        <div class="claim-dialog-title-row">
+          <h2 id="play-start-dialog-title" class="h4 mb-0">Get Ready to Play!</h2>
+        </div>
+      </div>
+      <div class="claim-dialog-body play-start-dialog-body">
+        <p class="play-start-dialog-intro mb-0">Here&rsquo;s how the game works:</p>
+        <ul class="play-start-dialog-list mb-0">
+          <li>Players will be shown one hand at a time.</li>
+          <li>The first player to find the right image for that hand should say the name of the image and press any key on the keyboard to claim the hand.</li>
+          <li>The game will indicate which key was pressed first, though most people prefer to give credit to the player who managed to say the name of the image first.</li>
+          <li>Once someone presses a key, everyone can relax and decide who gets to claim the point(s) for that hand.</li>
+          <li>The game will let you add points to the chosen player(s) but keep the total score secret until the end of the game.</li>
+          <li>Everyone then goes on to the next hand until the game is over and the final scores are shown.</li>
+        </ul>
+        <p class="play-start-dialog-shortcuts text-muted mb-0">Press Enter for OK or Escape for Cancel.</p>
+        <div class="claim-dialog-actions">
+          <button id="play-start-dialog-cancel-button" type="button" class="btn btn-outline-secondary">Cancel</button>
+          <button id="play-start-dialog-ok-button" type="button" class="btn btn-primary">OK</button>
+        </div>
+      </div>
+    </section>
+
     <section id="claim-dialog" class="claim-dialog" hidden aria-live="polite">
       <div id="claim-dialog-header" class="claim-dialog-header">
         <div class="claim-dialog-title-row">
@@ -89,3 +121,4 @@
     <script type="module" src="./js/app/play.js"></script>
   </body>
 </html>
+
