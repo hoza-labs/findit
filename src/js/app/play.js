@@ -1688,7 +1688,11 @@ claimPointsModeTomatoButton.addEventListener('click', () => {
   setClaimPointsMode(CLAIM_POINTS_MODE_TOMATO);
 });
 
-claimPlayerList.addEventListener('click', (event) => {
+claimPlayerList.addEventListener('pointerup', (event) => {
+  if (event.pointerType === 'touch') {
+    return;
+  }
+
   const target = event.target instanceof HTMLElement ? event.target : null;
   if (!target) {
     return;
