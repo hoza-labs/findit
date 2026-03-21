@@ -25,6 +25,10 @@ body.has-top-bar.play-page {
   min-height: 3rem;
 }
 
+.top-next-bar--playing {
+  z-index: 5000;
+}
+
 .top-next-bar .container-fluid {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -116,7 +120,7 @@ body.has-top-bar.play-page {
   border: 1px solid var(--card-border);
   border-radius: 0.6rem;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
-  z-index: 2000;
+  z-index: 4000;
 }
 
 .top-page-menu-link {
