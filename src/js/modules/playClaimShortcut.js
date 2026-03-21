@@ -1,0 +1,30 @@
+export function getClaimDialogShortcut(event, maxPlayers = 9) {
+  if (!event || typeof event !== 'object') {
+    return null;
+  }
+
+  if (event.key === 'Enter' && !event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey) {
+    return {
+      type: 'next-hand'
+    };
+  }
+
+  if (typeof event.code !== 'string' || !event.code.startsWith('Digit')) {
+    return null;
+  }
+
+  if (event.altKey || event.ctrlKey || event.metaKey) {
+    return null;
+  }
+
+  const playerNumber = Number.parseInt(event.code.slice('Digit'.length), 10);
+  if (!Number.isInteger(playerNumber) || playerNumber < 1 || playerNumber > Math.min(9, maxPlayers)) {
+    return null;
+  }
+
+  return {
+    type: 'score',
+    playerIndex: playerNumber - 1,
+    scoreDelta: event.shiftKey ? -1 : 1
+  };
+}

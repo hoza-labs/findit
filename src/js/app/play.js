@@ -18,6 +18,7 @@ import {
   getPlayRevealTotalDurationMs,
   readPlayRevealStep
 } from '../modules/playRevealCountdown.js';
+import { getClaimDialogShortcut } from '../modules/playClaimShortcut.js';
 import { createPlayHatState, drawNextHand } from '../modules/playHat.js';
 import { parsePositiveNumberInput, parsePositiveWholeNumberInput } from '../modules/playNumberValidation.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
@@ -545,6 +546,34 @@ function cancelClaimHandPoints() {
   }
 
   state.claimHandPoints = state.playerScores.map(() => 0);
+}
+
+function applyClaimHandScore(playerIndex, scoreDelta) {
+  const player = state.playerScores[playerIndex];
+  if (!player || Number.isNaN(scoreDelta)) {
+    return false;
+  }
+
+  player.score += scoreDelta;
+  state.claimHandPoints[playerIndex] = (state.claimHandPoints[playerIndex] ?? 0) + scoreDelta;
+  renderClaimPlayerList();
+  return true;
+}
+
+function handleClaimDialogShortcut(event) {
+  const shortcut = getClaimDialogShortcut(event, state.playerScores.length);
+  if (!shortcut) {
+    return false;
+  }
+
+  event.preventDefault();
+  if (shortcut.type === 'next-hand') {
+    closeClaimDialog({ resumeCountdown: false });
+    void renderHand();
+    return true;
+  }
+
+  return applyClaimHandScore(shortcut.playerIndex, shortcut.scoreDelta);
 }
 
 function getHandSettings() {
@@ -1565,14 +1594,7 @@ claimPlayerList.addEventListener('click', (event) => {
 
   const playerIndex = Number.parseInt(button.dataset.playerIndex ?? '', 10);
   const scoreDelta = Number.parseInt(button.dataset.scoreDelta ?? '', 10);
-  const player = state.playerScores[playerIndex];
-  if (!player || Number.isNaN(scoreDelta)) {
-    return;
-  }
-
-  player.score += scoreDelta;
-  state.claimHandPoints[playerIndex] = (state.claimHandPoints[playerIndex] ?? 0) + scoreDelta;
-  renderClaimPlayerList();
+  applyClaimHandScore(playerIndex, scoreDelta);
 });
 
 claimDialogCancelButton.addEventListener('click', () => {
@@ -1674,6 +1696,12 @@ document.addEventListener('keydown', (event) => {
     event.preventDefault();
     resumePlayAfterClaimCancel();
     return;
+  }
+
+  if (state.claimDialogOpen) {
+    if (handleClaimDialogShortcut(event)) {
+      return;
+    }
   }
 
   if (state.sessionEnded || state.playStartDialogOpen || state.playRevealCountdownOpen || state.claimDialogOpen || state.confirmationDialogOpen) {
