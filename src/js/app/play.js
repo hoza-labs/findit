@@ -14,6 +14,10 @@ import {
   resetCountdownClock,
   startCountdownClock
 } from '../modules/playCountdown.js';
+import {
+  getPlayRevealTotalDurationMs,
+  readPlayRevealStep
+} from '../modules/playRevealCountdown.js';
 import { createPlayHatState, drawNextHand } from '../modules/playHat.js';
 import { parsePositiveNumberInput, parsePositiveWholeNumberInput } from '../modules/playNumberValidation.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
@@ -29,6 +33,8 @@ const playerStatus = document.querySelector('#player-status');
 const playCardGrid = document.querySelector('#play-card-grid');
 const playBoardEmpty = document.querySelector('#play-board-empty');
 const playBoard = document.querySelector('.play-board');
+const playRevealOverlay = document.querySelector('#play-reveal-overlay');
+const playRevealNumber = document.querySelector('#play-reveal-number');
 const resultsButton = document.querySelector('#results-button');
 const nextHandButton = document.querySelector('#next-hand-button');
 const restartButton = document.querySelector('#restart-button');
@@ -55,6 +61,7 @@ const webImages = await repository.listWebImages();
 
 let objectUrls = [];
 let countdownTimerId = null;
+let playRevealTimerId = null;
 let minuteLimitTimerId = null;
 let scoreAnimationTimerId = null;
 let claimDialogPeekRestoreTimerId = null;
@@ -70,6 +77,15 @@ const state = {
   countdownRemainingMs: 0,
   countdownEndsAtMs: 0,
   countdownRunId: createCountdownClock().runId,
+  playRevealRemainingMs: 0,
+  playRevealEndsAtMs: 0,
+  playRevealRunId: createCountdownClock().runId,
+  playRevealCountdownOpen: false,
+  playRevealCountdownOpenedAtMs: 0,
+  totalPlayRevealCountdownOpenMs: 0,
+  playRevealCountdownComplete: false,
+  handReadyForLivePlay: false,
+  playRevealContext: 'start',
   playStartDialogOpen: false,
   claimDialogOpen: false,
   claimDialogOpenedAtMs: 0,
@@ -134,6 +150,236 @@ function applyCountdownClock(clock) {
   state.countdownRemainingMs = clock.remainingMs;
   state.countdownEndsAtMs = clock.endsAtMs;
   state.countdownRunId = clock.runId;
+}
+
+function getPlayRevealClock() {
+  return {
+    remainingMs: state.playRevealRemainingMs,
+    endsAtMs: state.playRevealEndsAtMs,
+    runId: state.playRevealRunId
+  };
+}
+
+function applyPlayRevealClock(clock) {
+  state.playRevealRemainingMs = clock.remainingMs;
+  state.playRevealEndsAtMs = clock.endsAtMs;
+  state.playRevealRunId = clock.runId;
+}
+
+function stopPlayRevealTimer() {
+  if (playRevealTimerId !== null) {
+    window.clearInterval(playRevealTimerId);
+    playRevealTimerId = null;
+  }
+
+  state.playRevealEndsAtMs = 0;
+}
+
+function resetPlayRevealState() {
+  const nextClock = resetCountdownClock(getPlayRevealClock());
+  applyPlayRevealClock(nextClock);
+}
+
+function pausePlayRevealState() {
+  const nextClock = pauseCountdownClock(getPlayRevealClock(), Date.now());
+  applyPlayRevealClock(nextClock);
+}
+
+function startPlayRevealState(durationMs) {
+  const nextClock = startCountdownClock(getPlayRevealClock(), durationMs, Date.now());
+  applyPlayRevealClock(nextClock);
+  return nextClock.runId;
+}
+
+function beginPlayRevealTimingWindow() {
+  if (state.playRevealCountdownOpenedAtMs === 0) {
+    state.playRevealCountdownOpenedAtMs = Date.now();
+  }
+}
+
+function closePlayRevealTimingWindow() {
+  if (state.playRevealCountdownOpenedAtMs > 0) {
+    state.totalPlayRevealCountdownOpenMs += Math.max(0, Date.now() - state.playRevealCountdownOpenedAtMs);
+    state.playRevealCountdownOpenedAtMs = 0;
+  }
+}
+
+function clearPlayRevealNumber() {
+  playRevealNumber.textContent = '';
+  playRevealNumber.dataset.stepIndex = '';
+  playRevealNumber.classList.remove('is-animating');
+}
+
+function restartPlayRevealNumberAnimation() {
+  playRevealNumber.classList.remove('is-animating');
+  void playRevealNumber.offsetWidth;
+  playRevealNumber.classList.add('is-animating');
+}
+
+function renderPlayRevealStep(forceAnimation = false) {
+  const frame = readPlayRevealStep(state.playRevealRemainingMs);
+  if (frame.complete) {
+    clearPlayRevealNumber();
+    return frame;
+  }
+
+  const nextStepIndex = String(frame.stepIndex);
+  if (forceAnimation || playRevealNumber.dataset.stepIndex !== nextStepIndex) {
+    playRevealNumber.textContent = frame.label;
+    playRevealNumber.dataset.stepIndex = nextStepIndex;
+    restartPlayRevealNumberAnimation();
+  }
+
+  return frame;
+}
+
+function getPlayRevealStatusText() {
+  if (!state.handReadyForLivePlay) {
+    return 'Get ready...';
+  }
+
+  const frame = readPlayRevealStep(state.playRevealRemainingMs);
+  if (frame.complete) {
+    return '';
+  }
+
+  const prefix = state.playRevealContext === 'resume' ? 'Play resumes in' : 'Hand starts in';
+  return `${prefix} ${frame.label}...`;
+}
+
+function closePlayRevealOverlay(options = {}) {
+  const { restoreButtons = true } = options;
+  stopPlayRevealTimer();
+  closePlayRevealTimingWindow();
+  resetPlayRevealState();
+  state.playRevealCountdownOpen = false;
+  state.playRevealCountdownComplete = false;
+  state.handReadyForLivePlay = false;
+  state.playRevealContext = 'start';
+  playRevealOverlay.hidden = true;
+  clearPlayRevealNumber();
+
+  if (restoreButtons && !state.sessionEnded && !state.playStartDialogOpen && !state.claimDialogOpen && !state.confirmationDialogOpen) {
+    setPlayActionButtonsDisabled(false);
+  }
+}
+
+function beginPlayReveal(context = 'start') {
+  stopMinuteLimitTimer();
+  stopPlayRevealTimer();
+  resetPlayRevealState();
+  state.playRevealCountdownOpen = true;
+  state.playRevealCountdownComplete = false;
+  state.handReadyForLivePlay = false;
+  state.playRevealContext = context;
+  playRevealOverlay.hidden = false;
+  beginPlayRevealTimingWindow();
+  clearPlayRevealNumber();
+  countdownStatus.textContent = getPlayRevealStatusText();
+  updatePlayStatusLine();
+  setPlayActionButtonsDisabled(true);
+}
+
+function startPlayRevealCountdown() {
+  if (!state.playRevealCountdownOpen || state.playRevealCountdownComplete || !state.handReadyForLivePlay) {
+    return;
+  }
+
+  stopPlayRevealTimer();
+  const runId = startPlayRevealState(getPlayRevealTotalDurationMs());
+  renderPlayRevealStep(true);
+  countdownStatus.textContent = getPlayRevealStatusText();
+  updatePlayStatusLine();
+
+  playRevealTimerId = window.setInterval(() => {
+    const tick = readCountdownTick(getPlayRevealClock(), Date.now(), runId);
+    if (tick.ignored) {
+      return;
+    }
+
+    state.playRevealRemainingMs = tick.remainingMs;
+    if (tick.expired) {
+      stopPlayRevealTimer();
+      state.playRevealCountdownComplete = true;
+      clearPlayRevealNumber();
+      activateHandAfterPlayReveal();
+      return;
+    }
+
+    renderPlayRevealStep();
+    countdownStatus.textContent = getPlayRevealStatusText();
+    updatePlayStatusLine();
+  }, 50);
+}
+
+function pausePlayRevealCountdown() {
+  if (!state.playRevealCountdownOpen) {
+    return;
+  }
+
+  closePlayRevealTimingWindow();
+  if (state.playRevealEndsAtMs > 0) {
+    pausePlayRevealState();
+    stopPlayRevealTimer();
+  }
+}
+
+function resumePlayRevealCountdown() {
+  if (!state.playRevealCountdownOpen || state.sessionEnded) {
+    return;
+  }
+
+  beginPlayRevealTimingWindow();
+
+  if (state.playRevealCountdownComplete) {
+    activateHandAfterPlayReveal();
+    return;
+  }
+
+  countdownStatus.textContent = getPlayRevealStatusText();
+  updatePlayStatusLine();
+
+  if (state.handReadyForLivePlay) {
+    startPlayRevealCountdown();
+  }
+}
+
+function activateHandAfterPlayReveal() {
+  if (!state.playRevealCountdownOpen || !state.playRevealCountdownComplete || !state.handReadyForLivePlay) {
+    return;
+  }
+
+  closePlayRevealOverlay();
+  if (state.sessionEnded || state.playStartDialogOpen || state.claimDialogOpen || state.confirmationDialogOpen || state.currentCardsShownCount === 0) {
+    return;
+  }
+
+  const settings = getHandSettings();
+  const players = getPlayerNames();
+  if (settings.lengthOfPlayUnits === 'minutes' && settings.lengthOfPlay) {
+    handStatus.textContent = getMinuteHandStatus(settings, state.currentCardsShownCount);
+    updatePlayStatusLine();
+    startMinuteLimitTimer(settings, players);
+    if (hasReachedPlayLimit(settings)) {
+      renderCompletion(settings, players, 'minutes');
+      return;
+    }
+  }
+
+  startCountdown(settings);
+}
+
+function resumePlayAfterClaimCancel() {
+  cancelClaimHandPoints();
+  closeClaimDialog({ resumeCountdown: false, restoreButtons: false });
+
+  if (state.sessionEnded || state.currentCardsShownCount === 0) {
+    return;
+  }
+
+  beginPlayReveal('resume');
+  state.handReadyForLivePlay = true;
+  startPlayRevealCountdown();
 }
 
 function stopMinuteLimitTimer() {
@@ -500,6 +746,7 @@ function pauseForNavigationPrompt() {
   state.navigationPromptOpenedAtMs = Date.now();
   state.navigationPromptOverlapsDialog = state.playStartDialogOpen || state.claimDialogOpen || state.confirmationDialogOpen;
   pauseCountdownForDialog();
+  pausePlayRevealCountdown();
   stopMinuteLimitTimer();
 }
 
@@ -517,6 +764,11 @@ function resumeAfterNavigationPrompt() {
   state.navigationPromptOverlapsDialog = false;
 
   if (state.sessionEnded) {
+    return;
+  }
+
+  if (state.playRevealCountdownOpen) {
+    resumePlayRevealCountdown();
     return;
   }
 
@@ -643,6 +895,7 @@ function prepareGameStart() {
   const settings = getHandSettings();
 
   updateHeader(players, settings);
+  closePlayRevealOverlay({ restoreButtons: false });
   clearObjectUrls();
   playCardGrid.innerHTML = '';
   playBoardEmpty.hidden = true;
@@ -664,6 +917,7 @@ function openClaimDialog(message) {
   if (
     state.sessionEnded
     || state.playStartDialogOpen
+    || state.playRevealCountdownOpen
     || state.claimDialogOpen
     || state.confirmationDialogOpen
     || state.currentCardsShownCount === 0
@@ -689,6 +943,7 @@ function openClaimDialog(message) {
 function performRestart() {
   stopCountdown();
   stopMinuteLimitTimer();
+  closePlayRevealOverlay({ restoreButtons: false });
   stopScoreAnimation();
   clearObjectUrls();
   closeConfirmationDialog({ resumeTimers: false });
@@ -708,6 +963,14 @@ function performRestart() {
   state.navigationPromptOverlapsDialog = false;
   state.totalNavigationPromptOverlapMs = 0;
   state.countdownRemainingMs = 0;
+  state.playRevealRemainingMs = 0;
+  state.playRevealEndsAtMs = 0;
+  state.playRevealCountdownOpen = false;
+  state.playRevealCountdownOpenedAtMs = 0;
+  state.totalPlayRevealCountdownOpenMs = 0;
+  state.playRevealCountdownComplete = false;
+  state.handReadyForLivePlay = false;
+  state.playRevealContext = 'start';
   state.playStartDialogOpen = false;
   state.claimDialogOpenedAtMs = 0;
   state.totalClaimDialogOpenMs = 0;
@@ -754,6 +1017,7 @@ function setRestartButtonLabel(label) {
 function renderCompletion(settings, players, reason = '') {
   stopCountdown();
   stopMinuteLimitTimer();
+  closePlayRevealOverlay({ restoreButtons: false });
   stopScoreAnimation();
   closePlayStartDialog({ restoreButtons: false });
   closeClaimDialog({ resumeCountdown: false });
@@ -909,6 +1173,9 @@ function getActiveElapsedMilliseconds() {
   const currentConfirmationOpenMs = state.confirmationDialogOpenedAtMs > 0
     ? Math.max(0, Date.now() - state.confirmationDialogOpenedAtMs)
     : 0;
+  const currentPlayRevealOpenMs = state.playRevealCountdownOpenedAtMs > 0
+    ? Math.max(0, Date.now() - state.playRevealCountdownOpenedAtMs)
+    : 0;
   const currentNavigationPromptOpenMs = state.navigationPromptOpenedAtMs > 0
     ? Math.max(0, Date.now() - state.navigationPromptOpenedAtMs)
     : 0;
@@ -922,6 +1189,8 @@ function getActiveElapsedMilliseconds() {
       - currentDialogOpenMs
       - state.totalConfirmationDialogOpenMs
       - currentConfirmationOpenMs
+      - state.totalPlayRevealCountdownOpenMs
+      - currentPlayRevealOpenMs
       - state.totalNavigationPromptOpenMs
       + state.totalNavigationPromptOverlapMs
       - currentNavigationPromptOpenMs
@@ -1136,7 +1405,10 @@ async function renderHand() {
   if (state.sessionEnded) {
     return;
   }
+
   stopCountdown();
+  stopMinuteLimitTimer();
+  closePlayRevealOverlay({ restoreButtons: false });
   resetCountdownState();
   if (state.startedAtMs === 0) {
     state.startedAtMs = Date.now();
@@ -1174,11 +1446,13 @@ async function renderHand() {
     setNextHandButtonLabel('Finished');
     return;
   }
+
   const cardsToShow = getCardsToDrawForHand(settings, state.hatState, getRandomInteger);
   if (cardsToShow === 0) {
     renderCompletion(settings, players, 'decks');
     return;
   }
+
   state.currentCardsShownCount = cardsToShow;
   const maxRefills = settings.lengthOfPlayUnits === 'decks' && settings.lengthOfPlay
     ? Math.max(0, settings.lengthOfPlay - 1)
@@ -1187,9 +1461,23 @@ async function renderHand() {
   state.hatState = drawResult.state;
   const cardIndices = state.hatState.displayedCardIndices;
   state.currentCardsShownCount = cardIndices.length;
+
+  const minimumCardsToShow = getMinimumAllowedCardsToShow(settings);
+  if (cardIndices.length < minimumCardsToShow) {
+    renderCompletion(settings, players, settings.lengthOfPlayUnits === 'decks' ? 'decks' : 'hands');
+    return;
+  }
+
+  if (drawResult.refillLimitHit) {
+    commitPendingHand();
+    renderCompletion(settings, players, 'decks');
+    return;
+  }
+
+  beginPlayReveal('start');
   updatePlayCardGridSize(cardIndices.length);
   const pattern = getPatternSources();
-  handStatus.textContent = getCurrentHandStatus(settings, cardsToShow, state.hatState);
+  handStatus.textContent = getCurrentHandStatus(settings, cardIndices.length, state.hatState);
   renderPlayerClaimPrompt();
   updatePlayStatusLine();
 
@@ -1212,36 +1500,18 @@ async function renderHand() {
     playCardGrid.appendChild(card);
 
     await drawImagesOnSquareTarget(target, sources, tempDeck.generationOptions);
-    if (state.sessionEnded) {
+    if (state.sessionEnded || !state.playRevealCountdownOpen) {
       return;
     }
   }
 
-  startMinuteLimitTimer(settings, players);
-
-  if (hasReachedPlayLimit(settings) && settings.lengthOfPlayUnits === 'minutes') {
-    renderCompletion(settings, players, 'minutes');
-    return;
-  }
-
-  const minimumCardsToShow = getMinimumAllowedCardsToShow(settings);
-  if (cardIndices.length < minimumCardsToShow) {
-    renderCompletion(settings, players, settings.lengthOfPlayUnits === 'decks' ? 'decks' : 'hands');
-    return;
-  }
-
   state.pendingHandCount = true;
-
-  if (drawResult.refillLimitHit) {
-    commitPendingHand();
-    renderCompletion(settings, players, 'decks');
-    return;
-  }
-
-  startCountdown(settings);
+  state.handReadyForLivePlay = true;
+  startPlayRevealCountdown();
 }
 
 function showEmptyState(message) {
+  closePlayRevealOverlay({ restoreButtons: false });
   playCardGrid.innerHTML = '';
   playBoardEmpty.hidden = false;
   playBoardEmpty.textContent = message;
@@ -1306,8 +1576,7 @@ claimPlayerList.addEventListener('click', (event) => {
 });
 
 claimDialogCancelButton.addEventListener('click', () => {
-  cancelClaimHandPoints();
-  closeClaimDialog();
+  resumePlayAfterClaimCancel();
 });
 
 claimDialogPeekButton.addEventListener('click', () => {
@@ -1371,7 +1640,7 @@ claimDialogHeader.addEventListener('pointerup', (event) => {
 });
 
 document.addEventListener('pointerdown', (event) => {
-  if (state.sessionEnded || state.playStartDialogOpen || state.claimDialogOpen || state.confirmationDialogOpen) {
+  if (state.sessionEnded || state.playStartDialogOpen || state.playRevealCountdownOpen || state.claimDialogOpen || state.confirmationDialogOpen) {
     return;
   }
 
@@ -1403,12 +1672,11 @@ document.addEventListener('keydown', (event) => {
 
   if (state.claimDialogOpen && event.key === 'Escape') {
     event.preventDefault();
-    cancelClaimHandPoints();
-    closeClaimDialog();
+    resumePlayAfterClaimCancel();
     return;
   }
 
-  if (state.sessionEnded || state.playStartDialogOpen || state.claimDialogOpen || state.confirmationDialogOpen) {
+  if (state.sessionEnded || state.playStartDialogOpen || state.playRevealCountdownOpen || state.claimDialogOpen || state.confirmationDialogOpen) {
     return;
   }
 
