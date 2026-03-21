@@ -812,15 +812,17 @@ body.has-top-bar.play-page {
 .play-page {
   background: linear-gradient(180deg, #ffffff 0%, #eef5ff 100%);
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .play-main-shell {
   height: calc(100vh - 4rem);
+  height: calc(100dvh - 4rem);
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
   overflow: hidden;
 }
 
@@ -925,6 +927,7 @@ body.has-top-bar.play-page {
 
   .play-main-shell {
     height: calc(100vh - 4.5rem);
+    height: calc(100dvh - 4.5rem);
   }
 
   .top-nav-play-actions {
@@ -1204,7 +1207,9 @@ body.has-top-bar.play-page {
   left: 50%;
   transform: translate(-50%, -50%);
   width: min(560px, calc(100vw - 2rem));
-  max-height: calc(100vh - 5rem);
+  max-height: calc(100vh - 5rem - env(safe-area-inset-bottom, 0px));
+  max-height: calc(100dvh - 5rem - env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   overflow: auto;
   background: rgba(255, 255, 255, var(--claim-dialog-content-opacity, 1));
   border: 1px solid rgba(208, 215, 222, var(--claim-dialog-content-opacity, 1));
@@ -1426,6 +1431,7 @@ body.has-top-bar.play-page {
   inset: 0;
   display: grid;
   place-items: center;
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
   background: rgba(0, 0, 0, 0.25);
   z-index: 3200;
 }

@@ -774,16 +774,41 @@ function updatePlayInfoSummaryLayout() {
   }
 }
 
+function getVisibleViewportRect() {
+  if (window.visualViewport) {
+    return {
+      left: window.visualViewport.offsetLeft,
+      top: window.visualViewport.offsetTop,
+      width: window.visualViewport.width,
+      height: window.visualViewport.height
+    };
+  }
+
+  return {
+    left: 0,
+    top: 0,
+    width: window.innerWidth,
+    height: window.innerHeight
+  };
+}
+
 function positionDialogOverPlayBoard(dialog) {
   const playBoardRect = playBoard?.getBoundingClientRect();
   if (!playBoardRect || playBoardRect.width <= 0 || playBoardRect.height <= 0) {
     return;
   }
 
-  dialog.style.left = `${Math.round(playBoardRect.left)}px`;
-  dialog.style.top = `${Math.round(playBoardRect.top)}px`;
-  dialog.style.width = `${Math.round(playBoardRect.width)}px`;
-  dialog.style.height = `${Math.round(playBoardRect.height)}px`;
+  const viewportRect = getVisibleViewportRect();
+  const inset = 8;
+  const left = Math.max(playBoardRect.left, viewportRect.left + inset);
+  const top = Math.max(playBoardRect.top, viewportRect.top + inset);
+  const maxWidth = Math.max(0, viewportRect.left + viewportRect.width - left - inset);
+  const maxHeight = Math.max(0, viewportRect.top + viewportRect.height - top - inset);
+
+  dialog.style.left = `${Math.round(left)}px`;
+  dialog.style.top = `${Math.round(top)}px`;
+  dialog.style.width = `${Math.round(Math.min(playBoardRect.width, maxWidth))}px`;
+  dialog.style.height = `${Math.round(Math.min(playBoardRect.height, maxHeight))}px`;
   dialog.style.transform = 'none';
 }
 
@@ -821,13 +846,15 @@ function clampClaimDialogToViewport() {
     return;
   }
 
-  const minimumLeft = 8;
-  const minimumTop = 56;
-  const maximumLeft = Math.max(minimumLeft, window.innerWidth - claimDialog.offsetWidth - 8);
+  const viewportRect = getVisibleViewportRect();
+  const minimumLeft = viewportRect.left + 8;
+  const minimumTop = viewportRect.top + 56;
+  const maximumLeft = Math.max(minimumLeft, viewportRect.left + viewportRect.width - claimDialog.offsetWidth - 8);
+  const maximumTop = Math.max(minimumTop, viewportRect.top + viewportRect.height - claimDialog.offsetHeight - 8);
   const currentLeft = Number.parseFloat(claimDialog.style.left || '');
   const currentTop = Number.parseFloat(claimDialog.style.top || '');
   const nextLeft = Number.isFinite(currentLeft) ? Math.min(Math.max(currentLeft, minimumLeft), maximumLeft) : minimumLeft;
-  const nextTop = Number.isFinite(currentTop) ? Math.max(currentTop, minimumTop) : minimumTop;
+  const nextTop = Number.isFinite(currentTop) ? Math.min(Math.max(currentTop, minimumTop), maximumTop) : minimumTop;
 
   claimDialog.style.left = `${nextLeft}px`;
   claimDialog.style.top = `${nextTop}px`;
@@ -1849,7 +1876,7 @@ window.addEventListener('pageshow', () => {
   resumeAfterNavigationPrompt();
 });
 
-window.addEventListener('resize', () => {
+function handlePlayViewportResize() {
   if (state.playStartDialogOpen) {
     positionPlayStartDialogOverPlayBoard();
   }
@@ -1861,7 +1888,14 @@ window.addEventListener('resize', () => {
   }
   updatePlayCardGridSize();
   updatePlayInfoSummaryLayout();
-});
+}
+
+window.addEventListener('resize', handlePlayViewportResize);
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', handlePlayViewportResize);
+  window.visualViewport.addEventListener('scroll', handlePlayViewportResize);
+}
 
 resetPlayerScores();
 prepareGameStart();
