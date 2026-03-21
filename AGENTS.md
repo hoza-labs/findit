@@ -42,7 +42,6 @@ Build and maintain a browser-only static website that explains Spot It (Dobble) 
 - Keep `.github/workflows/static-site.yml` passing.
 - CI should run tests and build.
 - Do not commit generated artifacts outside `docs/`.
-- Check edited source files and regenerated output for Unicode mangling before finishing, especially symbols such as ☒ and ⓘ.
 
 ## Product constraints
 
