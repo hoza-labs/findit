@@ -27,6 +27,12 @@ import {
   formatClaimHandPointsSummary
 } from '../modules/playClaimScoreDisplay.js';
 import { stepClaimHandPoints } from '../modules/playClaimHandPoints.js';
+import {
+  CLAIM_POINTS_MODE_STAR,
+  CLAIM_POINTS_MODE_TOMATO,
+  getClaimPointsModeRowAction,
+  normalizeClaimPointsMode
+} from '../modules/playClaimPointsMode.js';
 import { createPlayHatState, drawNextHand } from '../modules/playHat.js';
 import { parsePositiveNumberInput, parsePositiveWholeNumberInput } from '../modules/playNumberValidation.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
@@ -53,6 +59,8 @@ const playStartDialogCancelButton = document.querySelector('#play-start-dialog-c
 const claimDialog = document.querySelector('#claim-dialog');
 const claimDialogHeader = document.querySelector('#claim-dialog-header');
 const claimDialogMessage = document.querySelector('#claim-dialog-message');
+const claimPointsModeStarButton = document.querySelector('#claim-points-mode-star-button');
+const claimPointsModeTomatoButton = document.querySelector('#claim-points-mode-tomato-button');
 const claimPlayerList = document.querySelector('#claim-player-list');
 const claimDialogShortcuts = document.querySelector('#claim-dialog-shortcuts');
 const claimDialogPeekButton = document.querySelector('#claim-dialog-peek-button');
@@ -111,6 +119,7 @@ const state = {
   totalNavigationPromptOverlapMs: 0,
   playerScores: [],
   claimHandPoints: [],
+  claimPointsMode: CLAIM_POINTS_MODE_STAR,
   claimDragOffsetX: 0,
   claimDragOffsetY: 0,
   claimDragging: false
@@ -504,6 +513,23 @@ function getClaimDialogShortcutsText() {
   return 'Press number keys or click to give points. Press Enter when done or Escape to cancel.';
 }
 
+function renderClaimPointsMode() {
+  const pointsMode = normalizeClaimPointsMode(state.claimPointsMode);
+  state.claimPointsMode = pointsMode;
+  const isStarMode = pointsMode === CLAIM_POINTS_MODE_STAR;
+  claimPointsModeStarButton.classList.toggle('is-selected', isStarMode);
+  claimPointsModeStarButton.setAttribute('aria-checked', String(isStarMode));
+  claimPointsModeTomatoButton.classList.toggle('is-selected', !isStarMode);
+  claimPointsModeTomatoButton.setAttribute('aria-checked', String(!isStarMode));
+  claimPlayerList.classList.toggle('is-star-mode', isStarMode);
+  claimPlayerList.classList.toggle('is-tomato-mode', !isStarMode);
+}
+
+function setClaimPointsMode(nextMode) {
+  state.claimPointsMode = normalizeClaimPointsMode(nextMode);
+  renderClaimPointsMode();
+}
+
 function renderClaimPlayerList() {
   claimPlayerList.innerHTML = '';
 
@@ -558,33 +584,8 @@ function renderClaimPlayerList() {
 
     score.setAttribute('aria-label', 'Points for this hand: ' + String(handPoints));
 
-    const controls = document.createElement('div');
-    controls.className = 'claim-player-controls';
-
-    const decreaseButton = document.createElement('button');
-    decreaseButton.type = 'button';
-    decreaseButton.className = 'btn btn-outline-secondary claim-player-button';
-    decreaseButton.dataset.playerIndex = String(index);
-    decreaseButton.dataset.scoreAction = 'decrease';
-    decreaseButton.textContent = String.fromCodePoint(0x1F345);
-
-    const resetButton = document.createElement('button');
-    resetButton.type = 'button';
-    resetButton.className = 'btn btn-outline-secondary claim-player-button';
-    resetButton.dataset.playerIndex = String(index);
-    resetButton.dataset.scoreAction = 'reset';
-    resetButton.textContent = String.fromCodePoint(0x1F4A4);
-
-    const increaseButton = document.createElement('button');
-    increaseButton.type = 'button';
-    increaseButton.className = 'btn btn-outline-primary claim-player-button';
-    increaseButton.dataset.playerIndex = String(index);
-    increaseButton.dataset.scoreAction = 'increase';
-    increaseButton.textContent = String.fromCodePoint(0x2B50);
-
     name.appendChild(score);
-    controls.append(decreaseButton, resetButton, increaseButton);
-    row.append(name, controls);
+    row.appendChild(name);
     claimPlayerList.appendChild(row);
   }
 }
@@ -610,6 +611,7 @@ function setClaimHandScore(playerIndex, nextHandPoints) {
   player.score += scoreDelta;
   state.claimHandPoints[playerIndex] = nextHandPoints;
   renderClaimPlayerList();
+  renderClaimPointsMode();
   return true;
 }
 
@@ -1029,9 +1031,11 @@ function openClaimDialog(message) {
   state.claimDialogOpen = true;
   state.claimDialogOpenedAtMs = Date.now();
   state.claimHandPoints = state.playerScores.map(() => 0);
+  state.claimPointsMode = CLAIM_POINTS_MODE_STAR;
   claimDialogMessage.textContent = message;
   claimDialogResultsButton.hidden = !isUnlimitedGame(settings);
   renderClaimPlayerList();
+  renderClaimPointsMode();
   claimDialog.hidden = false;
   setClaimDialogOpacity(1);
   setPlayActionButtonsDisabled(true);
@@ -1476,13 +1480,13 @@ function startCountdown(settings) {
 }
 
 function appendClaimInstructions(message) {
-  return message + ' Hand out points (or penalties!) using the options below.';
+  return message + ' Grab a wand to hand out points or penalties! ' + String.fromCodePoint(0x1F642);
 }
 
 function getClaimEventMessage(event) {
   if (event instanceof KeyboardEvent) {
     const keyLabel = event.key === ' ' ? 'Space' : event.key;
-    return appendClaimInstructions(`The ${keyLabel} key was pressed! But who spoke first? (and said the right thing!)`);
+    return appendClaimInstructions(`The ${keyLabel} key was pressed! But who spoke first?`);
   }
 
   if (event instanceof PointerEvent) {
@@ -1660,19 +1664,17 @@ restartButton.addEventListener('click', () => {
   openConfirmationDialog('restart');
 });
 
+claimPointsModeStarButton.addEventListener('click', () => {
+  setClaimPointsMode(CLAIM_POINTS_MODE_STAR);
+});
+
+claimPointsModeTomatoButton.addEventListener('click', () => {
+  setClaimPointsMode(CLAIM_POINTS_MODE_TOMATO);
+});
+
 claimPlayerList.addEventListener('click', (event) => {
   const target = event.target instanceof HTMLElement ? event.target : null;
   if (!target) {
-    return;
-  }
-
-  const button = target.closest('button[data-player-index]');
-  if (button) {
-    const playerIndex = Number.parseInt(button.dataset.playerIndex ?? '', 10);
-    const scoreAction = button.dataset.scoreAction;
-    if (scoreAction) {
-      stepClaimHandScore(playerIndex, scoreAction);
-    }
     return;
   }
 
@@ -1682,7 +1684,7 @@ claimPlayerList.addEventListener('click', (event) => {
   }
 
   const playerIndex = Number.parseInt(row.dataset.playerIndex ?? '', 10);
-  stepClaimHandScore(playerIndex, 'row');
+  stepClaimHandScore(playerIndex, getClaimPointsModeRowAction(state.claimPointsMode));
 });
 
 claimDialogCancelButton.addEventListener('click', () => {

@@ -1277,21 +1277,80 @@ body.has-top-bar.play-page {
   font-size: 0.95rem;
 }
 
+.claim-points-mode {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.claim-points-mode-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.2rem;
+  height: 3.2rem;
+  padding: 0.35rem;
+  border: 1px solid #adb5bd;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff 0%, #e9eef5 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 2px 5px rgba(15, 23, 42, 0.12);
+  color: #334155;
+  cursor: pointer;
+}
+
+.claim-points-mode-button.is-selected {
+  background: linear-gradient(180deg, #dbeafe 0%, #bfdbfe 100%);
+  box-shadow:
+    0 2px 5px rgba(15, 23, 42, 0.08) inset,
+    0 1px 0 rgba(255, 255, 255, 0.55);
+  transform: translateY(1px);
+}
+
+.claim-points-mode-button:focus-visible {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}
+
+.claim-points-mode-button.is-selected#claim-points-mode-star-button {
+  cursor: url('../assets/images/star-wand.svg') 21 5, pointer;
+}
+
+.claim-points-mode-button.is-selected#claim-points-mode-tomato-button {
+  cursor: url('../assets/images/tomato-wand.svg') 21 5, pointer;
+}
+
+.claim-points-mode-icon {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+}
+
 .claim-player-list {
   display: grid;
   gap: 0.75rem;
 }
 
+.claim-player-list.is-star-mode {
+  cursor: url('../assets/images/star-wand.svg') 21 5, pointer;
+}
+
+.claim-player-list.is-tomato-mode {
+  cursor: url('../assets/images/tomato-wand.svg') 21 5, pointer;
+}
+
 .claim-player-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
   align-items: center;
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--card-border);
   border-radius: 0.6rem;
   background: #fafbfc;
-  cursor: pointer;
 }
 
 .claim-player-name {
@@ -1349,19 +1408,6 @@ body.has-top-bar.play-page {
   color: #495057;
 }
 
-.claim-player-controls {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.claim-player-controls .claim-player-button {
-  cursor: pointer;
-}
-
-.claim-player-button {
-  min-width: 2.5rem;
-}
-
 .claim-dialog-actions {
   display: flex;
   justify-content: flex-end;
@@ -1401,6 +1447,14 @@ body.has-top-bar.play-page {
 }
 
 @media (max-width: 576px) {
+  .claim-points-mode {
+    flex-wrap: wrap;
+  }
+
+  .claim-points-mode-button {
+    width: 3.2rem;
+  }
+
   .claim-player-row {
     grid-template-columns: 1fr;
   }

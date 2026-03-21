@@ -101,7 +101,15 @@
       </div>
       <div class="claim-dialog-body">
         <p id="claim-dialog-message" class="mb-3"></p>
-        <div id="claim-player-list" class="claim-player-list"></div>
+        <div id="claim-points-mode" class="claim-points-mode" role="radiogroup" aria-label="Points Mode">
+          <button id="claim-points-mode-star-button" type="button" class="claim-points-mode-button is-selected" role="radio" aria-checked="true" aria-label="Star Mode">
+            <img src="./assets/images/star-wand.svg" alt="" class="claim-points-mode-icon" />
+          </button>
+          <button id="claim-points-mode-tomato-button" type="button" class="claim-points-mode-button" role="radio" aria-checked="false" aria-label="Tomato Mode">
+            <img src="./assets/images/tomato-wand.svg" alt="" class="claim-points-mode-icon" />
+          </button>
+        </div>
+        <div id="claim-player-list" class="claim-player-list is-star-mode"></div>
         <p id="claim-dialog-shortcuts" class="claim-dialog-shortcuts text-muted mb-0"></p>
         <div class="claim-dialog-actions">
           <button id="claim-dialog-results-button" type="button" class="btn btn-outline-secondary me-auto" hidden>Results</button>

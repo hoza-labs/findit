@@ -15,10 +15,16 @@ test('given decrease action, negative and zero scores step down while positive s
   assert.equal(stepClaimHandPoints(2, 'decrease'), -1);
 });
 
-test('given row action, nonnegative scores step up and negative scores step down', () => {
-  assert.equal(stepClaimHandPoints(0, 'row'), 1);
-  assert.equal(stepClaimHandPoints(2, 'row'), 3);
-  assert.equal(stepClaimHandPoints(-2, 'row'), -3);
+test('given row-increase action, points step up and are clamped to zero or higher', () => {
+  assert.equal(stepClaimHandPoints(0, 'row-increase'), 1);
+  assert.equal(stepClaimHandPoints(2, 'row-increase'), 3);
+  assert.equal(stepClaimHandPoints(-2, 'row-increase'), 0);
+});
+
+test('given row-decrease action, points step down and are clamped to zero or lower', () => {
+  assert.equal(stepClaimHandPoints(0, 'row-decrease'), -1);
+  assert.equal(stepClaimHandPoints(-2, 'row-decrease'), -3);
+  assert.equal(stepClaimHandPoints(2, 'row-decrease'), 0);
 });
 
 test('given reset action, claim hand points return to zero', () => {
