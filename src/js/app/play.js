@@ -56,6 +56,7 @@ const restartButton = document.querySelector('#restart-button');
 const playStartDialog = document.querySelector('#play-start-dialog');
 const playStartDialogOkButton = document.querySelector('#play-start-dialog-ok-button');
 const playStartDialogCancelButton = document.querySelector('#play-start-dialog-cancel-button');
+const playStartDialogShortcuts = document.querySelector('.play-start-dialog-shortcuts');
 const claimDialog = document.querySelector('#claim-dialog');
 const claimDialogHeader = document.querySelector('#claim-dialog-header');
 const claimDialogMessage = document.querySelector('#claim-dialog-message');
@@ -510,6 +511,21 @@ function renderPlayerClaimPrompt() {
   playerStatus.textContent = 'Any player can click anywhere or press any key to claim the hand.';
 }
 
+function shouldHideKeyboardShortcutHints() {
+  const hasTouch = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
+  const hasCoarsePrimaryPointer = typeof window.matchMedia === 'function'
+    && window.matchMedia('(pointer: coarse)').matches;
+  const hasAnyFinePointer = typeof window.matchMedia === 'function'
+    && window.matchMedia('(any-pointer: fine)').matches;
+  return hasTouch && hasCoarsePrimaryPointer && !hasAnyFinePointer;
+}
+
+function renderShortcutHintsVisibility() {
+  const hideShortcutHints = shouldHideKeyboardShortcutHints();
+  playStartDialogShortcuts.hidden = hideShortcutHints;
+  claimDialogShortcuts.hidden = hideShortcutHints;
+}
+
 function getClaimDialogShortcutsText() {
   const shortcutPlayerCount = Math.min(9, state.playerScores.length);
   const playerShortcutText = shortcutPlayerCount > 0
@@ -580,7 +596,7 @@ function renderClaimPlayerList() {
     const identity = document.createElement('span');
     identity.className = 'claim-player-identity';
 
-    if (index < 9) {
+    if (!shouldHideKeyboardShortcutHints() && index < 9) {
       const keycap = document.createElement('span');
       keycap.className = 'claim-player-keycap';
       keycap.textContent = String(index + 1);
@@ -1053,6 +1069,7 @@ function prepareGameStart() {
   const settings = getHandSettings();
 
   updateHeader(players, settings);
+  renderShortcutHintsVisibility();
   closePlayRevealOverlay({ restoreButtons: false });
   clearObjectUrls();
   playCardGrid.innerHTML = '';
@@ -1091,6 +1108,7 @@ function openClaimDialog(message) {
   state.claimPointsMode = CLAIM_POINTS_MODE_STAR;
   claimDialogMessage.textContent = message;
   claimDialogResultsButton.hidden = !isUnlimitedGame(settings);
+  renderShortcutHintsVisibility();
   renderClaimPlayerList();
   renderClaimPointsMode();
   claimDialog.hidden = false;
@@ -1891,6 +1909,7 @@ window.addEventListener('pageshow', () => {
 });
 
 function handlePlayViewportResize() {
+  renderShortcutHintsVisibility();
   if (state.playStartDialogOpen) {
     positionPlayStartDialogOverPlayBoard();
   }
