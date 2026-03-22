@@ -61,3 +61,7 @@ Build and maintain a browser-only static website that explains Spot It (Dobble) 
 - App should work for small multi-page navigation.
 - Deck data must support browser storage.
 - Users should be able to print locally and export card data to disk.
+
+## UI Notes
+
+- Any menu displayed with a top-nav menu, info menu, file menu, or three-dots/details menu should close when the user clicks elsewhere on the page or presses Escape. Escape should be absorbed when closing an open menu so it does not trigger unrelated page actions.
