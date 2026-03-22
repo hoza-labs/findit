@@ -1729,7 +1729,7 @@ claimPointsModeTomatoButton.addEventListener('click', () => {
   setClaimPointsMode(CLAIM_POINTS_MODE_TOMATO);
 });
 
-claimPlayerList.addEventListener('pointerup', (event) => {
+claimPlayerList.addEventListener('click', (event) => {
   if (!isClaimDialogActionKeyAllowed()) {
     return;
   }
