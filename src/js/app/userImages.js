@@ -1,12 +1,14 @@
-﻿import { addImageRef, createImageRef, hasImageRef, removeAllImageRefs, removeImageRef } from '../modules/imageRefs.js';
+import { addImageRef, createImageRef, hasImageRef, removeAllImageRefs, removeImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
-import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { renderSelectImagesHeaderAndSubnav } from '../modules/imagePageNavigation.js';
 
 const uploadImagesForm = document.querySelector('#upload-images-form');
 const imageUploadInput = document.querySelector('#image-upload-input');
 const userImagesElement = document.querySelector('#user-images');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
+const imagePageSubnav = document.querySelector('#image-page-subnav');
 
 const renameDialog = document.querySelector('#rename-image-dialog');
 const renameForm = document.querySelector('#rename-image-form');
@@ -22,8 +24,17 @@ let objectUrls = [];
 let renameTarget = null;
 let deleteTarget = null;
 
-renderDeckStatusLine(deckStatusLine, tempDeck);
-renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'User Images', tempDeck });
+renderPageChrome();
+
+function renderPageChrome() {
+  renderDeckStatusLine(deckStatusLine, tempDeck);
+  renderSelectImagesHeaderAndSubnav({
+    headingElement: pageHeading,
+    subnavElement: imagePageSubnav,
+    tempDeck,
+    currentHref: './user-images.html'
+  });
+}
 
 function clearObjectUrls() {
   for (const url of objectUrls) {
@@ -54,15 +65,14 @@ async function renderUserImages() {
         onClick: async () => {
           tempDeck = markDirty(isSelected ? removeImageRef(tempDeck, imageRef) : addImageRef(tempDeck, imageRef));
           await saveTempDeck(tempDeck);
-          renderDeckStatusLine(deckStatusLine, tempDeck);
-          renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'User Images', tempDeck });
+          renderPageChrome();
           await renderUserImages();
         },
         menuActions: [
           {
             label: 'Edit...',
             onClick: async () => {
-              window.location.assign(`./image-editor.html?source=user&id=${encodeURIComponent(image.id)}`);
+              window.location.assign('./image-editor.html?source=user&id=' + encodeURIComponent(image.id));
             }
           },
           {
@@ -105,8 +115,7 @@ imageUploadInput.addEventListener('change', async () => {
 
   if (files.length > 0) {
     await saveTempDeck(tempDeck);
-    renderDeckStatusLine(deckStatusLine, tempDeck);
-    renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'User Images', tempDeck });
+    renderPageChrome();
   }
 
   imageUploadInput.value = '';
@@ -147,8 +156,7 @@ deleteForm.addEventListener('submit', async (event) => {
   if (tempDeck.selectedImageRefs.length !== beforeCount) {
     tempDeck = markDirty(tempDeck);
     await saveTempDeck(tempDeck);
-    renderDeckStatusLine(deckStatusLine, tempDeck);
-    renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'User Images', tempDeck });
+    renderPageChrome();
   }
 
   deleteDialog.close();

@@ -1,13 +1,13 @@
-﻿import { addImageRef, createImageRef, hasImageRef, removeAllImageRefs, removeImageRef } from '../modules/imageRefs.js';
+import { addImageRef, createImageRef, hasImageRef, removeAllImageRefs, removeImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
 import {
   createImageTile,
   loadTempDeckOrDefault,
-  renderDeckHeaderAndTitle,
   renderDeckStatusLine,
   repository,
   saveTempDeck
 } from '../modules/deckFlowCommon.js';
+import { renderSelectImagesHeaderAndSubnav } from '../modules/imagePageNavigation.js';
 import { getDefaultWebImageName, getWebImageCaption, inferWebContentTypeFromUrl, normalizeWebContentType, trimWebImageName } from '../modules/webImageMetadata.js';
 
 const webImageForm = document.querySelector('#web-image-form');
@@ -16,6 +16,7 @@ const webImageNameInput = document.querySelector('#web-image-name');
 const webImagesElement = document.querySelector('#web-images');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
+const imagePageSubnav = document.querySelector('#image-page-subnav');
 
 const renameDialog = document.querySelector('#rename-image-dialog');
 const renameForm = document.querySelector('#rename-image-form');
@@ -30,8 +31,17 @@ let tempDeck = await loadTempDeckOrDefault();
 let renameTarget = null;
 let deleteTarget = null;
 
-renderDeckStatusLine(deckStatusLine, tempDeck);
-renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Web Images', tempDeck });
+renderPageChrome();
+
+function renderPageChrome() {
+  renderDeckStatusLine(deckStatusLine, tempDeck);
+  renderSelectImagesHeaderAndSubnav({
+    headingElement: pageHeading,
+    subnavElement: imagePageSubnav,
+    tempDeck,
+    currentHref: './web-images.html'
+  });
+}
 
 async function fetchRemoteContentType(url) {
   const attempts = [
@@ -86,15 +96,14 @@ async function renderWebImages() {
         onClick: async () => {
           tempDeck = markDirty(isSelected ? removeImageRef(tempDeck, imageRef) : addImageRef(tempDeck, imageRef));
           await saveTempDeck(tempDeck);
-          renderDeckStatusLine(deckStatusLine, tempDeck);
-          renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Web Images', tempDeck });
+          renderPageChrome();
           await renderWebImages();
         },
         menuActions: [
           {
             label: 'Edit...',
             onClick: async () => {
-              window.location.assign(`./image-editor.html?source=web&id=${encodeURIComponent(image.id)}`);
+              window.location.assign('./image-editor.html?source=web&id=' + encodeURIComponent(image.id));
             }
           },
           {
@@ -149,8 +158,7 @@ webImageForm.addEventListener('submit', async (event) => {
   const saved = await repository.addWebImage({ url, name, contentType });
   tempDeck = markDirty(addImageRef(tempDeck, createImageRef('web', saved.id)));
   await saveTempDeck(tempDeck);
-  renderDeckStatusLine(deckStatusLine, tempDeck);
-  renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Web Images', tempDeck });
+  renderPageChrome();
 
   webImageUrlInput.value = '';
   webImageNameInput.value = '';
@@ -191,8 +199,7 @@ deleteForm.addEventListener('submit', async (event) => {
   if (tempDeck.selectedImageRefs.length !== beforeCount) {
     tempDeck = markDirty(tempDeck);
     await saveTempDeck(tempDeck);
-    renderDeckStatusLine(deckStatusLine, tempDeck);
-    renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Web Images', tempDeck });
+    renderPageChrome();
   }
 
   deleteDialog.close();

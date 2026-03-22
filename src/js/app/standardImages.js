@@ -1,14 +1,16 @@
 import { addImageRef, createImageRef, hasImageRef, removeImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
-import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { renderSelectImagesHeaderAndSubnav } from '../modules/imagePageNavigation.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
 
 const standardImagesElement = document.querySelector('#standard-images');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
+const imagePageSubnav = document.querySelector('#image-page-subnav');
 let tempDeck = await loadTempDeckOrDefault();
-renderDeckStatusLine(deckStatusLine, tempDeck);
-renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Standard Images', tempDeck });
+
+renderPageChrome();
 
 async function loadStandardImageNames() {
   const response = await fetch('./assets/deck-images/manifest.json', { cache: 'no-store' });
@@ -16,6 +18,16 @@ async function loadStandardImageNames() {
     throw new Error('Failed to load standard image manifest.');
   }
   return response.json();
+}
+
+function renderPageChrome() {
+  renderDeckStatusLine(deckStatusLine, tempDeck);
+  renderSelectImagesHeaderAndSubnav({
+    headingElement: pageHeading,
+    subnavElement: imagePageSubnav,
+    tempDeck,
+    currentHref: './standard-images.html'
+  });
 }
 
 function renderStandardImages(fileNames) {
@@ -36,8 +48,7 @@ function renderStandardImages(fileNames) {
         onClick: async () => {
           tempDeck = markDirty(isSelected ? removeImageRef(tempDeck, imageRef) : addImageRef(tempDeck, imageRef));
           await saveTempDeck(tempDeck);
-          renderDeckStatusLine(deckStatusLine, tempDeck);
-          renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Standard Images', tempDeck });
+          renderPageChrome();
           renderStandardImages(fileNames);
         }
       })
