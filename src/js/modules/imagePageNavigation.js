@@ -67,7 +67,7 @@ export function renderSelectImagesHeaderAndSubnav({ headingElement, subnavElemen
   const normalizedCurrentHref = normalizeImagePageHref(currentHref) ?? DEFAULT_IMAGE_PAGE_HREF;
 
   if (headingElement) {
-    headingElement.textContent = 'Select Images for ' + deckName + dirtyMarker;
+    headingElement.textContent = 'Select images - ' + deckName + dirtyMarker;
   }
 
   document.title = 'FindIt | Select Images | ' + deckName + dirtyMarker;
