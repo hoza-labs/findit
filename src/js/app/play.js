@@ -1716,7 +1716,7 @@ claimPointsModeTomatoButton.addEventListener('click', () => {
 });
 
 claimPlayerList.addEventListener('pointerup', (event) => {
-  if (event.pointerType === 'touch') {
+  if (!isClaimDialogActionKeyAllowed()) {
     return;
   }
 
