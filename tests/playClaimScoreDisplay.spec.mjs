@@ -36,16 +36,16 @@ test('given a non-integer value, claim hand display is empty', () => {
 });
 
 test('given positive points, claim hand summary explains points added to the player score', () => {
-  assert.equal(formatClaimHandPointsSummary(3, 'Alex'), "(3 points will be added to Alex's score)");
+  assert.equal(formatClaimHandPointsSummary(3, 'Alex'), "3 points will be added to Alex's score");
 });
 
 test('given exactly one point, claim hand summary uses singular point', () => {
-  assert.equal(formatClaimHandPointsSummary(1, 'Alex'), "(1 point will be added to Alex's score)");
-  assert.equal(formatClaimHandPointsSummary(-1, 'Blair'), "(1 point will be subtracted from Blair's score)");
+  assert.equal(formatClaimHandPointsSummary(1, 'Alex'), "1 point will be added to Alex's score");
+  assert.equal(formatClaimHandPointsSummary(-1, 'Blair'), "1 point will be subtracted from Blair's score");
 });
 
 test('given negative points, claim hand summary explains points subtracted from the player score', () => {
-  assert.equal(formatClaimHandPointsSummary(-2, 'Blair'), "(2 points will be subtracted from Blair's score)");
+  assert.equal(formatClaimHandPointsSummary(-2, 'Blair'), "2 points will be subtracted from Blair's score");
 });
 
 test('given zero points, claim hand summary is empty', () => {

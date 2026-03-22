@@ -1418,12 +1418,6 @@ body.has-top-bar.play-page {
   vertical-align: baseline;
 }
 
-.claim-player-score-summary {
-  display: inline;
-  margin-left: 0.35rem;
-  font-size: 0.875rem;
-  color: #495057;
-}
 
 
 .claim-dialog-actions {
@@ -1431,6 +1425,20 @@ body.has-top-bar.play-page {
   justify-content: flex-end;
   gap: 0.75rem;
   margin-top: 1rem;
+}
+
+.claim-dialog-summaries {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 0.55rem;
+}
+
+.claim-dialog-summary {
+  text-align: right;
+  font-size: 0.82rem;
+  font-weight: 300;
+  color: #6c757d;
+  line-height: 1.2;
 }
 
 .claim-dialog-shortcuts {

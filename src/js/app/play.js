@@ -67,6 +67,7 @@ const claimDialogPeekButton = document.querySelector('#claim-dialog-peek-button'
 const claimDialogResultsButton = document.querySelector('#claim-dialog-results-button');
 const claimDialogCancelButton = document.querySelector('#claim-dialog-cancel-button');
 const claimDialogNextHandButton = document.querySelector('#claim-dialog-next-hand-button');
+const claimDialogSummaries = document.querySelector('#claim-dialog-summaries');
 const confirmationDialog = document.querySelector('#confirmation-dialog');
 const confirmationDialogMessage = document.querySelector('#confirmation-dialog-message');
 const confirmationDialogChangeOptionsButton = document.querySelector('#confirmation-dialog-change-options-button');
@@ -534,8 +535,27 @@ function setClaimPointsMode(nextMode) {
   renderClaimPointsMode();
 }
 
+function renderClaimDialogSummaries() {
+  claimDialogSummaries.innerHTML = '';
+
+  for (let index = 0; index < state.playerScores.length; index += 1) {
+    const player = state.playerScores[index];
+    const handPoints = state.claimHandPoints[index] ?? 0;
+    const scoreSummaryText = formatClaimHandPointsSummary(handPoints, player.name);
+    if (!scoreSummaryText) {
+      continue;
+    }
+
+    const summary = document.createElement('p');
+    summary.className = 'claim-dialog-summary mb-0';
+    summary.textContent = scoreSummaryText;
+    claimDialogSummaries.appendChild(summary);
+  }
+}
+
 function renderClaimPlayerList() {
   claimPlayerList.innerHTML = '';
+  claimDialogSummaries.innerHTML = '';
 
   if (state.playerScores.length === 0) {
     claimDialogShortcuts.textContent = getClaimDialogShortcutsText();
@@ -584,17 +604,11 @@ function renderClaimPlayerList() {
       content.appendChild(scoreIcons);
     }
 
-    const scoreSummaryText = formatClaimHandPointsSummary(handPoints, player.name);
-    if (scoreSummaryText) {
-      const scoreSummary = document.createElement('span');
-      scoreSummary.className = 'claim-player-score-summary';
-      scoreSummary.textContent = scoreSummaryText;
-      content.appendChild(scoreSummary);
-    }
-
     row.appendChild(content);
     claimPlayerList.appendChild(row);
   }
+
+  renderClaimDialogSummaries();
 }
 
 function cancelClaimHandPoints() {

@@ -23,5 +23,5 @@ export function formatClaimHandPointsSummary(points, playerName) {
   const absolutePoints = Math.abs(points);
   const pointLabel = absolutePoints === 1 ? 'point' : 'points';
   const verb = points > 0 ? 'added to' : 'subtracted from';
-  return '(' + String(absolutePoints) + ' ' + pointLabel + ' will be ' + verb + ' ' + String(playerName) + "'s score)";
+  return String(absolutePoints) + ' ' + pointLabel + ' will be ' + verb + ' ' + String(playerName) + "'s score";
 }
