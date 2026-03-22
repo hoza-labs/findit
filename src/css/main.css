@@ -495,11 +495,16 @@ body.has-top-bar.play-page {
   border-radius: 999px;
   display: inline-grid;
   place-items: center;
-  font-size: 1.35rem;
-  line-height: 0.9;
-  padding: 0 0 0.08rem;
+  line-height: 1;
+  padding: 0;
   color: #fff;
   background: #6c757d;
+}
+
+.deck-player-toggle-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  display: block;
 }
 
 .deck-player-toggle[aria-expanded='true'] {
