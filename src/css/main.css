@@ -625,18 +625,20 @@ body.has-top-bar.play-page {
 
 @media (max-width: 576px) {
   .image-page-subnav {
+    --image-page-tab-width: 10rem;
+    --image-page-tab-overlap: max(0px, calc(((var(--image-page-tab-width) * 3) - 100%) / 2));
     gap: 0;
     overflow: visible;
   }
 
   .image-page-subnav-link {
-    width: 10rem;
-    flex-basis: 10rem;
+    width: var(--image-page-tab-width);
+    flex-basis: var(--image-page-tab-width);
     padding-inline: 0.85rem;
   }
 
   .image-page-subnav-link + .image-page-subnav-link {
-    margin-left: -1.8rem;
+    margin-left: calc(-1 * var(--image-page-tab-overlap));
   }
 
   .image-page-subnav-link:nth-child(1) {
