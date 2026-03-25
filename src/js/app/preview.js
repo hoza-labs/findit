@@ -50,7 +50,7 @@ function updateHeader() {
   const requiredCount = getRequiredImageCount();
   deckSummary.textContent = `n=${tempDeck.symbolsPerCard}, selected images=${tempDeck.selectedImageRefs.length}, required=${requiredCount}`;
   renderDeckStatusLine(deckStatusLine, tempDeck);
-  renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Preview', tempDeck });
+  renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Build', tempDeck });
 }
 
 function resolveImageSrc(ref, placeholderNumber) {
@@ -157,14 +157,14 @@ function stopDeckPlayer() {
     deckPlayerTimerId = null;
   }
 
-  deckPlayerPlayButton.textContent = '>';
+  deckPlayerPlayButton.textContent = '\u25B6\uFE0F';
   deckPlayerPlayButton.title = 'Play';
   deckPlayerPlayButton.setAttribute('aria-label', 'Play deck');
 }
 
 function updateDeckPlayerSummary() {
   if (!deckPlayerExpanded) {
-    deckPlayerSummary.textContent = 'Deck Player is off.';
+    deckPlayerSummary.textContent = 'Deck Builder is off.';
     return;
   }
 
@@ -175,7 +175,7 @@ function setDeckPlayerExpanded(expanded) {
   deckPlayerExpanded = expanded;
   deckPlayerPanel.hidden = !expanded;
   deckPlayerToggle.setAttribute('aria-expanded', String(expanded));
-  deckPlayerToggle.setAttribute('aria-label', expanded ? 'Turn Deck Player off' : 'Turn Deck Player on');
+  deckPlayerToggle.setAttribute('aria-label', expanded ? 'Turn Deck Builder off' : 'Turn Deck Builder on');
 
   if (!expanded) {
     stopDeckPlayer();
@@ -190,7 +190,7 @@ function startDeckPlayer() {
     return;
   }
 
-  deckPlayerPlayButton.textContent = '[]';
+  deckPlayerPlayButton.textContent = '\u23F8\uFE0F';
   deckPlayerPlayButton.title = 'Stop';
   deckPlayerPlayButton.setAttribute('aria-label', 'Stop deck');
 

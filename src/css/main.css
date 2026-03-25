@@ -234,7 +234,8 @@ body.has-top-bar.play-page {
   border-radius: 999px;
   padding: 0.25rem 0.6rem;
   line-height: 1.2;
-  white-space: nowrap;
+  white-space: normal;
+  text-align: center;
 }
 
 .play-info-menu summary::-webkit-details-marker {
@@ -527,9 +528,17 @@ body.has-top-bar.play-page {
 }
 
 .deck-player-button {
-  min-width: 3rem;
-  font-size: 1.2rem;
-  line-height: 1;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1.1;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
 }
 
 .deck-player-status {

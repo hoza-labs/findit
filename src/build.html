@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>FindIt | Preview</title>
+    <title>FindIt | Build</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
     <link rel="stylesheet" href="./css/main.css" />
   </head>
@@ -14,7 +14,7 @@
           <a href="./index.html" class="nav-link fw-semibold">Home</a>
           <a href="./basic-info.html" class="nav-link fw-semibold">Basic Info</a>
           <a href="./standard-images.html" class="nav-link fw-semibold" data-select-images-link>Select Images</a>
-          <a href="./preview.html" class="nav-link fw-semibold is-current" aria-current="page">Preview</a>
+          <a href="./build.html" class="nav-link fw-semibold is-current" aria-current="page">Build</a>
           <a href="./play.html" class="nav-link fw-semibold">Play!</a>
           <a href="./save.html" class="nav-link fw-semibold">Save&hellip;</a>
         </div>
@@ -26,7 +26,7 @@
             <li><a href="./index.html" class="top-page-menu-link">Home</a></li>
             <li><a href="./basic-info.html" class="top-page-menu-link">Basic Info</a></li>
             <li><a href="./standard-images.html" class="top-page-menu-link" data-select-images-link>Select Images</a></li>
-            <li><a href="./preview.html" class="top-page-menu-link" aria-current="page">Preview</a></li>
+            <li><a href="./build.html" class="top-page-menu-link" aria-current="page">Build</a></li>
             <li><a href="./play.html" class="top-page-menu-link">Play!</a></li>
             <li><a href="./save.html" class="top-page-menu-link">Save&hellip;</a></li>
           </ul>
@@ -39,7 +39,7 @@
     </nav>
 
     <header class="container-fluid preview-page-shell py-4">
-      <h1 class="display-6 mb-2">Preview</h1>
+      <h1 class="display-6 mb-2">Build</h1>
       <p class="mb-2">Learn how the deck is built from your selected images.</p>
       <p id="deck-status-line" class="text-muted mb-0">Current deck: (new untitled deck) (no changes yet)</p>
     </header>
@@ -60,9 +60,9 @@
             </section>
             <section>
               <div class="deck-player-toggle-row">
-                <h3 class="h6 mb-0">Deck Player</h3>
-                <p id="deck-player-summary" class="deck-player-summary text-muted mb-0">Deck Player is off.</p>
-                <button id="deck-player-toggle" type="button" class="deck-player-toggle" aria-controls="deck-player-panel" aria-expanded="false" aria-label="Turn Deck Player on">
+                <h3 class="h6 mb-0">Deck Builder</h3>
+                <p id="deck-player-summary" class="deck-player-summary text-muted mb-0">Deck Builder is off.</p>
+                <button id="deck-player-toggle" type="button" class="deck-player-toggle" aria-controls="deck-player-panel" aria-expanded="false" aria-label="Turn Deck Builder on">
                   <img src="./assets/images/power-button.svg" alt="" class="deck-player-toggle-icon" />
                 </button>
               </div>
@@ -70,11 +70,11 @@
                 <label for="deck-player-slider" class="form-label mb-1">Card</label>
                 <input id="deck-player-slider" class="form-range" type="range" min="1" max="1" value="1" />
                 <div class="deck-player-controls" role="group" aria-label="Deck player controls">
-                  <button id="deck-player-rewind-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go to first card" title="First card">|&lt;</button>
-                  <button id="deck-player-back-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go back one card" title="Previous card">&lt;&lt;</button>
-                  <button id="deck-player-play-button" type="button" class="btn btn-primary deck-player-button" aria-label="Play deck" title="Play">&gt;</button>
-                  <button id="deck-player-forward-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go forward one card" title="Next card">&gt;&gt;</button>
-                  <button id="deck-player-end-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go to last card" title="Last card">&gt;|</button>
+                  <button id="deck-player-rewind-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go to first card" title="First card">First card</button>
+                  <button id="deck-player-back-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go back one card" title="Previous card">Prev card</button>
+                  <button id="deck-player-play-button" type="button" class="btn btn-primary deck-player-button" aria-label="Play deck" title="Play">&#x25B6;&#xFE0F;</button>
+                  <button id="deck-player-forward-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go forward one card" title="Next card">Next card</button>
+                  <button id="deck-player-end-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go to last card" title="Last card">Last card</button>
                 </div>
                 <p id="deck-player-status" class="deck-player-status text-muted mb-2"></p>
                 <div id="preview-sample-card-target" class="sample-card-target"></div>
