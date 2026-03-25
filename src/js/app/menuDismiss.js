@@ -1,4 +1,4 @@
-const MENU_SELECTOR = 'details.top-page-menu-mobile, details.play-info-menu, details.editor-nav-file-menu, details.image-menu';
+const MENU_SELECTOR = 'details.top-page-menu-mobile, details.play-info-menu, details.editor-nav-file-menu, details.image-menu, details.quick-deck-menu';
 
 function getOpenMenus() {
   return [...document.querySelectorAll(MENU_SELECTOR)].filter((menu) => menu.open);

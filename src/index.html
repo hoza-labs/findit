@@ -50,7 +50,16 @@
             <h2 class="h5 mb-1">Start a deck</h2>
             <p class="mb-0 text-muted">Open an existing deck or start a new one.</p>
           </div>
-          <button id="new-deck-button" type="button" class="btn btn-primary">New deck...</button>
+          <div class="home-start-actions">
+            <button id="new-deck-button" type="button" class="btn btn-primary">New deck...</button>
+            <div class="quick-deck-split" role="group" aria-label="Quick deck actions">
+              <button id="quick-deck-button" type="button" class="btn btn-outline-primary quick-deck-main-button">Quick 6-image deck...</button>
+              <details class="quick-deck-menu">
+                <summary class="quick-deck-menu-trigger" aria-label="Choose quick deck size"><span aria-hidden="true">&#9662;</span></summary>
+                <div id="quick-deck-menu-list" class="quick-deck-menu-list"></div>
+              </details>
+            </div>
+          </div>
         </div>
       </section>
 

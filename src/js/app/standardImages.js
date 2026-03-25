@@ -2,6 +2,7 @@ import { addImageRef, createImageRef, hasImageRef, removeImageRef } from '../mod
 import { markDirty } from '../modules/deckSession.js';
 import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { renderSelectImagesHeaderAndSubnav } from '../modules/imagePageNavigation.js';
+import { loadStandardImageNames } from '../modules/standardImageManifest.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
 
 const standardImagesElement = document.querySelector('#standard-images');
@@ -11,14 +12,6 @@ const imagePageSubnav = document.querySelector('#image-page-subnav');
 let tempDeck = await loadTempDeckOrDefault();
 
 renderPageChrome();
-
-async function loadStandardImageNames() {
-  const response = await fetch('./assets/deck-images/manifest.json', { cache: 'no-store' });
-  if (!response.ok) {
-    throw new Error('Failed to load standard image manifest.');
-  }
-  return response.json();
-}
 
 function renderPageChrome() {
   renderDeckStatusLine(deckStatusLine, tempDeck);

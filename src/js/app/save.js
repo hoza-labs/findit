@@ -2,6 +2,8 @@ import { createEmptyTempDeck, createTempDeckFromSavedDeck, markSaved } from '../
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
+import { createQuickDeckTempDeck } from '../modules/quickDeck.js';
+import { loadStandardImageNames } from '../modules/standardImageManifest.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
 
 const pageHeading = document.querySelector('header h1');
@@ -22,6 +24,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const saveFirstMode = urlParams.get('saveFirst') === '1';
 const afterAction = urlParams.get('after');
 const afterName = urlParams.get('name') ?? '';
+const afterQuickN = urlParams.get('quickN') ?? '';
 
 let tempDeck = await loadTempDeckOrDefault();
 let userImages = [];
@@ -143,6 +146,13 @@ async function continueAfterSaveIntent() {
   if (afterAction === 'new') {
     await repository.saveTempDeck(createEmptyTempDeck());
     window.location.href = './basic-info.html';
+    return;
+  }
+
+  if (afterAction === 'quick') {
+    const standardImageIds = await loadStandardImageNames();
+    await repository.saveTempDeck(createQuickDeckTempDeck({ symbolsPerCard: afterQuickN, standardImageIds }));
+    window.location.href = './play.html';
     return;
   }
 

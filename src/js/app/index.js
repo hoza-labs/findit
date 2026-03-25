@@ -1,10 +1,20 @@
 ﻿import { createEmptyTempDeck, createTempDeckFromSavedDeck } from '../modules/deckSession.js';
-import { createIndexedDbRepository } from '../modules/indexedDbRepository.js';
 import { renderDeckHeaderAndTitle, renderDeckStatusLine } from '../modules/deckFlowCommon.js';
+import { createIndexedDbRepository } from '../modules/indexedDbRepository.js';
+import {
+  createQuickDeckTempDeck,
+  getQuickDeckOptions,
+  getQuickDeckSymbolsPerCard,
+  rememberQuickDeckSymbolsPerCard
+} from '../modules/quickDeck.js';
+import { loadStandardImageNames } from '../modules/standardImageManifest.js';
 
 const repository = createIndexedDbRepository();
 const existingDecksElement = document.querySelector('#existing-decks');
 const newDeckButton = document.querySelector('#new-deck-button');
+const quickDeckButton = document.querySelector('#quick-deck-button');
+const quickDeckMenu = document.querySelector('.quick-deck-menu');
+const quickDeckMenuList = document.querySelector('#quick-deck-menu-list');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
 const homeNextLink = document.querySelector('#home-next-link');
@@ -21,6 +31,13 @@ const deleteDeckConfirmButton = document.querySelector('#delete-deck-confirm');
 async function openNewDeck() {
   await repository.saveTempDeck(createEmptyTempDeck());
   window.location.href = './basic-info.html';
+}
+
+async function openQuickDeck(symbolsPerCard = getQuickDeckSymbolsPerCard()) {
+  const standardImageIds = await loadStandardImageNames();
+  const quickDeck = createQuickDeckTempDeck({ symbolsPerCard, standardImageIds });
+  await repository.saveTempDeck(quickDeck);
+  window.location.href = './play.html';
 }
 
 async function openExistingDeck(name) {
@@ -154,7 +171,7 @@ async function promptSaveChoice() {
   });
 }
 
-async function maybeSaveBeforeNavigate(nextAction, deckName = '') {
+async function maybeSaveBeforeNavigate(nextAction, params = {}) {
   const currentTempDeck = await repository.getTempDeck();
   if (!currentTempDeck?.dirty) {
     return 'no';
@@ -166,19 +183,65 @@ async function maybeSaveBeforeNavigate(nextAction, deckName = '') {
   }
 
   if (choice === 'yes') {
-    const params = new URLSearchParams({
+    const searchParams = new URLSearchParams({
       saveFirst: '1',
       after: nextAction
     });
 
-    if (deckName) {
-      params.set('name', deckName);
+    for (const [key, value] of Object.entries(params)) {
+      if (value) {
+        searchParams.set(key, value);
+      }
     }
 
-    window.location.href = `./save.html?${params.toString()}`;
+    window.location.href = `./save.html?${searchParams.toString()}`;
   }
 
   return choice;
+}
+
+async function startQuickDeckFlow(symbolsPerCard) {
+  try {
+    await openQuickDeck(symbolsPerCard);
+  } catch {
+    window.alert('Quick deck could not be created right now.');
+  }
+}
+
+function renderQuickDeckPrimaryButton() {
+  quickDeckButton.textContent = getQuickDeckOptions()
+    .find((option) => option.symbolsPerCard === getQuickDeckSymbolsPerCard())?.label
+    ?? 'Quick deck...';
+}
+
+function renderQuickDeckMenu() {
+  const currentSymbolsPerCard = getQuickDeckSymbolsPerCard();
+  quickDeckMenuList.innerHTML = '';
+
+  for (const option of getQuickDeckOptions()) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'quick-deck-menu-item';
+    button.textContent = option.label;
+    if (option.symbolsPerCard === currentSymbolsPerCard) {
+      button.classList.add('is-current');
+      button.setAttribute('aria-current', 'true');
+    }
+    button.addEventListener('click', () => {
+      quickDeckMenu.open = false;
+      const rememberedSymbolsPerCard = rememberQuickDeckSymbolsPerCard(undefined, option.symbolsPerCard);
+      renderQuickDeckPrimaryButton();
+      renderQuickDeckMenu();
+      void (async () => {
+        const choice = await maybeSaveBeforeNavigate('quick', { quickN: String(rememberedSymbolsPerCard) });
+        if (choice === 'yes' || choice === 'cancel') {
+          return;
+        }
+        await startQuickDeckFlow(rememberedSymbolsPerCard);
+      })();
+    });
+    quickDeckMenuList.appendChild(button);
+  }
 }
 
 async function renderExistingDecks() {
@@ -208,7 +271,7 @@ async function renderExistingDecks() {
     deckLink.addEventListener('click', (event) => {
       event.preventDefault();
       void (async () => {
-        const choice = await maybeSaveBeforeNavigate('open', deck.name);
+        const choice = await maybeSaveBeforeNavigate('open', { name: deck.name });
         if (choice === 'yes' || choice === 'cancel') {
           return;
         }
@@ -231,7 +294,7 @@ async function renderExistingDecks() {
     openButton.textContent = 'Open';
     openButton.addEventListener('click', () => {
       void (async () => {
-        const choice = await maybeSaveBeforeNavigate('open', deck.name);
+        const choice = await maybeSaveBeforeNavigate('open', { name: deck.name });
         if (choice === 'yes' || choice === 'cancel') {
           return;
         }
@@ -270,9 +333,22 @@ newDeckButton.addEventListener('click', () => {
   })();
 });
 
+quickDeckButton.addEventListener('click', () => {
+  void (async () => {
+    const symbolsPerCard = getQuickDeckSymbolsPerCard();
+    const choice = await maybeSaveBeforeNavigate('quick', { quickN: String(symbolsPerCard) });
+    if (choice === 'yes' || choice === 'cancel') {
+      return;
+    }
+    await startQuickDeckFlow(symbolsPerCard);
+  })();
+});
+
 const tempDeck = await repository.getTempDeck();
 const normalizedTempDeck = tempDeck ?? createEmptyTempDeck();
 renderDeckStatusLine(deckStatusLine, normalizedTempDeck);
 renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Home', tempDeck: normalizedTempDeck });
 homeNextLink.hidden = !normalizedTempDeck.dirty;
+renderQuickDeckPrimaryButton();
+renderQuickDeckMenu();
 await renderExistingDecks();
