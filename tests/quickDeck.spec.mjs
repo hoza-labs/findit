@@ -53,25 +53,35 @@ test('given a quick deck size, getQuickDeckImageCount returns the required image
   assert.equal(getQuickDeckImageCount(6), 31);
 });
 
-test('given enough standard image ids, createQuickDeckTempDeck creates a deck with unique standard refs', () => {
-  const standardImageIds = Array.from({ length: 40 }, (_, index) => `image-${index + 1}.png`);
-  const deck = createQuickDeckTempDeck({
+test('given enough images across sources, createQuickDeckTempDeck fills from user then web then standard', () => {
+  const result = createQuickDeckTempDeck({
     symbolsPerCard: 6,
-    standardImageIds,
+    userImageIds: ['u1', 'u2'],
+    webImageIds: ['w1', 'w2', 'w3'],
+    standardImageIds: Array.from({ length: 40 }, (_, index) => `image-${index + 1}.png`),
     random: () => 0.25
   });
 
-  assert.equal(deck.symbolsPerCard, 6);
-  assert.equal(deck.selectedImageRefs.length, 31);
-  assert.equal(deck.dirty, false);
-  assert.equal(deck.deckName, '');
-  assert.ok(deck.selectedImageRefs.every((ref) => ref.source === 'standard'));
-  assert.equal(new Set(deck.selectedImageRefs.map((ref) => ref.id)).size, 31);
+  assert.equal(result.requiredImageCount, 31);
+  assert.equal(result.selectedImageCount, 31);
+  assert.equal(result.isComplete, true);
+  assert.equal(result.tempDeck.symbolsPerCard, 6);
+  assert.equal(result.tempDeck.selectedImageRefs.length, 31);
+  assert.deepEqual(result.tempDeck.selectedImageRefs.slice(0, 2).map((ref) => ref.source), ['user', 'user']);
+  assert.deepEqual(result.tempDeck.selectedImageRefs.slice(2, 5).map((ref) => ref.source), ['web', 'web', 'web']);
+  assert.ok(result.tempDeck.selectedImageRefs.slice(5).every((ref) => ref.source === 'standard'));
 });
 
-test('given too few standard image ids, createQuickDeckTempDeck throws', () => {
-  assert.throws(
-    () => createQuickDeckTempDeck({ symbolsPerCard: 8, standardImageIds: ['a.png', 'b.png'] }),
-    /Not enough standard images/
-  );
+test('given too few images overall, createQuickDeckTempDeck returns an incomplete deck instead of throwing', () => {
+  const result = createQuickDeckTempDeck({
+    symbolsPerCard: 8,
+    userImageIds: ['u1'],
+    webImageIds: ['w1', 'w2'],
+    standardImageIds: ['s1', 's2']
+  });
+
+  assert.equal(result.requiredImageCount, 57);
+  assert.equal(result.selectedImageCount, 5);
+  assert.equal(result.isComplete, false);
+  assert.deepEqual(result.tempDeck.selectedImageRefs.map((ref) => ref.source), ['user', 'web', 'web', 'standard', 'standard']);
 });

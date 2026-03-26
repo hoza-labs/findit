@@ -1,9 +1,10 @@
-import { markDirty } from '../modules/deckSession.js';
+﻿import { markDirty } from '../modules/deckSession.js';
 import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { NEUTRAL_PREVIEW_GENERATION_OPTIONS } from '../modules/cardGenerationOptions.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
 import { describeImageRef, removeImageRefAtIndex } from '../modules/imageRefs.js';
+import { getLastImagePageHref } from '../modules/imagePageNavigation.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
 
 const deckPatternElement = document.querySelector('#deck-pattern');
@@ -23,6 +24,9 @@ const deckPlayerStatus = document.querySelector('#deck-player-status');
 const deckSummary = document.querySelector('#deck-summary');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
+const quickDeckIncompleteNotice = document.querySelector('#quick-deck-incomplete-notice');
+const quickDeckIncompleteTitle = document.querySelector('#quick-deck-incomplete-title');
+const quickDeckIncompleteMessage = document.querySelector('#quick-deck-incomplete-message');
 
 let tempDeck = await loadTempDeckOrDefault();
 let objectUrls = [];
@@ -51,6 +55,7 @@ function updateHeader() {
   deckSummary.textContent = `n=${tempDeck.symbolsPerCard}, selected images=${tempDeck.selectedImageRefs.length}, required=${requiredCount}`;
   renderDeckStatusLine(deckStatusLine, tempDeck);
   renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Build', tempDeck });
+  renderQuickDeckIncompleteNotice();
 }
 
 function resolveImageSrc(ref, placeholderNumber) {
@@ -137,7 +142,7 @@ function createPatternItem({ slotIndex, slotTitle = '', topLabel = '', refIndex 
     const removeButton = document.createElement('button');
     removeButton.type = 'button';
     removeButton.className = 'preview-remove-button';
-    removeButton.textContent = '☒';
+    removeButton.textContent = '\u2612';
     removeButton.title = `Remove ${label}`;
     removeButton.setAttribute('aria-label', `Remove ${label}`);
     removeButton.addEventListener('click', async () => {
@@ -395,6 +400,45 @@ async function renderPatternItemPreview(targetElement, imageSource) {
   }
 }
 
+function renderQuickDeckIncompleteNotice() {
+  if (!quickDeckIncompleteNotice) {
+    return;
+  }
+
+  const n = tempDeck.symbolsPerCard;
+  const requiredImageCount = getRequiredImageCount();
+  const needsMoreImages = tempDeck.selectedImageRefs.length < requiredImageCount;
+  quickDeckIncompleteNotice.hidden = !needsMoreImages;
+
+  if (!needsMoreImages) {
+    return;
+  }
+
+  if (quickDeckIncompleteTitle) {
+    const missingImageCount = requiredImageCount - tempDeck.selectedImageRefs.length;
+    const imageLabel = missingImageCount === 1 ? 'Image' : 'Images';
+    quickDeckIncompleteTitle.textContent = `${missingImageCount} More ${imageLabel} Needed`;
+  }
+
+  if (quickDeckIncompleteMessage) {
+    quickDeckIncompleteMessage.innerHTML = '';
+    quickDeckIncompleteMessage.append('Please ');
+
+    const selectImagesLink = document.createElement('a');
+    selectImagesLink.href = getLastImagePageHref();
+    selectImagesLink.textContent = 'select more images';
+
+    const basicInfoLink = document.createElement('a');
+    basicInfoLink.href = './basic-info.html';
+    basicInfoLink.textContent = 'reduce the # Pictures per Card';
+
+    quickDeckIncompleteMessage.append(selectImagesLink);
+    quickDeckIncompleteMessage.append(' or ');
+    quickDeckIncompleteMessage.append(basicInfoLink);
+    quickDeckIncompleteMessage.append('.');
+  }
+}
+
 window.addEventListener('resize', () => {
   applyPatternScale();
   if (deckPlayerExpanded) {
@@ -448,3 +492,14 @@ userImages = await repository.listUserImages();
 webImages = await repository.listWebImages();
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
+
+
+
+
+
+
+
+
+
+
+

@@ -150,9 +150,21 @@ async function continueAfterSaveIntent() {
   }
 
   if (afterAction === 'quick') {
-    const standardImageIds = await loadStandardImageNames();
-    await repository.saveTempDeck(createQuickDeckTempDeck({ symbolsPerCard: afterQuickN, standardImageIds }));
-    window.location.href = './play.html';
+    const [userImagesForQuickDeck, webImagesForQuickDeck, standardImageIds] = await Promise.all([
+      repository.listUserImages(),
+      repository.listWebImages(),
+      loadStandardImageNames()
+    ]);
+    const result = createQuickDeckTempDeck({
+      symbolsPerCard: afterQuickN,
+      userImageIds: userImagesForQuickDeck.map((image) => image.id),
+      webImageIds: webImagesForQuickDeck.map((image) => image.id),
+      standardImageIds
+    });
+    await repository.saveTempDeck(result.tempDeck);
+    window.location.href = result.isComplete
+      ? './play.html'
+      : './build.html?quickDeckIncomplete=1';
     return;
   }
 

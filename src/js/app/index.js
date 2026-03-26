@@ -34,10 +34,23 @@ async function openNewDeck() {
 }
 
 async function openQuickDeck(symbolsPerCard = getQuickDeckSymbolsPerCard()) {
-  const standardImageIds = await loadStandardImageNames();
-  const quickDeck = createQuickDeckTempDeck({ symbolsPerCard, standardImageIds });
-  await repository.saveTempDeck(quickDeck);
-  window.location.href = './play.html';
+  const [userImages, webImages, standardImageIds] = await Promise.all([
+    repository.listUserImages(),
+    repository.listWebImages(),
+    loadStandardImageNames()
+  ]);
+
+  const result = createQuickDeckTempDeck({
+    symbolsPerCard,
+    userImageIds: userImages.map((image) => image.id),
+    webImageIds: webImages.map((image) => image.id),
+    standardImageIds
+  });
+
+  await repository.saveTempDeck(result.tempDeck);
+  window.location.href = result.isComplete
+    ? './play.html'
+    : './build.html?quickDeckIncomplete=1';
 }
 
 async function openExistingDeck(name) {

@@ -46,33 +46,47 @@ export function rememberQuickDeckSymbolsPerCard(
 
 export function createQuickDeckTempDeck({
   symbolsPerCard = DEFAULT_QUICK_DECK_SYMBOLS_PER_CARD,
-  standardImageIds,
+  userImageIds = [],
+  webImageIds = [],
+  standardImageIds = [],
   random = Math.random
 } = {}) {
   const normalizedSymbolsPerCard = normalizeQuickDeckSymbolsPerCard(symbolsPerCard);
   const requiredImageCount = getQuickDeckImageCount(normalizedSymbolsPerCard);
 
-  if (!Array.isArray(standardImageIds) || standardImageIds.length < requiredImageCount) {
-    throw new Error('Not enough standard images are available to create this quick deck.');
-  }
+  const userSelections = pickRandomSubset(userImageIds, requiredImageCount, random)
+    .map((imageId) => createImageRef('user', imageId));
+  const webSelections = pickRandomSubset(webImageIds, Math.max(0, requiredImageCount - userSelections.length), random)
+    .map((imageId) => createImageRef('web', imageId));
+  const standardSelections = pickRandomSubset(
+    standardImageIds,
+    Math.max(0, requiredImageCount - userSelections.length - webSelections.length),
+    random
+  ).map((imageId) => createImageRef('standard', imageId));
 
-  const selectedImageIds = pickRandomUniqueItems(standardImageIds, requiredImageCount, random);
+  const selectedImageRefs = [...userSelections, ...webSelections, ...standardSelections];
   return {
-    ...createEmptyTempDeck(),
-    symbolsPerCard: normalizedSymbolsPerCard,
-    selectedImageRefs: selectedImageIds.map((imageId) => createImageRef('standard', imageId))
+    tempDeck: {
+      ...createEmptyTempDeck(),
+      symbolsPerCard: normalizedSymbolsPerCard,
+      selectedImageRefs
+    },
+    requiredImageCount,
+    selectedImageCount: selectedImageRefs.length,
+    isComplete: selectedImageRefs.length >= requiredImageCount
   };
 }
 
-export function pickRandomUniqueItems(items, count, random = Math.random) {
+export function pickRandomSubset(items, maxCount, random = Math.random) {
   if (!Array.isArray(items)) {
     throw new Error('items must be an array.');
   }
 
-  if (!Number.isInteger(count) || count < 0 || count > items.length) {
-    throw new Error('count must be an integer between 0 and the array length.');
+  if (!Number.isInteger(maxCount) || maxCount < 0) {
+    throw new Error('maxCount must be a non-negative integer.');
   }
 
+  const count = Math.min(maxCount, items.length);
   const shuffled = [...items];
   for (let index = shuffled.length - 1; index > 0; index -= 1) {
     const swapIndex = Math.floor(random() * (index + 1));
