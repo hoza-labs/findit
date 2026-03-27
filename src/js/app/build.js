@@ -24,9 +24,9 @@ const deckPlayerStatus = document.querySelector('#deck-player-status');
 const deckSummary = document.querySelector('#deck-summary');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
-const quickDeckIncompleteNotice = document.querySelector('#quick-deck-incomplete-notice');
-const quickDeckIncompleteTitle = document.querySelector('#quick-deck-incomplete-title');
-const quickDeckIncompleteMessage = document.querySelector('#quick-deck-incomplete-message');
+const incompleteDeckWarning = document.querySelector('#incomplete-deck-warning');
+const incompleteDeckWarningTitle = document.querySelector('#incomplete-deck-warning-title');
+const incompleteDeckWarningMessage = document.querySelector('#incomplete-deck-warning-message');
 
 let tempDeck = await loadTempDeckOrDefault();
 let objectUrls = [];
@@ -55,7 +55,7 @@ function updateHeader() {
   deckSummary.textContent = `n=${tempDeck.symbolsPerCard}, selected images=${tempDeck.selectedImageRefs.length}, required=${requiredCount}`;
   renderDeckStatusLine(deckStatusLine, tempDeck);
   renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Build', tempDeck });
-  renderQuickDeckIncompleteNotice();
+  renderIncompleteDeckWarning();
 }
 
 function resolveImageSrc(ref, placeholderNumber) {
@@ -400,29 +400,29 @@ async function renderPatternItemPreview(targetElement, imageSource) {
   }
 }
 
-function renderQuickDeckIncompleteNotice() {
-  if (!quickDeckIncompleteNotice) {
+function renderIncompleteDeckWarning() {
+  if (!incompleteDeckWarning) {
     return;
   }
 
   const n = tempDeck.symbolsPerCard;
   const requiredImageCount = getRequiredImageCount();
   const needsMoreImages = tempDeck.selectedImageRefs.length < requiredImageCount;
-  quickDeckIncompleteNotice.hidden = !needsMoreImages;
+  incompleteDeckWarning.hidden = !needsMoreImages;
 
   if (!needsMoreImages) {
     return;
   }
 
-  if (quickDeckIncompleteTitle) {
+  if (incompleteDeckWarningTitle) {
     const missingImageCount = requiredImageCount - tempDeck.selectedImageRefs.length;
     const imageLabel = missingImageCount === 1 ? 'Image' : 'Images';
-    quickDeckIncompleteTitle.textContent = `${missingImageCount} More ${imageLabel} Needed`;
+    incompleteDeckWarningTitle.textContent = `${missingImageCount} More ${imageLabel} Needed`;
   }
 
-  if (quickDeckIncompleteMessage) {
-    quickDeckIncompleteMessage.innerHTML = '';
-    quickDeckIncompleteMessage.append('Please ');
+  if (incompleteDeckWarningMessage) {
+    incompleteDeckWarningMessage.innerHTML = '';
+    incompleteDeckWarningMessage.append('Please ');
 
     const selectImagesLink = document.createElement('a');
     selectImagesLink.href = getLastImagePageHref();
@@ -432,10 +432,10 @@ function renderQuickDeckIncompleteNotice() {
     basicInfoLink.href = './basic-info.html';
     basicInfoLink.textContent = 'reduce the # Pictures per Card';
 
-    quickDeckIncompleteMessage.append(selectImagesLink);
-    quickDeckIncompleteMessage.append(' or ');
-    quickDeckIncompleteMessage.append(basicInfoLink);
-    quickDeckIncompleteMessage.append('.');
+    incompleteDeckWarningMessage.append(selectImagesLink);
+    incompleteDeckWarningMessage.append(' or ');
+    incompleteDeckWarningMessage.append(basicInfoLink);
+    incompleteDeckWarningMessage.append('.');
   }
 }
 
@@ -492,6 +492,7 @@ userImages = await repository.listUserImages();
 webImages = await repository.listWebImages();
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
+
 
 
 
