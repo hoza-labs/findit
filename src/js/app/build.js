@@ -321,7 +321,7 @@ async function renderSelectedImages() {
 
   const slopeLabel = document.createElement('h3');
   slopeLabel.className = 'h6 mb-2';
-  slopeLabel.textContent = 'Slopes (rise/run) and their Slope Images';
+  slopeLabel.textContent = `Slope Images (${n})`;
   canvas.appendChild(slopeLabel);
 
   const slopeRow = document.createElement('div');
@@ -346,6 +346,11 @@ async function renderSelectedImages() {
   canvas.appendChild(slopeRow);
 
   canvas.appendChild(document.createElement('hr'));
+
+  const gridLabel = document.createElement('h3');
+  gridLabel.className = 'h6 mb-2';
+  gridLabel.textContent = `Grid Images (${p} x ${p} = ${p * p})`;
+  canvas.appendChild(gridLabel);
 
   const gridRows = [];
   for (let row = 0; row < p; row += 1) {
