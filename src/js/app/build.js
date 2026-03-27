@@ -1,4 +1,4 @@
-﻿import { markDirty } from '../modules/deckSession.js';
+import { markDirty } from '../modules/deckSession.js';
 import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { NEUTRAL_PREVIEW_GENERATION_OPTIONS } from '../modules/cardGenerationOptions.js';
@@ -311,7 +311,7 @@ async function renderSelectedImages() {
 
   const slopeLabel = document.createElement('h3');
   slopeLabel.className = 'h6 mb-2';
-  slopeLabel.textContent = 'Slope Items (over x, down y)';
+  slopeLabel.textContent = 'Slope Items (over x, up y)';
   canvas.appendChild(slopeLabel);
 
   const slopeRow = document.createElement('div');
@@ -335,6 +335,7 @@ async function renderSelectedImages() {
 
   canvas.appendChild(document.createElement('hr'));
 
+  const gridRows = [];
   for (let row = 0; row < p; row += 1) {
     const rowElement = document.createElement('div');
     rowElement.className = 'deck-pattern-row deck-pattern-row--grid';
@@ -353,7 +354,12 @@ async function renderSelectedImages() {
       rowElement.appendChild(item);
     }
     gridPatternItems.push(gridRowItems);
-    canvas.appendChild(rowElement);
+    gridRows.push(rowElement);
+  }
+
+  // Render highest y first so the visual grid origin sits at the lower-left corner.
+  for (let row = gridRows.length - 1; row >= 0; row -= 1) {
+    canvas.appendChild(gridRows[row]);
   }
 
   deckPatternElement.appendChild(canvas);
@@ -492,15 +498,4 @@ userImages = await repository.listUserImages();
 webImages = await repository.listWebImages();
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
-
-
-
-
-
-
-
-
-
-
-
 
