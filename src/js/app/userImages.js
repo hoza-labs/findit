@@ -1,11 +1,13 @@
 import { addImageRef, createImageRef, hasImageRef, removeAllImageRefs, removeImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
 import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { renderSelectImagesIntro } from '../modules/selectImagesIntro.js';
 import { renderSelectImagesHeaderAndSubnav } from '../modules/imagePageNavigation.js';
 
 const uploadImagesForm = document.querySelector('#upload-images-form');
 const imageUploadInput = document.querySelector('#image-upload-input');
 const userImagesElement = document.querySelector('#user-images');
+const selectImagesIntro = document.querySelector('#select-images-intro');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
 const imagePageSubnav = document.querySelector('#image-page-subnav');
@@ -27,6 +29,7 @@ let deleteTarget = null;
 renderPageChrome();
 
 function renderPageChrome() {
+  renderSelectImagesIntro(selectImagesIntro, tempDeck);
   renderDeckStatusLine(deckStatusLine, tempDeck);
   renderSelectImagesHeaderAndSubnav({
     headingElement: pageHeading,
@@ -165,3 +168,4 @@ deleteForm.addEventListener('submit', async (event) => {
 });
 
 await renderUserImages();
+

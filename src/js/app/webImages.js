@@ -8,12 +8,14 @@ import {
   saveTempDeck
 } from '../modules/deckFlowCommon.js';
 import { renderSelectImagesHeaderAndSubnav } from '../modules/imagePageNavigation.js';
+import { renderSelectImagesIntro } from '../modules/selectImagesIntro.js';
 import { getDefaultWebImageName, getWebImageCaption, inferWebContentTypeFromUrl, normalizeWebContentType, trimWebImageName } from '../modules/webImageMetadata.js';
 
 const webImageForm = document.querySelector('#web-image-form');
 const webImageUrlInput = document.querySelector('#web-image-url');
 const webImageNameInput = document.querySelector('#web-image-name');
 const webImagesElement = document.querySelector('#web-images');
+const selectImagesIntro = document.querySelector('#select-images-intro');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
 const imagePageSubnav = document.querySelector('#image-page-subnav');
@@ -34,6 +36,7 @@ let deleteTarget = null;
 renderPageChrome();
 
 function renderPageChrome() {
+  renderSelectImagesIntro(selectImagesIntro, tempDeck);
   renderDeckStatusLine(deckStatusLine, tempDeck);
   renderSelectImagesHeaderAndSubnav({
     headingElement: pageHeading,

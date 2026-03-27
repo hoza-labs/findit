@@ -1,11 +1,13 @@
 import { addImageRef, createImageRef, hasImageRef, removeImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
 import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { renderSelectImagesIntro } from '../modules/selectImagesIntro.js';
 import { renderSelectImagesHeaderAndSubnav } from '../modules/imagePageNavigation.js';
 import { loadStandardImageNames } from '../modules/standardImageManifest.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
 
 const standardImagesElement = document.querySelector('#standard-images');
+const selectImagesIntro = document.querySelector('#select-images-intro');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
 const imagePageSubnav = document.querySelector('#image-page-subnav');
@@ -14,6 +16,7 @@ let tempDeck = await loadTempDeckOrDefault();
 renderPageChrome();
 
 function renderPageChrome() {
+  renderSelectImagesIntro(selectImagesIntro, tempDeck);
   renderDeckStatusLine(deckStatusLine, tempDeck);
   renderSelectImagesHeaderAndSubnav({
     headingElement: pageHeading,
@@ -54,3 +57,4 @@ try {
 } catch {
   standardImagesElement.textContent = 'Could not load standard images.';
 }
+
