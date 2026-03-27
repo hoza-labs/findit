@@ -48,9 +48,7 @@ async function openQuickDeck(symbolsPerCard = getQuickDeckSymbolsPerCard()) {
   });
 
   await repository.saveTempDeck(result.tempDeck);
-  window.location.href = result.isComplete
-    ? './play.html'
-    : './build.html?quickDeckIncomplete=1';
+  window.location.href = './build.html';
 }
 
 async function openExistingDeck(name) {
@@ -365,3 +363,4 @@ homeNextLink.hidden = !normalizedTempDeck.dirty;
 renderQuickDeckPrimaryButton();
 renderQuickDeckMenu();
 await renderExistingDecks();
+
