@@ -4,6 +4,26 @@ export function getDeckPlayerCardCount(symbolsPerCard) {
   return calculateDeckSize(symbolsPerCard);
 }
 
+export function getDeckPlayerSlopeComponents(slopeIndex, order) {
+  if (!Number.isInteger(order) || order < 1) {
+    throw new Error('order must be a positive integer.');
+  }
+
+  if (!Number.isInteger(slopeIndex) || slopeIndex < 0 || slopeIndex > order) {
+    throw new Error('slopeIndex must reference a valid slope item.');
+  }
+
+  if (slopeIndex === order) {
+    return { rise: 1, run: 0 };
+  }
+
+  if (slopeIndex % 2 === 0) {
+    return { rise: slopeIndex === 0 ? 0 : slopeIndex / -2, run: 1 };
+  }
+
+  return { rise: (slopeIndex + 1) / 2, run: 1 };
+}
+
 export function getDeckPlayerStepAt(symbolsPerCard, cardIndex) {
   validateSymbolsPerCard(symbolsPerCard);
 
@@ -48,8 +68,9 @@ export function getDeckPlayerCardItems(slopeItems, grid, s, r) {
     return selectedItems;
   }
 
+  const { rise } = getDeckPlayerSlopeComponents(s, order);
   for (let column = 0; column < order; column += 1) {
-    const row = (r + column * s) % order;
+    const row = ((r + column * rise) % order + order) % order;
     selectedItems.push(grid[row][column]);
   }
 
@@ -76,3 +97,4 @@ function validateDeckPatternInputs(slopeItems, grid) {
     }
   }
 }
+

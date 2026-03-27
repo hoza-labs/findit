@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   getDeckPlayerCardCount,
   getDeckPlayerCardItems,
+  getDeckPlayerSlopeComponents,
   getDeckPlayerStepAt
 } from '../src/js/modules/deckPlayer.js';
 
@@ -24,6 +25,13 @@ test('given the last card index, getDeckPlayerStepAt returns Infinity for both c
   });
 });
 
+test('given a slope index, getDeckPlayerSlopeComponents returns the alternating rise and run', () => {
+  assert.deepEqual(getDeckPlayerSlopeComponents(0, 3), { rise: 0, run: 1 });
+  assert.deepEqual(getDeckPlayerSlopeComponents(1, 3), { rise: 1, run: 1 });
+  assert.deepEqual(getDeckPlayerSlopeComponents(2, 3), { rise: -1, run: 1 });
+  assert.deepEqual(getDeckPlayerSlopeComponents(3, 3), { rise: 1, run: 0 });
+});
+
 test('given a finite slope, getDeckPlayerCardItems returns the slope item and wrapped grid path', () => {
   const slopeItems = ['S0', 'S1', 'S2', 'SV'];
   const grid = [
@@ -33,6 +41,17 @@ test('given a finite slope, getDeckPlayerCardItems returns the slope item and wr
   ];
 
   assert.deepEqual(getDeckPlayerCardItems(slopeItems, grid, 2, 1), ['S2', 'B0', 'A1', 'C2']);
+});
+
+test('given a negative-rise slope, getDeckPlayerCardItems wraps rows correctly', () => {
+  const slopeItems = ['S0', 'S1', 'S2', 'SV'];
+  const grid = [
+    ['A0', 'A1', 'A2'],
+    ['B0', 'B1', 'B2'],
+    ['C0', 'C1', 'C2']
+  ];
+
+  assert.deepEqual(getDeckPlayerCardItems(slopeItems, grid, 2, 0), ['S2', 'A0', 'C1', 'B2']);
 });
 
 test('given the vertical slope item, getDeckPlayerCardItems returns the matching grid column', () => {

@@ -2,7 +2,7 @@ import { markDirty } from '../modules/deckSession.js';
 import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { NEUTRAL_PREVIEW_GENERATION_OPTIONS } from '../modules/cardGenerationOptions.js';
-import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
+import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerSlopeComponents, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
 import { describeImageRef, removeImageRefAtIndex } from '../modules/imageRefs.js';
 import { getLastImagePageHref } from '../modules/imagePageNavigation.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
@@ -328,9 +328,8 @@ async function renderSelectedImages() {
   slopeRow.className = 'deck-pattern-row deck-pattern-row--slope';
   for (let slot = 0; slot < n; slot += 1) {
     const slotTitle = slot < p ? String(slot) : 'infinity';
-    const topLabel = slot < p
-      ? `(${slot}/1)\n\u2248${formatSlopeAngleDegrees(slot)}\u00B0`
-      : `(1/0)\n\u2248${formatSlopeAngleDegrees(1, 0)}\u00B0`;
+    const { rise, run } = getDeckPlayerSlopeComponents(slot, p);
+    const topLabel = `(${rise}/${run})\n\u2248${formatSlopeAngleDegrees(rise, run)}\u00B0`;
     const hasSelected = slot < tempDeck.selectedImageRefs.length;
     const item = createPatternItem({
       slotIndex: slot,
@@ -515,5 +514,7 @@ userImages = await repository.listUserImages();
 webImages = await repository.listWebImages();
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
+
+
 
 
