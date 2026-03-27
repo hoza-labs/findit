@@ -1,4 +1,4 @@
-﻿import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
+import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { loadTempDeckOrDefault, repository } from '../modules/deckFlowCommon.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
 import {
@@ -799,7 +799,7 @@ function updatePlayInfoSummaryLayout() {
 
   if (summaryContainer.clientWidth < 110) {
     summaryContainer.classList.add('is-icon-only');
-    playInfoMenuSummary.textContent = 'ⓘ';
+    playInfoMenuSummary.textContent = '\u24D8';
     playInfoMenuSummary.setAttribute('aria-label', 'Open game information');
   }
 }
@@ -1284,7 +1284,7 @@ function getStatisticsText(settings, reason) {
 
   return {
     reasonText,
-    elapsedTimeText: formatElapsedTime(getActiveElapsedMilliseconds()),
+    elapsedTimeText: formatElapsedTime(getActiveElapsedMilliseconds(), { includeTenthsUnderMinute: true }),
     averageSecondsPerHand,
     playerScores: state.playerScores.map((player) => ({ ...player }))
   };
@@ -1323,8 +1323,15 @@ function getCurrentHandStatus(settings, cardsToShow, hatState) {
   return `Hand ${state.activeHandNumber} of ${settings.lengthOfPlay}. Showing ${cardsToShow} card${cardsToShow === 1 ? '' : 's'}.`;
 }
 
-function formatElapsedTime(elapsedMilliseconds) {
-  const elapsedSeconds = Math.max(0, Math.floor(elapsedMilliseconds / 1000));
+function formatElapsedTime(elapsedMilliseconds, options = {}) {
+  const { includeTenthsUnderMinute = false } = options;
+  const clampedMilliseconds = Math.max(0, elapsedMilliseconds);
+
+  if (includeTenthsUnderMinute && clampedMilliseconds < 60_000) {
+    return `${(clampedMilliseconds / 1000).toFixed(1)}s`;
+  }
+
+  const elapsedSeconds = Math.floor(clampedMilliseconds / 1000);
   const minutes = Math.floor(elapsedSeconds / 60);
   const seconds = elapsedSeconds % 60;
 
@@ -1932,4 +1939,6 @@ if (window.visualViewport) {
 
 resetPlayerScores();
 prepareGameStart();
+
+
 
