@@ -39,6 +39,11 @@ let deckPlayerTimerId = null;
 let deckPlayerExpanded = false;
 const patternActiveOutlineBuffer = 6;
 
+function formatSlopeAngleDegrees(rise, run = 1) {
+  const angle = Math.atan2(rise, run) * (180 / Math.PI);
+  return String(Math.round(angle));
+}
+
 function clearObjectUrls() {
   for (const url of objectUrls) {
     URL.revokeObjectURL(url);
@@ -119,7 +124,12 @@ function createPatternItem({ slotIndex, slotTitle = '', topLabel = '', refIndex 
   if (topLabel) {
     const topLabelElement = document.createElement('div');
     topLabelElement.className = 'deck-pattern-top-label';
-    topLabelElement.textContent = topLabel;
+    for (const line of String(topLabel).split('\n')) {
+      const topLabelLineElement = document.createElement('span');
+      topLabelLineElement.className = 'deck-pattern-top-label-line';
+      topLabelLineElement.textContent = line;
+      topLabelElement.appendChild(topLabelLineElement);
+    }
     item.appendChild(topLabelElement);
   }
 
@@ -311,14 +321,16 @@ async function renderSelectedImages() {
 
   const slopeLabel = document.createElement('h3');
   slopeLabel.className = 'h6 mb-2';
-  slopeLabel.textContent = 'Slope Items (over x, up y)';
+  slopeLabel.textContent = 'Slopes (rise/run) and their Slope Images';
   canvas.appendChild(slopeLabel);
 
   const slopeRow = document.createElement('div');
   slopeRow.className = 'deck-pattern-row deck-pattern-row--slope';
   for (let slot = 0; slot < n; slot += 1) {
     const slotTitle = slot < p ? String(slot) : 'infinity';
-    const topLabel = slot < p ? `(1,${slot})` : '(0,1)';
+    const topLabel = slot < p
+      ? `(${slot}/1)\n\u2248${formatSlopeAngleDegrees(slot)}\u00B0`
+      : `(1/0)\n\u2248${formatSlopeAngleDegrees(1, 0)}\u00B0`;
     const hasSelected = slot < tempDeck.selectedImageRefs.length;
     const item = createPatternItem({
       slotIndex: slot,
@@ -498,4 +510,5 @@ userImages = await repository.listUserImages();
 webImages = await repository.listWebImages();
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
+
 
