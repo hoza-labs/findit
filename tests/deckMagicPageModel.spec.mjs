@@ -1,4 +1,4 @@
-﻿import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
@@ -63,7 +63,7 @@ test('given deck magic page info, the page menu marks the current page and inclu
     [
       { pageNumber: 1, label: '1 - The wonder of it all', href: './deck-magic-1.html', isCurrent: false },
       { pageNumber: 2, label: '2 - The key insight', href: './deck-magic-2.html', isCurrent: true },
-      { pageNumber: 3, label: '3 - Lining up the images (literally!)', href: './deck-magic-3.html', isCurrent: false }
+      { pageNumber: 3, label: '3 - Lining up the images', href: './deck-magic-3.html', isCurrent: false }
     ]
   );
   assert.deepEqual(pageInfo.pageMenuItems[4], {
