@@ -43,9 +43,9 @@ test('given deck magic page three, the next page link is hidden by returning nul
   assert.equal(pageInfo.showNextPageLink, false);
 });
 
-test('given deck magic intro text, it includes the logic message and emoji via safe construction', () => {
+test('given deck magic intro text, it returns the shorter shared intro copy', () => {
   const introText = getDeckMagicIntroText();
 
-  assert.match(introText, /not magic, it/);
-  assert.match(introText, /logic/);
+  assert.equal(introText, 'Learn how we build the deck and why it works!');
 });
+

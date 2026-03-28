@@ -12,9 +12,7 @@ export function getDeckMagicPageHref(pageNumber) {
 }
 
 export function getDeckMagicIntroText() {
-  const apostrophe = String.fromCodePoint(0x2019);
-  const smile = String.fromCodePoint(0x1F642);
-  return `Learn how we build the deck and why it works! (It${apostrophe}s not magic, it${apostrophe}s just logic ${smile})`;
+  return 'Learn how we build the deck and why it works!';
 }
 
 export function getDeckMagicPageInfo(pageNumber) {
@@ -46,3 +44,4 @@ export function getDeckMagicPageInfo(pageNumber) {
     showNextPageLink: nextHref !== null
   };
 }
+
