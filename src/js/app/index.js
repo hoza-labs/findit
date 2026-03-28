@@ -7,6 +7,7 @@ import {
   getQuickDeckSymbolsPerCard,
   rememberQuickDeckSymbolsPerCard
 } from '../modules/quickDeck.js';
+import { getLastBuildPageHref } from '../modules/buildPageNavigation.js';
 import { loadStandardImageNames } from '../modules/standardImageManifest.js';
 
 const repository = createIndexedDbRepository();
@@ -48,7 +49,7 @@ async function openQuickDeck(symbolsPerCard = getQuickDeckSymbolsPerCard()) {
   });
 
   await repository.saveTempDeck(result.tempDeck);
-  window.location.href = './build.html';
+  window.location.href = getLastBuildPageHref();
 }
 
 async function openExistingDeck(name) {
@@ -363,4 +364,6 @@ homeNextLink.hidden = !normalizedTempDeck.dirty;
 renderQuickDeckPrimaryButton();
 renderQuickDeckMenu();
 await renderExistingDecks();
+
+
 

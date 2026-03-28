@@ -1,4 +1,5 @@
-﻿import { createEmptyTempDeck, createTempDeckFromSavedDeck, markSaved } from '../modules/deckSession.js';
+﻿import { getLastBuildPageHref } from '../modules/buildPageNavigation.js';
+import { createEmptyTempDeck, createTempDeckFromSavedDeck, markSaved } from '../modules/deckSession.js';
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
@@ -162,7 +163,7 @@ async function continueAfterSaveIntent() {
       standardImageIds
     });
     await repository.saveTempDeck(result.tempDeck);
-  window.location.href = './build.html';
+    window.location.href = getLastBuildPageHref();
     return;
   }
 
@@ -278,4 +279,7 @@ if (saveFirstMode) {
     await openSaveAsDialog();
   }
 }
+
+
+
 

@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --page-bg: #f6f8fa;
   --card-border: #d0d7de;
   --pattern-active-outline-width: 4px;
@@ -381,8 +381,20 @@ body.has-top-bar.play-page {
   padding-inline: max(0.75rem, calc(var(--bs-gutter-x, 1.5rem) * 0.5));
 }
 
-.image-page-subnav-shell {
-  padding-bottom: 0;
+
+.build-page-content-card {
+  border-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-color: rgba(13, 110, 253, 0.35);
+  border-width: 2px;
+}
+
+.build-page-content-card > .card-body {
+  padding-top: 0;
+  padding-right: 3px;
+  padding-bottom: 3px;
+  padding-left: 3px;
 }
 
 
@@ -1718,4 +1730,6 @@ body.has-top-bar.play-page {
   color: #0a58ca;
   font-weight: 600;
 }
+
+
 
