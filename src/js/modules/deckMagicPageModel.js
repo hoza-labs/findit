@@ -36,14 +36,14 @@ export function getDeckMagicPageInfo(pageNumber) {
   const nextHref = normalizedPageNumber < 3 ? getDeckMagicPageHref(normalizedPageNumber + 1) : null;
   const pageMenuItems = [1, 2, 3].map((menuPageNumber) => ({
     pageNumber: menuPageNumber,
-    label: `Page ${menuPageNumber}`,
+    label: `${menuPageNumber}`,
     href: getDeckMagicPageHref(menuPageNumber),
     isCurrent: menuPageNumber === normalizedPageNumber
   }));
 
   return {
     pageNumber: normalizedPageNumber,
-    currentPageLabel: `Page ${normalizedPageNumber}`,
+    currentPageLabel: `${normalizedPageNumber}`,
     introText: getDeckMagicIntroText(),
     bodyParagraphs: bodyByPageNumber[normalizedPageNumber],
     firstPageHref: getDeckMagicPageHref(1),
@@ -53,3 +53,4 @@ export function getDeckMagicPageInfo(pageNumber) {
     pageMenuItems
   };
 }
+
