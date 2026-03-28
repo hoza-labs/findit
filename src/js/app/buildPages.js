@@ -26,7 +26,7 @@ const deckSummary = document.querySelector('#deck-summary');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
 
-const hasDeckBuilderPage = Boolean(deckPatternElement);
+const isDeckBuilderPage = Boolean(deckPatternElement);
 
 let tempDeck = await loadTempDeckOrDefault();
 let objectUrls = [];
@@ -67,7 +67,7 @@ function getDeckPreviewIntroText() {
 }
 
 function updateBuildPageIntro() {
-  if (!buildPageIntro || hasDeckBuilderPage) {
+  if (!buildPageIntro || isDeckBuilderPage) {
     return;
   }
 
@@ -592,7 +592,7 @@ if (deckPlayerToggle) {
   });
 }
 
-if (hasDeckBuilderPage) {
+if (isDeckBuilderPage) {
   [userImages, webImages] = await Promise.all([
     repository.listUserImages(),
     repository.listWebImages()
@@ -601,3 +601,5 @@ if (hasDeckBuilderPage) {
 
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
+
+

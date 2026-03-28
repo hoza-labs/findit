@@ -22,9 +22,14 @@ function createMemoryStorage() {
 }
 
 test('given a build page path, normalizeBuildPageHref returns the canonical href', () => {
-  assert.equal(normalizeBuildPageHref('./build.html'), './build.html');
+  assert.equal(normalizeBuildPageHref('./deck-preview.html'), './deck-preview.html');
   assert.equal(normalizeBuildPageHref('/builder/deck-builder.html?foo=bar'), './deck-builder.html');
   assert.equal(normalizeBuildPageHref('https://example.test/app/deck-builder.html#top'), './deck-builder.html');
+});
+
+test('given a legacy build preview path, normalizeBuildPageHref maps it to deck preview', () => {
+  assert.equal(normalizeBuildPageHref('./build.html'), './deck-preview.html');
+  assert.equal(normalizeBuildPageHref('/app/build.html?from=legacy'), './deck-preview.html');
 });
 
 test('given a non-build page path, normalizeBuildPageHref returns null', () => {
@@ -45,6 +50,6 @@ test('given a current build page, rememberCurrentBuildPage stores and returns it
 });
 
 test('given a location, getCurrentBuildPageHref identifies build pages only', () => {
-  assert.equal(getCurrentBuildPageHref({ pathname: '/app/build.html' }), './build.html');
+  assert.equal(getCurrentBuildPageHref({ pathname: '/app/deck-preview.html' }), './deck-preview.html');
   assert.equal(getCurrentBuildPageHref({ pathname: '/app/save.html' }), null);
 });

@@ -1,11 +1,15 @@
-﻿const BUILD_PAGE_FILES = ['build.html', 'deck-builder.html'];
+﻿const LEGACY_BUILD_PAGE_ALIASES = new Map([
+  ['build.html', './deck-preview.html']
+]);
+
+const BUILD_PAGE_FILES = ['deck-preview.html', 'deck-builder.html'];
 
 export const BUILD_PAGE_ENTRIES = [
-  { href: './build.html', label: 'Deck Preview' },
+  { href: './deck-preview.html', label: 'Deck Preview' },
   { href: './deck-builder.html', label: 'Deck Builder' }
 ];
 
-export const DEFAULT_BUILD_PAGE_HREF = './build.html';
+export const DEFAULT_BUILD_PAGE_HREF = './deck-preview.html';
 export const LAST_BUILD_PAGE_STORAGE_KEY = 'findit:last-build-page';
 
 const buildPageHrefByFile = new Map(BUILD_PAGE_ENTRIES.map((entry) => [entry.href.replace('./', ''), entry.href]));
@@ -25,7 +29,15 @@ export function normalizeBuildPageHref(value) {
   const normalizedPath = withoutQuery.replace(/\\/g, '/');
   const fileName = normalizedPath.split('/').pop();
 
-  if (!fileName || !BUILD_PAGE_FILES.includes(fileName)) {
+  if (!fileName) {
+    return null;
+  }
+
+  if (LEGACY_BUILD_PAGE_ALIASES.has(fileName)) {
+    return LEGACY_BUILD_PAGE_ALIASES.get(fileName) ?? null;
+  }
+
+  if (!BUILD_PAGE_FILES.includes(fileName)) {
     return null;
   }
 
