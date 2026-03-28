@@ -1,11 +1,10 @@
 ﻿import { getLastBuildPageHref } from '../modules/buildPageNavigation.js';
 import { createEmptyTempDeck, createTempDeckFromSavedDeck, markSaved } from '../modules/deckSession.js';
-import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
-import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
+import { createDeckCardGalleryRenderer } from '../modules/deckCardGallery.js';
+import { getDeckPlayerCardCount } from '../modules/deckPlayer.js';
 import { createQuickDeckTempDeck } from '../modules/quickDeck.js';
 import { loadStandardImageNames } from '../modules/standardImageManifest.js';
-import { getStandardImageSrc } from '../modules/standardImageFiles.js';
 
 const pageHeading = document.querySelector('header h1');
 const deckStatusLine = document.querySelector('#deck-status-line');
@@ -30,14 +29,11 @@ const afterQuickN = urlParams.get('quickN') ?? '';
 let tempDeck = await loadTempDeckOrDefault();
 let userImages = [];
 let webImages = [];
-let objectUrls = [];
 
-function clearObjectUrls() {
-  for (const url of objectUrls) {
-    URL.revokeObjectURL(url);
-  }
-  objectUrls = [];
-}
+const deckCardGallery = createDeckCardGalleryRenderer({
+  containerElement: deckCardsElement,
+  emptyElement: savePageEmpty
+});
 
 function updateHeader() {
   const cardCount = getDeckPlayerCardCount(tempDeck.symbolsPerCard);
@@ -47,92 +43,8 @@ function updateHeader() {
   saveButton.disabled = !tempDeck.deckName;
 }
 
-function resolveImageSrc(ref, placeholderNumber) {
-  if (ref?.source === 'standard') {
-    return { src: getStandardImageSrc(ref.id) };
-  }
-
-  if (ref?.source === 'user') {
-    const userImage = userImages.find((item) => item.id === ref.id);
-    if (!userImage) {
-      return { src: `./assets/placeholder-images/${placeholderNumber}.png` };
-    }
-
-    const url = URL.createObjectURL(userImage.blob);
-    objectUrls.push(url);
-    return { src: url, mask: userImage.mask };
-  }
-
-  if (ref?.source === 'web') {
-    const webImage = webImages.find((item) => item.id === ref.id);
-    return webImage
-      ? { src: webImage.url, mask: webImage.mask }
-      : { src: `./assets/placeholder-images/${placeholderNumber}.png` };
-  }
-
-  return { src: `./assets/placeholder-images/${placeholderNumber}.png` };
-}
-
-function getPatternSources() {
-  clearObjectUrls();
-
-  const n = tempDeck.symbolsPerCard;
-  const order = n - 1;
-  const slopeItems = [];
-  const grid = [];
-
-  for (let slopeIndex = 0; slopeIndex < n; slopeIndex += 1) {
-    slopeItems.push(resolveImageSrc(tempDeck.selectedImageRefs[slopeIndex], slopeIndex + 1));
-  }
-
-  for (let row = 0; row < order; row += 1) {
-    const gridRow = [];
-    for (let column = 0; column < order; column += 1) {
-      const slotIndex = n + row * order + column;
-      gridRow.push(resolveImageSrc(tempDeck.selectedImageRefs[slotIndex], slotIndex + 1));
-    }
-    grid.push(gridRow);
-  }
-
-  return { slopeItems, grid };
-}
-
 async function renderDeckCards() {
-  deckCardsElement.innerHTML = '';
-  savePageEmpty.hidden = true;
-
-  if (tempDeck.selectedImageRefs.length === 0) {
-    savePageEmpty.hidden = false;
-    savePageEmpty.textContent = 'This deck has no selected images yet.';
-    return;
-  }
-
-  const pattern = getPatternSources();
-  const cardCount = getDeckPlayerCardCount(tempDeck.symbolsPerCard);
-
-  for (let cardIndex = 0; cardIndex < cardCount; cardIndex += 1) {
-    const step = getDeckPlayerStepAt(tempDeck.symbolsPerCard, cardIndex);
-    const sources = getDeckPlayerCardItems(pattern.slopeItems, pattern.grid, step.s, step.r);
-
-    const card = document.createElement('section');
-    card.className = 'save-card card shadow-sm';
-
-    const cardBody = document.createElement('div');
-    cardBody.className = 'card-body';
-
-    const title = document.createElement('h2');
-    title.className = 'h6 mb-2';
-    title.textContent = `Card ${cardIndex + 1}`;
-
-    const target = document.createElement('div');
-    target.className = 'sample-card-target save-card-target';
-
-    cardBody.append(title, target);
-    card.appendChild(cardBody);
-    deckCardsElement.appendChild(card);
-
-    await drawImagesOnSquareTarget(target, sources, tempDeck.generationOptions);
-  }
+  await deckCardGallery.render({ tempDeck, userImages, webImages });
 }
 
 function normalizeDeckName(name) {
@@ -200,6 +112,7 @@ async function saveDeckWithName(name, confirmReplace) {
   tempDeck = markSaved({ ...tempDeck, deckName: name });
   await saveTempDeck(tempDeck);
   updateHeader();
+  await renderDeckCards();
   return true;
 }
 
@@ -261,11 +174,13 @@ saveButton.addEventListener('click', async () => {
 });
 
 window.addEventListener('beforeunload', () => {
-  clearObjectUrls();
+  deckCardGallery.dispose();
 });
 
-userImages = await repository.listUserImages();
-webImages = await repository.listWebImages();
+[userImages, webImages] = await Promise.all([
+  repository.listUserImages(),
+  repository.listWebImages()
+]);
 updateHeader();
 await renderDeckCards();
 
@@ -279,7 +194,3 @@ if (saveFirstMode) {
     await openSaveAsDialog();
   }
 }
-
-
-
-

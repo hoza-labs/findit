@@ -1,7 +1,8 @@
-﻿import { markDirty } from '../modules/deckSession.js';
+import { markDirty } from '../modules/deckSession.js';
 import { createImageTile, createPreviewGenerationOptions, loadTempDeckOrDefault, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { getCurrentBuildPageHref, renderBuildHeaderAndSubnav } from '../modules/buildPageNavigation.js';
+import { createDeckCardGalleryRenderer } from '../modules/deckCardGallery.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerSlopeComponents, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
 import { describeImageRef, removeImageRefAtIndex } from '../modules/imageRefs.js';
 import { getLastImagePageHref } from '../modules/imagePageNavigation.js';
@@ -24,6 +25,8 @@ const deckPlayerForwardButton = document.querySelector('#deck-player-forward-but
 const deckPlayerEndButton = document.querySelector('#deck-player-end-button');
 const deckPlayerStatus = document.querySelector('#deck-player-status');
 const deckSummary = document.querySelector('#deck-summary');
+const deckCardsElement = document.querySelector('#deck-cards');
+const deckPreviewEmpty = document.querySelector('#deck-preview-empty');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
 const incompleteDeckWarning = document.querySelector('#incomplete-deck-warning');
@@ -43,6 +46,18 @@ let deckPlayerTimerId = null;
 let deckPlayerExpanded = false;
 let managePatternImages = false;
 const patternActiveOutlineBuffer = 6;
+
+const deckCardGallery = createDeckCardGalleryRenderer({
+  containerElement: deckCardsElement,
+  emptyElement: deckPreviewEmpty
+});
+function waitForNextPaint() {
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(resolve);
+    });
+  });
+}
 
 function formatSlopeAngleDegrees(rise, run = 1) {
   const angle = Math.atan2(rise, run) * (180 / Math.PI);
@@ -125,12 +140,13 @@ function renderIncompleteDeckWarning() {
     incompleteDeckWarningMessage.append('.');
   }
 }
+
 function resolveImageSrc(ref, placeholderNumber) {
-  if (ref.source === 'standard') {
+  if (ref?.source === 'standard') {
     return { src: getStandardImageSrc(ref.id) };
   }
 
-  if (ref.source === 'user') {
+  if (ref?.source === 'user') {
     const userImage = userImages.find((item) => item.id === ref.id);
     if (!userImage) {
       return { src: `./assets/placeholder-images/${placeholderNumber}.png` };
@@ -551,6 +567,12 @@ async function renderSelectedImages() {
   }
 
   updateHeader();
+
+  if (!isDeckBuilderPage && deckCardsElement) {
+    await waitForNextPaint();
+  }
+
+  await deckCardGallery.render({ tempDeck, userImages, webImages });
 }
 
 function getPatternPreviewGenerationOptions() {
@@ -628,23 +650,17 @@ if (deckPlayerToggle) {
   });
 }
 
-if (isDeckBuilderPage) {
-  [userImages, webImages] = await Promise.all([
-    repository.listUserImages(),
-    repository.listWebImages()
-  ]);
-}
+[userImages, webImages] = await Promise.all([
+  repository.listUserImages(),
+  repository.listWebImages()
+]);
+
+window.addEventListener('beforeunload', () => {
+  clearObjectUrls();
+  deckCardGallery.dispose();
+});
 
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
-
-
-
-
-
-
-
-
-
 
 
