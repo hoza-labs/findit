@@ -2,7 +2,7 @@ const LEGACY_BUILD_PAGE_ALIASES = new Map([
   ['build.html', './deck-preview.html']
 ]);
 
-const DECK_MAGIC_PAGE_FILES = ['deck-magic-1.html', 'deck-magic-2.html', 'deck-magic-3.html'];
+const DECK_MAGIC_PAGE_FILES = Array.from({ length: 8 }, (_, index) => `deck-magic-${index + 1}.html`);
 const BUILD_PAGE_FILES = ['deck-preview.html', ...DECK_MAGIC_PAGE_FILES, 'deck-builder.html'];
 const LAST_DECK_MAGIC_PAGE_STORAGE_KEY = 'findit:last-deck-magic-page';
 const DECK_MAGIC_DEFAULT_HREF = './deck-magic-1.html';
