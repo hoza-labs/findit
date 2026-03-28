@@ -414,9 +414,16 @@ async function renderSelectedImages() {
   updateHeader();
 }
 
+function getPatternPreviewGenerationOptions() {
+  return {
+    ...NEUTRAL_PREVIEW_GENERATION_OPTIONS,
+    sourceSamplingBias: tempDeck.generationOptions.sourceSamplingBias
+  };
+}
+
 async function renderPatternItemPreview(targetElement, imageSource) {
   try {
-    await drawImagesOnSquareTarget(targetElement, [imageSource], NEUTRAL_PREVIEW_GENERATION_OPTIONS);
+    await drawImagesOnSquareTarget(targetElement, [imageSource], getPatternPreviewGenerationOptions());
   } catch {
     targetElement.textContent = 'Preview unavailable.';
   }
@@ -514,6 +521,7 @@ userImages = await repository.listUserImages();
 webImages = await repository.listWebImages();
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
+
 
 
 
