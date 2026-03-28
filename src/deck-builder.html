@@ -14,7 +14,7 @@
           <a href="./index.html" class="nav-link fw-semibold">Home</a>
           <a href="./basic-info.html" class="nav-link fw-semibold">Basic Info</a>
           <a href="./standard-images.html" class="nav-link fw-semibold" data-select-images-link>Select Images</a>
-          <a href="./build.html" class="nav-link fw-semibold is-current" aria-current="page" data-build-link>Build</a>
+          <a href="./deck-builder.html" class="nav-link fw-semibold is-current" aria-current="page" data-build-link>Build</a>
           <a href="./play.html" class="nav-link fw-semibold">Play!</a>
           <a href="./save.html" class="nav-link fw-semibold">Save&hellip;</a>
         </div>
@@ -26,7 +26,7 @@
             <li><a href="./index.html" class="top-page-menu-link">Home</a></li>
             <li><a href="./basic-info.html" class="top-page-menu-link">Basic Info</a></li>
             <li><a href="./standard-images.html" class="top-page-menu-link" data-select-images-link>Select Images</a></li>
-            <li><a href="./build.html" class="top-page-menu-link" aria-current="page" data-build-link>Build</a></li>
+            <li><a href="./deck-builder.html" class="top-page-menu-link" aria-current="page" data-build-link>Build</a></li>
             <li><a href="./play.html" class="top-page-menu-link">Play!</a></li>
             <li><a href="./save.html" class="top-page-menu-link">Save&hellip;</a></li>
           </ul>
@@ -51,12 +51,37 @@
     <main class="container-fluid preview-page-shell pb-5">
       <section class="card shadow-sm mb-3 build-page-content-card">
         <div class="card-body">
-          <h2 class="h5 mb-1">Deck Preview</h2>
-          <p id="deck-summary" class="mb-0 text-muted"></p>
-          <div id="incomplete-deck-warning" class="alert alert-warning mt-3 mb-0" hidden>
-            <h3 id="incomplete-deck-warning-title" class="h6 mb-2">{m} More Image{s} Needed</h3>
-            <p id="incomplete-deck-warning-message" class="mb-0"></p>
+          <div class="preview-main-layout">
+            <section>
+              <div id="deck-pattern" class="deck-pattern"></div>
+            </section>
+            <section>
+              <div class="deck-player-toggle-row">
+                <h3 class="h6 mb-0">Deck Builder</h3>
+                <p id="deck-player-summary" class="deck-player-summary text-muted mb-0">Deck Builder is off.</p>
+                <button id="deck-player-toggle" type="button" class="deck-player-toggle" aria-controls="deck-player-panel" aria-expanded="false" aria-label="Turn Deck Builder on">
+                  <img src="./assets/images/power-button.svg" alt="" class="deck-player-toggle-icon" />
+                </button>
+              </div>
+              <div id="deck-player-panel" class="deck-player" hidden>
+                <label for="deck-player-slider" class="form-label mb-1">Card</label>
+                <input id="deck-player-slider" class="form-range" type="range" min="1" max="1" value="1" />
+                <div class="deck-player-controls" role="group" aria-label="Deck player controls">
+                  <button id="deck-player-rewind-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go to first card" title="First card">First card</button>
+                  <button id="deck-player-back-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go back one card" title="Previous card">Prev card</button>
+                  <button id="deck-player-play-button" type="button" class="btn btn-primary deck-player-button" aria-label="Play deck" title="Play">&#x25B6;&#xFE0F;</button>
+                  <button id="deck-player-forward-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go forward one card" title="Next card">Next card</button>
+                  <button id="deck-player-end-button" type="button" class="btn btn-outline-primary deck-player-button" aria-label="Go to last card" title="Last card">Last card</button>
+                </div>
+                <p id="deck-player-status" class="deck-player-status text-muted mb-2"></p>
+                <div id="preview-sample-card-target" class="sample-card-target"></div>
+              </div>
+            </section>
           </div>
+          <section id="extra-images-section" class="mt-4" hidden>
+            <h3 class="h6 mb-2">Extra images not included in the deck</h3>
+            <div id="selected-images" class="image-library-grid image-library-grid--page"></div>
+          </section>
         </div>
       </section>
     </main>
@@ -66,6 +91,4 @@
     <script type="module" src="./js/app/menuDismiss.js"></script>
   </body>
 </html>
-
-
 

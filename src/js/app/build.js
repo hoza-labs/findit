@@ -1,12 +1,13 @@
-import { markDirty } from '../modules/deckSession.js';
-import { createImageTile, createPreviewGenerationOptions, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
+﻿import { markDirty } from '../modules/deckSession.js';
+import { createImageTile, createPreviewGenerationOptions, loadTempDeckOrDefault, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
-import { NEUTRAL_PREVIEW_GENERATION_OPTIONS } from '../modules/cardGenerationOptions.js';
+import { getCurrentBuildPageHref, renderBuildHeaderAndSubnav } from '../modules/buildPageNavigation.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerSlopeComponents, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
 import { describeImageRef, removeImageRefAtIndex } from '../modules/imageRefs.js';
 import { getLastImagePageHref } from '../modules/imagePageNavigation.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
 
+const buildPageSubnav = document.querySelector('#build-page-subnav');
 const deckPatternElement = document.querySelector('#deck-pattern');
 const selectedImagesElement = document.querySelector('#selected-images');
 const extraImagesSection = document.querySelector('#extra-images-section');
@@ -27,6 +28,8 @@ const pageHeading = document.querySelector('header h1');
 const incompleteDeckWarning = document.querySelector('#incomplete-deck-warning');
 const incompleteDeckWarningTitle = document.querySelector('#incomplete-deck-warning-title');
 const incompleteDeckWarningMessage = document.querySelector('#incomplete-deck-warning-message');
+
+const hasDeckBuilderPage = Boolean(deckPatternElement);
 
 let tempDeck = await loadTempDeckOrDefault();
 let objectUrls = [];
@@ -58,9 +61,16 @@ function getRequiredImageCount() {
 
 function updateHeader() {
   const requiredCount = getRequiredImageCount();
-  deckSummary.textContent = `n=${tempDeck.symbolsPerCard}, selected images=${tempDeck.selectedImageRefs.length}, required=${requiredCount}`;
+  if (deckSummary) {
+    deckSummary.textContent = `n=${tempDeck.symbolsPerCard}, selected images=${tempDeck.selectedImageRefs.length}, required=${requiredCount}`;
+  }
   renderDeckStatusLine(deckStatusLine, tempDeck);
-  renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Build', tempDeck });
+  renderBuildHeaderAndSubnav({
+    headingElement: pageHeading,
+    subnavElement: buildPageSubnav,
+    tempDeck,
+    currentHref: getCurrentBuildPageHref()
+  });
   renderIncompleteDeckWarning();
 }
 
@@ -87,6 +97,10 @@ function resolveImageSrc(ref, placeholderNumber) {
 }
 
 function applyPatternScale() {
+  if (!deckPatternElement) {
+    return;
+  }
+
   const columns = tempDeck.symbolsPerCard;
   const gap = 8;
   const availableWidth = deckPatternElement.clientWidth || 960;
@@ -175,12 +189,20 @@ function stopDeckPlayer() {
     deckPlayerTimerId = null;
   }
 
+  if (!deckPlayerPlayButton) {
+    return;
+  }
+
   deckPlayerPlayButton.textContent = '\u25B6\uFE0F';
   deckPlayerPlayButton.title = 'Play';
   deckPlayerPlayButton.setAttribute('aria-label', 'Play deck');
 }
 
 function updateDeckPlayerSummary() {
+  if (!deckPlayerSummary) {
+    return;
+  }
+
   if (!deckPlayerExpanded) {
     deckPlayerSummary.textContent = 'Deck Builder is off.';
     return;
@@ -191,6 +213,11 @@ function updateDeckPlayerSummary() {
 
 function setDeckPlayerExpanded(expanded) {
   deckPlayerExpanded = expanded;
+
+  if (!deckPlayerPanel || !deckPlayerToggle) {
+    return;
+  }
+
   deckPlayerPanel.hidden = !expanded;
   deckPlayerToggle.setAttribute('aria-expanded', String(expanded));
   deckPlayerToggle.setAttribute('aria-label', expanded ? 'Turn Deck Builder off' : 'Turn Deck Builder on');
@@ -198,13 +225,16 @@ function setDeckPlayerExpanded(expanded) {
   if (!expanded) {
     stopDeckPlayer();
     clearActivePatternItems();
+    if (deckPlayerStatus) {
+      deckPlayerStatus.textContent = '';
+    }
   }
 
   updateDeckPlayerSummary();
 }
 
 function startDeckPlayer() {
-  if (deckPlayerTimerId !== null) {
+  if (!deckPlayerPlayButton || deckPlayerTimerId !== null) {
     return;
   }
 
@@ -242,10 +272,15 @@ function getDeckPlayerPatternItems() {
 }
 
 function updatePatternImageManagementState() {
+  if (!deckPatternElement) {
+    return;
+  }
+
   for (const button of deckPatternElement.querySelectorAll('.deck-pattern-item .preview-remove-button')) {
     button.hidden = !managePatternImages;
   }
 }
+
 function clearActivePatternItems() {
   for (const item of slopePatternItems) {
     item.classList.remove('is-active');
@@ -259,6 +294,10 @@ function clearActivePatternItems() {
 }
 
 async function renderDeckPlayerCard(slopeItems, grid, s, r) {
+  if (!previewSampleCardTarget) {
+    return;
+  }
+
   clearActivePatternItems();
 
   const selectedItems = getDeckPlayerCardItems(slopeItems, grid, s, r);
@@ -288,9 +327,12 @@ function getDeckPlayerStatusText(step, cardNumber, cardCount) {
 async function renderDeckPlayerAt(index) {
   const cardCount = getDeckPlayerCardCount(tempDeck.symbolsPerCard);
   deckPlayerIndex = Math.max(0, Math.min(index, cardCount - 1));
-  deckPlayerSlider.value = String(deckPlayerIndex + 1);
 
-  if (!deckPlayerExpanded) {
+  if (deckPlayerSlider) {
+    deckPlayerSlider.value = String(deckPlayerIndex + 1);
+  }
+
+  if (!deckPlayerExpanded || !previewSampleCardTarget) {
     clearActivePatternItems();
     updateDeckPlayerSummary();
     return;
@@ -299,7 +341,9 @@ async function renderDeckPlayerAt(index) {
   const step = getDeckPlayerStepAt(tempDeck.symbolsPerCard, deckPlayerIndex);
   const { slopeItems, grid } = getDeckPlayerPatternItems();
   await renderDeckPlayerCard(slopeItems, grid, step.s, step.r);
-  deckPlayerStatus.textContent = getDeckPlayerStatusText(step, deckPlayerIndex + 1, cardCount);
+  if (deckPlayerStatus) {
+    deckPlayerStatus.textContent = getDeckPlayerStatusText(step, deckPlayerIndex + 1, cardCount);
+  }
   updateDeckPlayerSummary();
 }
 
@@ -312,136 +356,149 @@ async function stepDeckPlayer(delta) {
 async function renderSelectedImages() {
   clearObjectUrls();
   stopDeckPlayer();
-  deckPatternElement.innerHTML = '';
-  selectedImagesElement.innerHTML = '';
-  extraImagesSection.hidden = true;
   slopePatternItems = [];
   gridPatternItems = [];
+
+  if (deckPatternElement) {
+    deckPatternElement.innerHTML = '';
+  }
+  if (selectedImagesElement) {
+    selectedImagesElement.innerHTML = '';
+  }
+  if (extraImagesSection) {
+    extraImagesSection.hidden = true;
+  }
 
   const n = tempDeck.symbolsPerCard;
   const p = n - 1;
   const requiredCount = getRequiredImageCount();
 
-  applyPatternScale();
+  if (deckPatternElement) {
+    applyPatternScale();
 
-  const canvas = document.createElement('div');
-  canvas.className = 'deck-pattern-canvas';
+    const canvas = document.createElement('div');
+    canvas.className = 'deck-pattern-canvas';
 
-  const slopeLabel = document.createElement('h3');
-  slopeLabel.className = 'h6 mb-2';
-  slopeLabel.textContent = `Slope Images (${n})`;
-  canvas.appendChild(slopeLabel);
+    const slopeLabel = document.createElement('h3');
+    slopeLabel.className = 'h6 mb-2';
+    slopeLabel.textContent = `Slope Images (${n})`;
+    canvas.appendChild(slopeLabel);
 
-  const slopeRow = document.createElement('div');
-  slopeRow.className = 'deck-pattern-row deck-pattern-row--slope';
-  for (let slot = 0; slot < n; slot += 1) {
-    const slotTitle = slot < p ? String(slot) : 'infinity';
-    const { rise, run } = getDeckPlayerSlopeComponents(slot, p);
-    const topLabel = `(${rise}/${run})\n\u2248${formatSlopeAngleDegrees(rise, run)}\u00B0`;
-    const hasSelected = slot < tempDeck.selectedImageRefs.length;
-    const item = createPatternItem({
-      slotIndex: slot,
-      slotTitle,
-      topLabel,
-      refIndex: hasSelected ? slot : null,
-      kind: 'slope',
-      slopeIndex: slot
-    });
-    slopePatternItems.push(item);
-    slopeRow.appendChild(item);
-  }
-  canvas.appendChild(slopeRow);
-
-  canvas.appendChild(document.createElement('hr'));
-
-  const gridLabel = document.createElement('h3');
-  gridLabel.className = 'h6 mb-2';
-  gridLabel.textContent = `Grid Images (${p} x ${p} = ${p * p})`;
-  canvas.appendChild(gridLabel);
-
-  const gridRows = [];
-  for (let row = 0; row < p; row += 1) {
-    const rowElement = document.createElement('div');
-    rowElement.className = 'deck-pattern-row deck-pattern-row--grid';
-    const gridRowItems = [];
-    for (let col = 0; col < p; col += 1) {
-      const slotIndex = n + row * p + col;
-      const hasSelected = slotIndex < tempDeck.selectedImageRefs.length;
+    const slopeRow = document.createElement('div');
+    slopeRow.className = 'deck-pattern-row deck-pattern-row--slope';
+    for (let slot = 0; slot < n; slot += 1) {
+      const slotTitle = slot < p ? String(slot) : 'infinity';
+      const { rise, run } = getDeckPlayerSlopeComponents(slot, p);
+      const topLabel = `(${rise}/${run})\n\u2248${formatSlopeAngleDegrees(rise, run)}\u00B0`;
+      const hasSelected = slot < tempDeck.selectedImageRefs.length;
       const item = createPatternItem({
-        slotIndex,
-        refIndex: hasSelected ? slotIndex : null,
-        kind: 'grid',
-        row,
-        column: col
+        slotIndex: slot,
+        slotTitle,
+        topLabel,
+        refIndex: hasSelected ? slot : null,
+        kind: 'slope',
+        slopeIndex: slot
       });
-      gridRowItems.push(item);
-      rowElement.appendChild(item);
+      slopePatternItems.push(item);
+      slopeRow.appendChild(item);
     }
-    gridPatternItems.push(gridRowItems);
-    gridRows.push(rowElement);
-  }
+    canvas.appendChild(slopeRow);
 
-  // Render highest y first so the visual grid origin sits at the lower-left corner.
-  for (let row = gridRows.length - 1; row >= 0; row -= 1) {
-    canvas.appendChild(gridRows[row]);
-  }
+    canvas.appendChild(document.createElement('hr'));
 
-  const manageImagesWrap = document.createElement('div');
-  manageImagesWrap.className = 'form-check mt-3';
+    const gridLabel = document.createElement('h3');
+    gridLabel.className = 'h6 mb-2';
+    gridLabel.textContent = `Grid Images (${p} x ${p} = ${p * p})`;
+    canvas.appendChild(gridLabel);
 
-  const manageImagesCheckbox = document.createElement('input');
-  manageImagesCheckbox.type = 'checkbox';
-  manageImagesCheckbox.className = 'form-check-input';
-  manageImagesCheckbox.id = 'manage-pattern-images-checkbox';
-  manageImagesCheckbox.checked = managePatternImages;
-  manageImagesCheckbox.addEventListener('change', () => {
-    managePatternImages = manageImagesCheckbox.checked;
+    const gridRows = [];
+    for (let row = 0; row < p; row += 1) {
+      const rowElement = document.createElement('div');
+      rowElement.className = 'deck-pattern-row deck-pattern-row--grid';
+      const gridRowItems = [];
+      for (let col = 0; col < p; col += 1) {
+        const slotIndex = n + row * p + col;
+        const hasSelected = slotIndex < tempDeck.selectedImageRefs.length;
+        const item = createPatternItem({
+          slotIndex,
+          refIndex: hasSelected ? slotIndex : null,
+          kind: 'grid',
+          row,
+          column: col
+        });
+        gridRowItems.push(item);
+        rowElement.appendChild(item);
+      }
+      gridPatternItems.push(gridRowItems);
+      gridRows.push(rowElement);
+    }
+
+    for (let row = gridRows.length - 1; row >= 0; row -= 1) {
+      canvas.appendChild(gridRows[row]);
+    }
+
+    const manageImagesWrap = document.createElement('div');
+    manageImagesWrap.className = 'form-check mt-3';
+
+    const manageImagesCheckbox = document.createElement('input');
+    manageImagesCheckbox.type = 'checkbox';
+    manageImagesCheckbox.className = 'form-check-input';
+    manageImagesCheckbox.id = 'manage-pattern-images-checkbox';
+    manageImagesCheckbox.checked = managePatternImages;
+    manageImagesCheckbox.addEventListener('change', () => {
+      managePatternImages = manageImagesCheckbox.checked;
+      updatePatternImageManagementState();
+    });
+
+    const manageImagesLabel = document.createElement('label');
+    manageImagesLabel.className = 'form-check-label';
+    manageImagesLabel.htmlFor = 'manage-pattern-images-checkbox';
+    manageImagesLabel.textContent = 'Manage Images';
+
+    manageImagesWrap.append(manageImagesCheckbox, manageImagesLabel);
+    canvas.appendChild(manageImagesWrap);
+
+    deckPatternElement.appendChild(canvas);
     updatePatternImageManagementState();
-  });
+  }
 
-  const manageImagesLabel = document.createElement('label');
-  manageImagesLabel.className = 'form-check-label';
-  manageImagesLabel.htmlFor = 'manage-pattern-images-checkbox';
-  manageImagesLabel.textContent = 'Manage Images';
+  if (selectedImagesElement && extraImagesSection) {
+    const extraRefs = tempDeck.selectedImageRefs.slice(requiredCount);
+    if (extraRefs.length > 0) {
+      extraImagesSection.hidden = false;
 
-  manageImagesWrap.append(manageImagesCheckbox, manageImagesLabel);
-  canvas.appendChild(manageImagesWrap);
-
-  deckPatternElement.appendChild(canvas);
-  updatePatternImageManagementState();
-
-  const extraRefs = tempDeck.selectedImageRefs.slice(requiredCount);
-  if (extraRefs.length > 0) {
-    extraImagesSection.hidden = false;
-
-    for (let index = 0; index < extraRefs.length; index += 1) {
-      const refIndex = requiredCount + index;
-      const ref = extraRefs[index];
-      const label = describeImageRef(ref, userImages, webImages);
-      const imageSource = resolveImageSrc(ref, ((refIndex % 133) + 1));
-      selectedImagesElement.appendChild(
-        createImageTile({
-          src: imageSource.src,
-          mask: imageSource.mask,
-          label: '',
-          tooltipText: label,
-          buttonText: 'Remove',
-          buttonVariant: 'outline-danger',
-          previewGenerationOptions: getPatternPreviewGenerationOptions(),
-          onClick: async () => {
-            tempDeck = markDirty(removeImageRefAtIndex(tempDeck, refIndex));
-            await saveTempDeck(tempDeck);
-            await renderSelectedImages();
-          }
-        })
-      );
+      for (let index = 0; index < extraRefs.length; index += 1) {
+        const refIndex = requiredCount + index;
+        const ref = extraRefs[index];
+        const label = describeImageRef(ref, userImages, webImages);
+        const imageSource = resolveImageSrc(ref, (refIndex % 133) + 1);
+        selectedImagesElement.appendChild(
+          createImageTile({
+            src: imageSource.src,
+            mask: imageSource.mask,
+            label: '',
+            tooltipText: label,
+            buttonText: 'Remove',
+            buttonVariant: 'outline-danger',
+            previewGenerationOptions: getPatternPreviewGenerationOptions(),
+            onClick: async () => {
+              tempDeck = markDirty(removeImageRefAtIndex(tempDeck, refIndex));
+              await saveTempDeck(tempDeck);
+              await renderSelectedImages();
+            }
+          })
+        );
+      }
     }
   }
 
-  const cardCount = getDeckPlayerCardCount(tempDeck.symbolsPerCard);
-  deckPlayerSlider.min = '1';
-  deckPlayerSlider.max = String(cardCount);
-  await renderDeckPlayerAt(Math.min(deckPlayerIndex, cardCount - 1));
+  if (deckPlayerSlider) {
+    const cardCount = getDeckPlayerCardCount(tempDeck.symbolsPerCard);
+    deckPlayerSlider.min = '1';
+    deckPlayerSlider.max = String(cardCount);
+    await renderDeckPlayerAt(Math.min(deckPlayerIndex, cardCount - 1));
+  }
+
   updateHeader();
 }
 
@@ -462,7 +519,6 @@ function renderIncompleteDeckWarning() {
     return;
   }
 
-  const n = tempDeck.symbolsPerCard;
   const requiredImageCount = getRequiredImageCount();
   const needsMoreImages = tempDeck.selectedImageRefs.length < requiredImageCount;
   incompleteDeckWarning.hidden = !needsMoreImages;
@@ -498,62 +554,73 @@ function renderIncompleteDeckWarning() {
 
 window.addEventListener('resize', () => {
   applyPatternScale();
-  if (deckPlayerExpanded) {
+  if (deckPlayerExpanded && deckPlayerSlider) {
     void renderDeckPlayerAt(deckPlayerIndex);
   }
 });
 
-deckPlayerSlider.addEventListener('input', () => {
-  stopDeckPlayer();
-  void renderDeckPlayerAt(Number(deckPlayerSlider.value) - 1);
-});
-
-deckPlayerRewindButton.addEventListener('click', () => {
-  stopDeckPlayer();
-  void renderDeckPlayerAt(0);
-});
-
-deckPlayerBackButton.addEventListener('click', () => {
-  stopDeckPlayer();
-  void stepDeckPlayer(-1);
-});
-
-deckPlayerPlayButton.addEventListener('click', () => {
-  if (deckPlayerTimerId !== null) {
+if (deckPlayerSlider) {
+  deckPlayerSlider.addEventListener('input', () => {
     stopDeckPlayer();
-    return;
-  }
+    void renderDeckPlayerAt(Number(deckPlayerSlider.value) - 1);
+  });
+}
 
-  startDeckPlayer();
-});
+if (deckPlayerRewindButton) {
+  deckPlayerRewindButton.addEventListener('click', () => {
+    stopDeckPlayer();
+    void renderDeckPlayerAt(0);
+  });
+}
 
-deckPlayerForwardButton.addEventListener('click', () => {
-  stopDeckPlayer();
-  void stepDeckPlayer(1);
-});
+if (deckPlayerBackButton) {
+  deckPlayerBackButton.addEventListener('click', () => {
+    stopDeckPlayer();
+    void stepDeckPlayer(-1);
+  });
+}
 
-deckPlayerEndButton.addEventListener('click', () => {
-  stopDeckPlayer();
-  void renderDeckPlayerAt(getDeckPlayerCardCount(tempDeck.symbolsPerCard) - 1);
-});
+if (deckPlayerPlayButton) {
+  deckPlayerPlayButton.addEventListener('click', () => {
+    if (deckPlayerTimerId !== null) {
+      stopDeckPlayer();
+      return;
+    }
 
-deckPlayerToggle.addEventListener('click', () => {
-  const nextExpanded = !deckPlayerExpanded;
-  setDeckPlayerExpanded(nextExpanded);
-  if (nextExpanded) {
-    void renderDeckPlayerAt(deckPlayerIndex);
-  }
-});
+    startDeckPlayer();
+  });
+}
 
-userImages = await repository.listUserImages();
-webImages = await repository.listWebImages();
+if (deckPlayerForwardButton) {
+  deckPlayerForwardButton.addEventListener('click', () => {
+    stopDeckPlayer();
+    void stepDeckPlayer(1);
+  });
+}
+
+if (deckPlayerEndButton) {
+  deckPlayerEndButton.addEventListener('click', () => {
+    stopDeckPlayer();
+    void renderDeckPlayerAt(getDeckPlayerCardCount(tempDeck.symbolsPerCard) - 1);
+  });
+}
+
+if (deckPlayerToggle) {
+  deckPlayerToggle.addEventListener('click', () => {
+    const nextExpanded = !deckPlayerExpanded;
+    setDeckPlayerExpanded(nextExpanded);
+    if (nextExpanded) {
+      void renderDeckPlayerAt(deckPlayerIndex);
+    }
+  });
+}
+
+if (hasDeckBuilderPage) {
+  [userImages, webImages] = await Promise.all([
+    repository.listUserImages(),
+    repository.listWebImages()
+  ]);
+}
+
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
-
-
-
-
-
-
-
-
