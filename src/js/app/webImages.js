@@ -2,6 +2,7 @@ import { addImageRef, createImageRef, hasImageRef, removeAllImageRefs, removeIma
 import { markDirty } from '../modules/deckSession.js';
 import {
   createImageTile,
+  createPreviewGenerationOptions,
   loadTempDeckOrDefault,
   renderDeckStatusLine,
   repository,
@@ -44,6 +45,10 @@ function renderPageChrome() {
     tempDeck,
     currentHref: './web-images.html'
   });
+}
+
+function getTilePreviewGenerationOptions() {
+  return createPreviewGenerationOptions(tempDeck.generationOptions.sourceSamplingBias);
 }
 
 async function fetchRemoteContentType(url) {
@@ -96,6 +101,7 @@ async function renderWebImages() {
         buttonText: isSelected ? 'Remove from deck' : 'Add to deck',
         buttonVariant: isSelected ? 'outline-danger' : 'outline-primary',
         isSelected,
+        previewGenerationOptions: getTilePreviewGenerationOptions(),
         onClick: async () => {
           tempDeck = markDirty(isSelected ? removeImageRef(tempDeck, imageRef) : addImageRef(tempDeck, imageRef));
           await saveTempDeck(tempDeck);

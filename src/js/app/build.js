@@ -1,5 +1,5 @@
 import { markDirty } from '../modules/deckSession.js';
-import { createImageTile, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { createImageTile, createPreviewGenerationOptions, loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { NEUTRAL_PREVIEW_GENERATION_OPTIONS } from '../modules/cardGenerationOptions.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerSlopeComponents, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
@@ -397,6 +397,7 @@ async function renderSelectedImages() {
           tooltipText: label,
           buttonText: 'Remove',
           buttonVariant: 'outline-danger',
+          previewGenerationOptions: getPatternPreviewGenerationOptions(),
           onClick: async () => {
             tempDeck = markDirty(removeImageRefAtIndex(tempDeck, refIndex));
             await saveTempDeck(tempDeck);
@@ -415,10 +416,7 @@ async function renderSelectedImages() {
 }
 
 function getPatternPreviewGenerationOptions() {
-  return {
-    ...NEUTRAL_PREVIEW_GENERATION_OPTIONS,
-    sourceSamplingBias: tempDeck.generationOptions.sourceSamplingBias
-  };
+  return createPreviewGenerationOptions(tempDeck.generationOptions.sourceSamplingBias);
 }
 
 async function renderPatternItemPreview(targetElement, imageSource) {
@@ -521,6 +519,7 @@ userImages = await repository.listUserImages();
 webImages = await repository.listWebImages();
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
+
 
 
 

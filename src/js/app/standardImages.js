@@ -1,6 +1,6 @@
 import { addImageRef, createImageRef, hasImageRef, removeImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
-import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { createImageTile, createPreviewGenerationOptions, loadTempDeckOrDefault, renderDeckStatusLine, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { renderSelectImagesIntro } from '../modules/selectImagesIntro.js';
 import { renderSelectImagesHeaderAndSubnav } from '../modules/imagePageNavigation.js';
 import { loadStandardImageNames } from '../modules/standardImageManifest.js';
@@ -26,6 +26,10 @@ function renderPageChrome() {
   });
 }
 
+function getTilePreviewGenerationOptions() {
+  return createPreviewGenerationOptions(tempDeck.generationOptions.sourceSamplingBias);
+}
+
 function renderStandardImages(fileNames) {
   standardImagesElement.innerHTML = '';
 
@@ -41,6 +45,7 @@ function renderStandardImages(fileNames) {
         buttonText: isSelected ? 'Remove from deck' : 'Add to deck',
         buttonVariant: isSelected ? 'outline-danger' : 'outline-primary',
         isSelected,
+        previewGenerationOptions: getTilePreviewGenerationOptions(),
         onClick: async () => {
           tempDeck = markDirty(isSelected ? removeImageRef(tempDeck, imageRef) : addImageRef(tempDeck, imageRef));
           await saveTempDeck(tempDeck);
@@ -57,4 +62,3 @@ try {
 } catch {
   standardImagesElement.textContent = 'Could not load standard images.';
 }
-

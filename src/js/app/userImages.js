@@ -1,6 +1,6 @@
 import { addImageRef, createImageRef, hasImageRef, removeAllImageRefs, removeImageRef } from '../modules/imageRefs.js';
 import { markDirty } from '../modules/deckSession.js';
-import { createImageTile, loadTempDeckOrDefault, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { createImageTile, createPreviewGenerationOptions, loadTempDeckOrDefault, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { renderSelectImagesIntro } from '../modules/selectImagesIntro.js';
 import { renderSelectImagesHeaderAndSubnav } from '../modules/imagePageNavigation.js';
 
@@ -39,6 +39,10 @@ function renderPageChrome() {
   });
 }
 
+function getTilePreviewGenerationOptions() {
+  return createPreviewGenerationOptions(tempDeck.generationOptions.sourceSamplingBias);
+}
+
 function clearObjectUrls() {
   for (const url of objectUrls) {
     URL.revokeObjectURL(url);
@@ -65,6 +69,7 @@ async function renderUserImages() {
         buttonText: isSelected ? 'Remove from deck' : 'Add to deck',
         buttonVariant: isSelected ? 'outline-danger' : 'outline-primary',
         isSelected,
+        previewGenerationOptions: getTilePreviewGenerationOptions(),
         onClick: async () => {
           tempDeck = markDirty(isSelected ? removeImageRef(tempDeck, imageRef) : addImageRef(tempDeck, imageRef));
           await saveTempDeck(tempDeck);
@@ -168,4 +173,3 @@ deleteForm.addEventListener('submit', async (event) => {
 });
 
 await renderUserImages();
-

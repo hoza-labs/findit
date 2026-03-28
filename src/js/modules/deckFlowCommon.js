@@ -1,7 +1,7 @@
 import { createEmptyTempDeck, normalizeTempDeck } from './deckSession.js';
-import { createIndexedDbRepository } from './indexedDbRepository.js';
 import { drawImagesOnSquareTarget } from './cardCanvasRenderer.js';
 import { NEUTRAL_PREVIEW_GENERATION_OPTIONS } from './cardGenerationOptions.js';
+import { createIndexedDbRepository } from './indexedDbRepository.js';
 
 export const repository = createIndexedDbRepository();
 
@@ -47,6 +47,13 @@ export function renderDeckHeaderAndTitle({ headingElement, pageLabel, tempDeck }
   document.title = `FindIt | ${pageLabel} | ${deckName}${dirtyMarker}`;
 }
 
+export function createPreviewGenerationOptions(sourceSamplingBias = 'balanced') {
+  return {
+    ...NEUTRAL_PREVIEW_GENERATION_OPTIONS,
+    sourceSamplingBias
+  };
+}
+
 export function createImageTile({
   src,
   mask = undefined,
@@ -56,7 +63,8 @@ export function createImageTile({
   buttonVariant = 'outline-primary',
   isSelected = false,
   tooltipText = '',
-  menuActions = []
+  menuActions = [],
+  previewGenerationOptions = NEUTRAL_PREVIEW_GENERATION_OPTIONS
 }) {
   const tile = document.createElement('article');
   tile.className = 'image-tile';
@@ -121,7 +129,7 @@ export function createImageTile({
 
   tile.append(imageFrame, meta, button);
   queueMicrotask(() => {
-    void renderTilePreview(imageFrame, src, mask);
+    void renderTilePreview(imageFrame, src, mask, previewGenerationOptions);
   });
   const menu = tile.querySelector('.image-menu');
   if (menu) {
@@ -130,9 +138,9 @@ export function createImageTile({
   return tile;
 }
 
-async function renderTilePreview(targetElement, src, mask) {
+async function renderTilePreview(targetElement, src, mask, previewGenerationOptions) {
   try {
-    await drawImagesOnSquareTarget(targetElement, [{ src, mask }], NEUTRAL_PREVIEW_GENERATION_OPTIONS);
+    await drawImagesOnSquareTarget(targetElement, [{ src, mask }], previewGenerationOptions);
   } catch {
     targetElement.textContent = 'Preview unavailable.';
   }
