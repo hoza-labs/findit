@@ -57,15 +57,15 @@ export function ensureDeckMagicParchmentFilter() {
 
     const turbulence = createSvgElement('feTurbulence');
     turbulence.setAttribute('type', 'fractalNoise');
-    turbulence.setAttribute('baseFrequency', '0.01');
-    turbulence.setAttribute('numOctaves', '5');
+    turbulence.setAttribute('baseFrequency', '0.018');
+    turbulence.setAttribute('numOctaves', '3');
     turbulence.setAttribute('seed', '2');
     turbulence.setAttribute('result', 'noise');
 
     const displacement = createSvgElement('feDisplacementMap');
     displacement.setAttribute('in', 'SourceGraphic');
     displacement.setAttribute('in2', 'noise');
-    displacement.setAttribute('scale', '3');
+    displacement.setAttribute('scale', '28');
 
     filter.append(turbulence, displacement);
     defs.appendChild(filter);
@@ -87,3 +87,4 @@ export function ensureDeckMagicParchmentFilter() {
   window.addEventListener('resize', handleResize, { passive: true });
   requestAnimationFrame(handleResize);
 }
+
