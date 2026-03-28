@@ -63,7 +63,7 @@ function getDeckPreviewIntroText() {
   }
 
   const imageSuffix = missingImageCount === 1 ? '' : 's';
-  return `You need ${missingImageCount} more image${imageSuffix} to create your deck.`;
+  return `You need ${missingImageCount} more image${imageSuffix} for a complete deck.`;
 }
 
 function updateBuildPageIntro() {
@@ -601,5 +601,6 @@ if (isDeckBuilderPage) {
 
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
+
 
 
