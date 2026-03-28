@@ -81,7 +81,7 @@ function updateBuildPageIntro() {
 function updateHeader() {
   const requiredCount = getRequiredImageCount();
   if (deckSummary) {
-    deckSummary.textContent = `n=${tempDeck.symbolsPerCard}, selected images=${tempDeck.selectedImageRefs.length}, required=${requiredCount}`;
+    deckSummary.textContent = `You are building a ${requiredCount}-card deck that shows ${tempDeck.symbolsPerCard} pictures per card. It uses ${requiredCount} unique images.`;
   }
   renderDeckStatusLine(deckStatusLine, tempDeck);
   renderBuildHeaderAndSubnav({
@@ -643,6 +643,7 @@ if (isDeckBuilderPage) {
 
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
+
 
 
 
