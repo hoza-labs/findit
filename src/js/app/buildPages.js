@@ -1,4 +1,4 @@
-﻿import { markDirty } from '../modules/deckSession.js';
+import { markDirty } from '../modules/deckSession.js';
 import { createImageTile, createPreviewGenerationOptions, loadTempDeckOrDefault, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { getCurrentBuildPageHref, renderBuildHeaderAndSubnav } from '../modules/buildPageNavigation.js';
@@ -51,6 +51,13 @@ const deckCardGallery = createDeckCardGalleryRenderer({
   containerElement: deckCardsElement,
   emptyElement: deckPreviewEmpty
 });
+function waitForNextPaint() {
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(resolve);
+    });
+  });
+}
 
 function formatSlopeAngleDegrees(rise, run = 1) {
   const angle = Math.atan2(rise, run) * (180 / Math.PI);
@@ -559,8 +566,13 @@ async function renderSelectedImages() {
     await renderDeckPlayerAt(Math.min(deckPlayerIndex, cardCount - 1));
   }
 
-  await deckCardGallery.render({ tempDeck, userImages, webImages });
   updateHeader();
+
+  if (!isDeckBuilderPage && deckCardsElement) {
+    await waitForNextPaint();
+  }
+
+  await deckCardGallery.render({ tempDeck, userImages, webImages });
 }
 
 function getPatternPreviewGenerationOptions() {
@@ -650,3 +662,5 @@ window.addEventListener('beforeunload', () => {
 
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
+
+
