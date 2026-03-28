@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Portions of this stylesheet are adapted from the following work:
  *   "Old parchment v.2.3" by AgnusDei
  *   https://codepen.io/AgnusDei/pen/NWPbOxL
@@ -187,6 +187,7 @@
   padding: 0.8rem 0.95rem;
   list-style: none;
   background: transparent;
+  text-align: left;
   z-index: 20;
 }
 
@@ -227,12 +228,12 @@
 
 .deck-magic-page-menu-link {
   display: block;
-  padding: 0.2rem 0.35rem;
+  padding: 0 0.35rem;
   color: #6b3b08;
   font-family: 'Pirata One', Georgia, serif;
   font-size: 1.2rem;
   text-decoration: none;
-  text-align: center;
+  text-align: left;
   white-space: nowrap;
   filter: url(#deck-magic-wavy-menu-text);
 }

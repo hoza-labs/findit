@@ -1,10 +1,10 @@
-﻿export const DECK_MAGIC_PAGE_TITLES = [
+export const DECK_MAGIC_PAGE_TITLES = [
   'The wonder of it all',
   'The key insight',
-  'Lining up the images (literally!)',
+  'Lining up the images',
   'Exploring and tinkering',
   "Don't consider all the angles",
-  'Wrap your head around the wrap-around',
+  'A wrap-around universe',
   'More tinkering',
   'Build it!'
 ];
