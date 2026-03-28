@@ -235,7 +235,6 @@
   text-decoration: none;
   text-align: left;
   white-space: nowrap;
-  filter: url(#deck-magic-wavy-menu-text);
 }
 
 .deck-magic-page-menu-link:hover,
