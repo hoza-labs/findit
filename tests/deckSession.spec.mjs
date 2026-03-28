@@ -9,7 +9,8 @@ test('given empty temp deck, play options are initialized with defaults', () => 
   assert.deepEqual(deck.generationOptions, {
     cardShape: 'round',
     imageRotation: 'random',
-    imageSize: 'various'
+    imageSize: 'various',
+    sourceSamplingBias: 'balanced'
   });
   assert.deepEqual(deck.playOptions, {
     cardsToShowCounts: '2',
@@ -28,7 +29,8 @@ test('given saved deck with play options, temp deck preserves normalized play op
     generationOptions: {
       cardShape: 'square',
       imageRotation: 'none',
-      imageSize: 'uniform'
+      imageSize: 'uniform',
+      sourceSamplingBias: 'prefer-larger-source-sampling'
     },
     playOptions: {
       cardsToShowCounts: ' 2, 4, 3 ',
@@ -42,7 +44,8 @@ test('given saved deck with play options, temp deck preserves normalized play op
   assert.deepEqual(tempDeck.generationOptions, {
     cardShape: 'square',
     imageRotation: 'none',
-    imageSize: 'uniform'
+    imageSize: 'uniform',
+    sourceSamplingBias: 'prefer-larger-source-sampling'
   });
   assert.deepEqual(tempDeck.playOptions, {
     cardsToShowCounts: '2, 4, 3',
@@ -60,7 +63,8 @@ test('given legacy handsToPlay option, normalize maps it to lengthOfPlay in hand
     generationOptions: {
       cardShape: 'triangle',
       imageRotation: 'sometimes',
-      imageSize: 'mixed'
+      imageSize: 'mixed',
+      sourceSamplingBias: 'extra'
     },
     playOptions: {
       cardsToShowMin: '',
@@ -74,7 +78,8 @@ test('given legacy handsToPlay option, normalize maps it to lengthOfPlay in hand
   assert.deepEqual(normalized.generationOptions, {
     cardShape: 'round',
     imageRotation: 'random',
-    imageSize: 'various'
+    imageSize: 'various',
+    sourceSamplingBias: 'balanced'
   });
   assert.deepEqual(normalized.playOptions, {
     cardsToShowCounts: '',
@@ -96,7 +101,8 @@ test('given legacy temp deck without play options, normalizeTempDeck adds defaul
   assert.deepEqual(normalized.generationOptions, {
     cardShape: 'round',
     imageRotation: 'random',
-    imageSize: 'various'
+    imageSize: 'various',
+    sourceSamplingBias: 'balanced'
   });
   assert.deepEqual(normalized.playOptions, {
     cardsToShowCounts: '2',

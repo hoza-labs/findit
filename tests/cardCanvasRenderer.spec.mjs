@@ -25,10 +25,16 @@ test('given a masked image, placement centers the saved mask and scales it to th
   assert.ok(Math.abs(placement.offsetY + 76.5) < 0.0001);
 });
 
-test('given a device pixel ratio, getCanvasRenderScale clamps it to a useful range', () => {
-  assert.equal(getCanvasRenderScale(0.5), 1);
-  assert.equal(getCanvasRenderScale(2), 2);
-  assert.equal(getCanvasRenderScale(5), 3);
+test('given balanced source sampling, getCanvasRenderScale keeps the current dpr clamp', () => {
+  assert.equal(getCanvasRenderScale('balanced', 0.5), 1);
+  assert.equal(getCanvasRenderScale('balanced', 2), 2);
+  assert.equal(getCanvasRenderScale('balanced', 5), 3);
+});
+
+test('given larger source sampling preference, getCanvasRenderScale increases scale and respects the upper cap', () => {
+  assert.equal(getCanvasRenderScale('prefer-larger-source-sampling', 1), 1.5);
+  assert.equal(getCanvasRenderScale('prefer-larger-source-sampling', 2), 3);
+  assert.equal(getCanvasRenderScale('prefer-larger-source-sampling', 5), 4);
 });
 
 test('given a card render, image placement order is shuffled every time the card is planned', () => {

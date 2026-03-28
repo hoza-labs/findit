@@ -2,7 +2,9 @@ import { clampImageMask, imageMaskToPixels } from './imageMasking.js';
 import { normalizeGenerationOptions } from './cardGenerationOptions.js';
 import { getCardLayout } from './cardLayout.js';
 
-const MAX_CANVAS_RENDER_SCALE = 3;
+const BALANCED_MAX_CANVAS_RENDER_SCALE = 3;
+const LARGER_SOURCE_SAMPLING_MAX_CANVAS_RENDER_SCALE = 4;
+const LARGER_SOURCE_SAMPLING_SCALE_MULTIPLIER = 1.5;
 
 export async function drawImagesOnSquareTarget(targetElement, imageSources, options = undefined) {
   if (!targetElement) {
@@ -21,7 +23,7 @@ export async function drawImagesOnSquareTarget(targetElement, imageSources, opti
   const generationOptions = normalizeGenerationOptions(options);
   const normalizedSources = imageSources.map(normalizeImageSource);
   const sideLength = getTargetSideLength(targetElement);
-  const renderScale = getCanvasRenderScale();
+  const renderScale = getCanvasRenderScale(generationOptions.sourceSamplingBias);
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(sideLength * renderScale);
   canvas.height = Math.round(sideLength * renderScale);
@@ -116,14 +118,24 @@ export function calculateMaskedImagePlacement({ imageWidth, imageHeight, mask, c
   };
 }
 
-export function getCanvasRenderScale(devicePixelRatio = undefined) {
+export function getCanvasRenderScale(sourceSamplingBias = 'balanced', devicePixelRatio = undefined) {
   const resolvedDevicePixelRatio = Number.isFinite(devicePixelRatio)
     ? devicePixelRatio
     : typeof window !== 'undefined' && Number.isFinite(window.devicePixelRatio)
       ? window.devicePixelRatio
       : 1;
 
-  return Math.max(1, Math.min(MAX_CANVAS_RENDER_SCALE, resolvedDevicePixelRatio));
+  if (sourceSamplingBias === 'prefer-larger-source-sampling') {
+    return Math.max(
+      1,
+      Math.min(
+        LARGER_SOURCE_SAMPLING_MAX_CANVAS_RENDER_SCALE,
+        resolvedDevicePixelRatio * LARGER_SOURCE_SAMPLING_SCALE_MULTIPLIER
+      )
+    );
+  }
+
+  return Math.max(1, Math.min(BALANCED_MAX_CANVAS_RENDER_SCALE, resolvedDevicePixelRatio));
 }
 
 function getTargetSideLength(targetElement) {
