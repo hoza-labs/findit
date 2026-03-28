@@ -37,6 +37,7 @@ let gridPatternItems = [];
 let deckPlayerIndex = 0;
 let deckPlayerTimerId = null;
 let deckPlayerExpanded = false;
+let managePatternImages = false;
 const patternActiveOutlineBuffer = 6;
 
 function formatSlopeAngleDegrees(rise, run = 1) {
@@ -110,6 +111,7 @@ function createPatternItem({ slotIndex, slotTitle = '', topLabel = '', refIndex 
   const tooltipText = slotTitle ? `${label} | slot ${slotTitle}` : label;
 
   item.dataset.kind = kind;
+  item.classList.toggle('deck-pattern-item--removable', refIndex !== null);
   item.renderSource = renderSource;
   if (row !== null) {
     item.dataset.row = String(row);
@@ -160,6 +162,7 @@ function createPatternItem({ slotIndex, slotTitle = '', topLabel = '', refIndex 
       await saveTempDeck(tempDeck);
       await renderSelectedImages();
     });
+    removeButton.hidden = !managePatternImages;
     imageWrap.appendChild(removeButton);
   }
 
@@ -238,6 +241,11 @@ function getDeckPlayerPatternItems() {
   };
 }
 
+function updatePatternImageManagementState() {
+  for (const button of deckPatternElement.querySelectorAll('.deck-pattern-item .preview-remove-button')) {
+    button.hidden = !managePatternImages;
+  }
+}
 function clearActivePatternItems() {
   for (const item of slopePatternItems) {
     item.classList.remove('is-active');
@@ -378,7 +386,29 @@ async function renderSelectedImages() {
     canvas.appendChild(gridRows[row]);
   }
 
+  const manageImagesWrap = document.createElement('div');
+  manageImagesWrap.className = 'form-check mt-3';
+
+  const manageImagesCheckbox = document.createElement('input');
+  manageImagesCheckbox.type = 'checkbox';
+  manageImagesCheckbox.className = 'form-check-input';
+  manageImagesCheckbox.id = 'manage-pattern-images-checkbox';
+  manageImagesCheckbox.checked = managePatternImages;
+  manageImagesCheckbox.addEventListener('change', () => {
+    managePatternImages = manageImagesCheckbox.checked;
+    updatePatternImageManagementState();
+  });
+
+  const manageImagesLabel = document.createElement('label');
+  manageImagesLabel.className = 'form-check-label';
+  manageImagesLabel.htmlFor = 'manage-pattern-images-checkbox';
+  manageImagesLabel.textContent = 'Manage Images';
+
+  manageImagesWrap.append(manageImagesCheckbox, manageImagesLabel);
+  canvas.appendChild(manageImagesWrap);
+
   deckPatternElement.appendChild(canvas);
+  updatePatternImageManagementState();
 
   const extraRefs = tempDeck.selectedImageRefs.slice(requiredCount);
   if (extraRefs.length > 0) {
@@ -519,6 +549,8 @@ userImages = await repository.listUserImages();
 webImages = await repository.listWebImages();
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
+
+
 
 
 
