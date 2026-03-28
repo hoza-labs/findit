@@ -4,6 +4,7 @@ import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { getCurrentBuildPageHref, renderBuildHeaderAndSubnav } from '../modules/buildPageNavigation.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerSlopeComponents, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
 import { describeImageRef, removeImageRefAtIndex } from '../modules/imageRefs.js';
+import { getLastImagePageHref } from '../modules/imagePageNavigation.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
 
 const buildPageSubnav = document.querySelector('#build-page-subnav');
@@ -25,6 +26,9 @@ const deckPlayerStatus = document.querySelector('#deck-player-status');
 const deckSummary = document.querySelector('#deck-summary');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
+const incompleteDeckWarning = document.querySelector('#incomplete-deck-warning');
+const incompleteDeckWarningTitle = document.querySelector('#incomplete-deck-warning-title');
+const incompleteDeckWarningMessage = document.querySelector('#incomplete-deck-warning-message');
 
 const isDeckBuilderPage = Boolean(deckPatternElement);
 
@@ -87,8 +91,46 @@ function updateHeader() {
     currentHref: getCurrentBuildPageHref()
   });
   updateBuildPageIntro();
+  renderIncompleteDeckWarning();
 }
 
+function renderIncompleteDeckWarning() {
+  if (!incompleteDeckWarning || isDeckBuilderPage) {
+    return;
+  }
+
+  const requiredImageCount = getRequiredImageCount();
+  const needsMoreImages = tempDeck.selectedImageRefs.length < requiredImageCount;
+  incompleteDeckWarning.hidden = !needsMoreImages;
+
+  if (!needsMoreImages) {
+    return;
+  }
+
+  if (incompleteDeckWarningTitle) {
+    const missingImageCount = requiredImageCount - tempDeck.selectedImageRefs.length;
+    const imageLabel = missingImageCount === 1 ? 'Image' : 'Images';
+    incompleteDeckWarningTitle.textContent = `${missingImageCount} More ${imageLabel} Needed`;
+  }
+
+  if (incompleteDeckWarningMessage) {
+    incompleteDeckWarningMessage.innerHTML = '';
+    incompleteDeckWarningMessage.append('Please ');
+
+    const selectImagesLink = document.createElement('a');
+    selectImagesLink.href = getLastImagePageHref();
+    selectImagesLink.textContent = 'select more images';
+
+    const basicInfoLink = document.createElement('a');
+    basicInfoLink.href = './basic-info.html';
+    basicInfoLink.textContent = 'reduce the # Pictures per Card';
+
+    incompleteDeckWarningMessage.append(selectImagesLink);
+    incompleteDeckWarningMessage.append(' or ');
+    incompleteDeckWarningMessage.append(basicInfoLink);
+    incompleteDeckWarningMessage.append('.');
+  }
+}
 function resolveImageSrc(ref, placeholderNumber) {
   if (ref.source === 'standard') {
     return { src: getStandardImageSrc(ref.id) };
@@ -601,6 +643,11 @@ if (isDeckBuilderPage) {
 
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
+
+
+
+
+
 
 
 
