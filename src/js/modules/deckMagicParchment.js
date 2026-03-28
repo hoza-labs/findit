@@ -41,7 +41,9 @@ function updateParchmentHeight(stageElement) {
     return;
   }
 
-  parchmentElement.style.height = `${containElement.offsetHeight}px`;
+  const containTop = containElement.offsetTop;
+  const containHeight = containElement.offsetHeight;
+  parchmentElement.style.height = `${containTop + containHeight}px`;
 }
 
 export function ensureDeckMagicParchmentFilter() {
@@ -87,4 +89,5 @@ export function ensureDeckMagicParchmentFilter() {
   window.addEventListener('resize', handleResize, { passive: true });
   requestAnimationFrame(handleResize);
 }
+
 
