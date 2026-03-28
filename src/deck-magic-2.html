@@ -61,8 +61,18 @@
             <div class="deck-magic-contain">
               <div id="deck-magic-content" class="deck-magic-content"></div>
               <div class="deck-magic-footer-links">
-                <a id="deck-magic-start-over" class="deck-magic-footer-link deck-magic-footer-link--left" href="./deck-magic-1.html">Start over</a>
-                <a id="deck-magic-next-page" class="deck-magic-footer-link deck-magic-footer-link--right" href="./deck-magic-3.html">Next page</a>
+                <div class="deck-magic-footer-slot deck-magic-footer-slot--left">
+                  <a id="deck-magic-first-page" class="deck-magic-footer-link deck-magic-footer-link--left" href="./deck-magic-1.html">First page</a>
+                </div>
+                <div class="deck-magic-footer-slot deck-magic-footer-slot--center">
+                  <details id="deck-magic-page-menu" class="deck-magic-page-menu">
+                    <summary id="deck-magic-page-menu-button" class="deck-magic-page-menu-summary" aria-label="Choose Deck Magic page">Page 1</summary>
+                    <ul id="deck-magic-page-menu-list" class="deck-magic-page-menu-list"></ul>
+                  </details>
+                </div>
+                <div class="deck-magic-footer-slot deck-magic-footer-slot--right">
+                  <a id="deck-magic-next-page" class="deck-magic-footer-link deck-magic-footer-link--right" href="#">Next page</a>
+                </div>
               </div>
             </div>
           </section>
@@ -75,3 +85,4 @@
     <script type="module" src="./js/app/menuDismiss.js"></script>
   </body>
 </html>
+

@@ -8,7 +8,10 @@ const deckStatusLine = document.querySelector('#deck-status-line');
 const buildPageSubnav = document.querySelector('#build-page-subnav');
 const buildPageIntro = document.querySelector('#build-page-intro');
 const deckMagicContent = document.querySelector('#deck-magic-content');
-const deckMagicStartOver = document.querySelector('#deck-magic-start-over');
+const deckMagicFirstPage = document.querySelector('#deck-magic-first-page');
+const deckMagicPageMenu = document.querySelector('#deck-magic-page-menu');
+const deckMagicPageMenuButton = document.querySelector('#deck-magic-page-menu-button');
+const deckMagicPageMenuList = document.querySelector('#deck-magic-page-menu-list');
 const deckMagicNextPage = document.querySelector('#deck-magic-next-page');
 
 function getCurrentDeckMagicPageNumber() {
@@ -20,6 +23,29 @@ function getCurrentDeckMagicPageNumber() {
   const pathname = globalThis.location?.pathname ?? '';
   const pathnameMatch = pathname.match(/deck-magic-(\d+)\.html$/i);
   return pathnameMatch?.[1] ?? 1;
+}
+
+function renderDeckMagicPageMenu(pageInfo) {
+  if (!deckMagicPageMenuButton || !deckMagicPageMenuList) {
+    return;
+  }
+
+  deckMagicPageMenuButton.textContent = pageInfo.currentPageLabel;
+  deckMagicPageMenuList.replaceChildren(
+    ...pageInfo.pageMenuItems.map((menuItem) => {
+      const listItem = document.createElement('li');
+      const link = document.createElement('a');
+      link.className = 'deck-magic-page-menu-link';
+      link.href = menuItem.href;
+      link.textContent = menuItem.label;
+      if (menuItem.isCurrent) {
+        link.setAttribute('aria-current', 'page');
+        link.classList.add('is-current');
+      }
+      listItem.append(link);
+      return listItem;
+    })
+  );
 }
 
 ensureDeckMagicParchmentFilter();
@@ -50,8 +76,15 @@ if (deckMagicContent) {
   );
 }
 
-if (deckMagicStartOver) {
-  deckMagicStartOver.href = pageInfo.startOverHref;
+if (deckMagicFirstPage) {
+  deckMagicFirstPage.href = pageInfo.firstPageHref;
+  deckMagicFirstPage.hidden = !pageInfo.showFirstPageLink;
+}
+
+renderDeckMagicPageMenu(pageInfo);
+
+if (deckMagicPageMenu) {
+  deckMagicPageMenu.open = false;
 }
 
 if (deckMagicNextPage) {

@@ -34,14 +34,22 @@ export function getDeckMagicPageInfo(pageNumber) {
   };
 
   const nextHref = normalizedPageNumber < 3 ? getDeckMagicPageHref(normalizedPageNumber + 1) : null;
+  const pageMenuItems = [1, 2, 3].map((menuPageNumber) => ({
+    pageNumber: menuPageNumber,
+    label: `Page ${menuPageNumber}`,
+    href: getDeckMagicPageHref(menuPageNumber),
+    isCurrent: menuPageNumber === normalizedPageNumber
+  }));
 
   return {
     pageNumber: normalizedPageNumber,
+    currentPageLabel: `Page ${normalizedPageNumber}`,
     introText: getDeckMagicIntroText(),
     bodyParagraphs: bodyByPageNumber[normalizedPageNumber],
-    startOverHref: getDeckMagicPageHref(1),
+    firstPageHref: getDeckMagicPageHref(1),
+    showFirstPageLink: normalizedPageNumber > 1,
     nextHref,
-    showNextPageLink: nextHref !== null
+    showNextPageLink: nextHref !== null,
+    pageMenuItems
   };
 }
-
