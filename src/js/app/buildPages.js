@@ -61,13 +61,7 @@ function getRequiredImageCount() {
 }
 
 function getDeckPreviewIntroText() {
-  const missingImageCount = getRequiredImageCount() - tempDeck.selectedImageRefs.length;
-  if (missingImageCount <= 0) {
-    return "Congrats! You've got all the images you need for your deck!";
-  }
-
-  const imageSuffix = missingImageCount === 1 ? '' : 's';
-  return `You need ${missingImageCount} more image${imageSuffix} for a complete deck.`;
+  return 'Take a quick peek at all the cards in your deck.';
 }
 
 function updateBuildPageIntro() {
@@ -643,6 +637,7 @@ if (isDeckBuilderPage) {
 
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
+
 
 
 
