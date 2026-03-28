@@ -390,6 +390,13 @@ body.has-top-bar.play-page {
   border-width: 2px;
 }
 
+.build-page-content-card > .card-body {
+  padding-top: 0;
+  padding-right: 3px;
+  padding-bottom: 3px;
+  padding-left: 3px;
+}
+
 
 @media (max-width: 900px) {
   .preview-main-layout {
@@ -1723,5 +1730,6 @@ body.has-top-bar.play-page {
   color: #0a58ca;
   font-weight: 600;
 }
+
 
 

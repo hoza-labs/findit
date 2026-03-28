@@ -4,10 +4,10 @@ import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { getCurrentBuildPageHref, renderBuildHeaderAndSubnav } from '../modules/buildPageNavigation.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerSlopeComponents, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
 import { describeImageRef, removeImageRefAtIndex } from '../modules/imageRefs.js';
-import { getLastImagePageHref } from '../modules/imagePageNavigation.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
 
 const buildPageSubnav = document.querySelector('#build-page-subnav');
+const buildPageIntro = document.querySelector('#build-page-intro');
 const deckPatternElement = document.querySelector('#deck-pattern');
 const selectedImagesElement = document.querySelector('#selected-images');
 const extraImagesSection = document.querySelector('#extra-images-section');
@@ -25,9 +25,6 @@ const deckPlayerStatus = document.querySelector('#deck-player-status');
 const deckSummary = document.querySelector('#deck-summary');
 const deckStatusLine = document.querySelector('#deck-status-line');
 const pageHeading = document.querySelector('header h1');
-const incompleteDeckWarning = document.querySelector('#incomplete-deck-warning');
-const incompleteDeckWarningTitle = document.querySelector('#incomplete-deck-warning-title');
-const incompleteDeckWarningMessage = document.querySelector('#incomplete-deck-warning-message');
 
 const hasDeckBuilderPage = Boolean(deckPatternElement);
 
@@ -59,6 +56,24 @@ function getRequiredImageCount() {
   return tempDeck.symbolsPerCard * (tempDeck.symbolsPerCard - 1) + 1;
 }
 
+function getDeckPreviewIntroText() {
+  const missingImageCount = getRequiredImageCount() - tempDeck.selectedImageRefs.length;
+  if (missingImageCount <= 0) {
+    return "Congrats! You've got all the images you need for your deck!";
+  }
+
+  const imageSuffix = missingImageCount === 1 ? '' : 's';
+  return `You need ${missingImageCount} more image${imageSuffix} to create your deck.`;
+}
+
+function updateBuildPageIntro() {
+  if (!buildPageIntro || hasDeckBuilderPage) {
+    return;
+  }
+
+  buildPageIntro.textContent = getDeckPreviewIntroText();
+}
+
 function updateHeader() {
   const requiredCount = getRequiredImageCount();
   if (deckSummary) {
@@ -71,7 +86,7 @@ function updateHeader() {
     tempDeck,
     currentHref: getCurrentBuildPageHref()
   });
-  renderIncompleteDeckWarning();
+  updateBuildPageIntro();
 }
 
 function resolveImageSrc(ref, placeholderNumber) {
@@ -511,44 +526,6 @@ async function renderPatternItemPreview(targetElement, imageSource) {
     await drawImagesOnSquareTarget(targetElement, [imageSource], getPatternPreviewGenerationOptions());
   } catch {
     targetElement.textContent = 'Preview unavailable.';
-  }
-}
-
-function renderIncompleteDeckWarning() {
-  if (!incompleteDeckWarning) {
-    return;
-  }
-
-  const requiredImageCount = getRequiredImageCount();
-  const needsMoreImages = tempDeck.selectedImageRefs.length < requiredImageCount;
-  incompleteDeckWarning.hidden = !needsMoreImages;
-
-  if (!needsMoreImages) {
-    return;
-  }
-
-  if (incompleteDeckWarningTitle) {
-    const missingImageCount = requiredImageCount - tempDeck.selectedImageRefs.length;
-    const imageLabel = missingImageCount === 1 ? 'Image' : 'Images';
-    incompleteDeckWarningTitle.textContent = `${missingImageCount} More ${imageLabel} Needed`;
-  }
-
-  if (incompleteDeckWarningMessage) {
-    incompleteDeckWarningMessage.innerHTML = '';
-    incompleteDeckWarningMessage.append('Please ');
-
-    const selectImagesLink = document.createElement('a');
-    selectImagesLink.href = getLastImagePageHref();
-    selectImagesLink.textContent = 'select more images';
-
-    const basicInfoLink = document.createElement('a');
-    basicInfoLink.href = './basic-info.html';
-    basicInfoLink.textContent = 'reduce the # Pictures per Card';
-
-    incompleteDeckWarningMessage.append(selectImagesLink);
-    incompleteDeckWarningMessage.append(' or ');
-    incompleteDeckWarningMessage.append(basicInfoLink);
-    incompleteDeckWarningMessage.append('.');
   }
 }
 
