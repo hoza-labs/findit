@@ -1,7 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { calculateMaskedImagePlacement, planCardRender, planCardRenderItems } from '../src/js/modules/cardCanvasRenderer.js';
+import {
+  calculateMaskedImagePlacement,
+  getCanvasRenderScale,
+  planCardRender,
+  planCardRenderItems
+} from '../src/js/modules/cardCanvasRenderer.js';
 
 test('given a masked image, placement centers the saved mask and scales it to the inscribed circle', () => {
   const placement = calculateMaskedImagePlacement({
@@ -18,6 +23,12 @@ test('given a masked image, placement centers the saved mask and scales it to th
   assert.ok(Math.abs(placement.drawHeight - 102) < 0.0001);
   assert.ok(Math.abs(placement.offsetX + 51) < 0.0001);
   assert.ok(Math.abs(placement.offsetY + 76.5) < 0.0001);
+});
+
+test('given a device pixel ratio, getCanvasRenderScale clamps it to a useful range', () => {
+  assert.equal(getCanvasRenderScale(0.5), 1);
+  assert.equal(getCanvasRenderScale(2), 2);
+  assert.equal(getCanvasRenderScale(5), 3);
 });
 
 test('given a card render, image placement order is shuffled every time the card is planned', () => {

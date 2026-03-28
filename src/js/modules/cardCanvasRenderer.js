@@ -2,6 +2,8 @@ import { clampImageMask, imageMaskToPixels } from './imageMasking.js';
 import { normalizeGenerationOptions } from './cardGenerationOptions.js';
 import { getCardLayout } from './cardLayout.js';
 
+const MAX_CANVAS_RENDER_SCALE = 3;
+
 export async function drawImagesOnSquareTarget(targetElement, imageSources, options = undefined) {
   if (!targetElement) {
     throw new Error('targetElement is required.');
@@ -19,16 +21,18 @@ export async function drawImagesOnSquareTarget(targetElement, imageSources, opti
   const generationOptions = normalizeGenerationOptions(options);
   const normalizedSources = imageSources.map(normalizeImageSource);
   const sideLength = getTargetSideLength(targetElement);
+  const renderScale = getCanvasRenderScale();
   const canvas = document.createElement('canvas');
-  canvas.width = sideLength;
-  canvas.height = sideLength;
+  canvas.width = Math.round(sideLength * renderScale);
+  canvas.height = Math.round(sideLength * renderScale);
   canvas.style.width = '100%';
   canvas.style.height = '100%';
   canvas.style.display = 'block';
   canvas.style.borderRadius = generationOptions.cardShape === 'round' ? '50%' : '0';
+  canvas.style.imageRendering = 'auto';
 
   const context = canvas.getContext('2d');
-  context.clearRect(0, 0, sideLength, sideLength);
+  configureCanvasRenderingContext(context, sideLength, renderScale);
   const renderPlan = planCardRender(normalizedSources, generationOptions);
   const images = await loadImages(normalizedSources);
   applyCardShape(targetElement, generationOptions.cardShape);
@@ -112,6 +116,16 @@ export function calculateMaskedImagePlacement({ imageWidth, imageHeight, mask, c
   };
 }
 
+export function getCanvasRenderScale(devicePixelRatio = undefined) {
+  const resolvedDevicePixelRatio = Number.isFinite(devicePixelRatio)
+    ? devicePixelRatio
+    : typeof window !== 'undefined' && Number.isFinite(window.devicePixelRatio)
+      ? window.devicePixelRatio
+      : 1;
+
+  return Math.max(1, Math.min(MAX_CANVAS_RENDER_SCALE, resolvedDevicePixelRatio));
+}
+
 function getTargetSideLength(targetElement) {
   const rect = targetElement.getBoundingClientRect();
   const side = Math.floor(Math.min(rect.width || 400, rect.height || 400));
@@ -125,6 +139,7 @@ async function loadImages(imageSources) {
         const source = normalizeImageSource(candidate);
         return new Promise((resolve, reject) => {
           const image = new Image();
+          image.decoding = 'async';
           image.onload = () => resolve({ image, mask: source.mask });
           image.onerror = () => reject(new Error(`Failed to load image: ${source.src}`));
           image.src = source.src;
@@ -132,6 +147,13 @@ async function loadImages(imageSources) {
       }
     )
   );
+}
+
+function configureCanvasRenderingContext(context, sideLength, renderScale) {
+  context.setTransform(renderScale, 0, 0, renderScale, 0, 0);
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = 'high';
+  context.clearRect(0, 0, sideLength, sideLength);
 }
 
 function buildShuffledIndices(length, random) {
