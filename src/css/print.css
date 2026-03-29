@@ -97,6 +97,7 @@
   display: none;
 }
 
+.print-layout-dialog,
 .print-tips-dialog {
   max-width: 38rem;
   width: min(38rem, calc(100vw - 2rem));
@@ -105,10 +106,12 @@
   padding: 0;
 }
 
+.print-layout-dialog::backdrop,
 .print-tips-dialog::backdrop {
   background: rgba(0, 0, 0, 0.35);
 }
 
+.print-layout-dialog-body,
 .print-tips-dialog-body {
   padding: 1.25rem;
 }
@@ -163,3 +166,4 @@
     box-shadow: none;
   }
 }
+

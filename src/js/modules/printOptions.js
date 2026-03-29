@@ -15,7 +15,7 @@ export const CARD_NUMBER_POSITIONS = Object.freeze(['top-left', 'top-right', 'bo
 export const CARD_OUTLINE_DASH_STYLES = Object.freeze(['solid', 'dashed', 'dotted']);
 
 export const PRINT_GAP_IN = 0.125;
-export const DEFAULT_PRINT_TARGET_CARD_WIDTH_IN = 4;
+export const DEFAULT_PRINT_TARGET_CARD_WIDTH_IN = 3.4;
 
 const MM_PER_INCH = 25.4;
 const DPI_PRESET_VALUES = Object.freeze({
@@ -39,13 +39,14 @@ export function createDefaultPrintOptions() {
     pageSizeId: 'letter',
     orientation: 'portrait',
     units: 'in',
+    desiredCardSize: '3.4',
     customPageWidth: '',
     customPageHeight: '',
     marginTop: '0.25',
     marginRight: '0.25',
     marginBottom: '0.25',
     marginLeft: '0.25',
-    layoutId: '4-up',
+    layoutId: '6-up',
     qualityPreset: 'inkjet',
     customDpi: '',
     showCardNumber: true,
@@ -64,6 +65,7 @@ export function normalizePrintOptions(rawOptions) {
     pageSizeId: normalizeEnum(options.pageSizeId, PAGE_SIZE_IDS, defaults.pageSizeId),
     orientation: normalizeEnum(options.orientation, ['portrait', 'landscape'], defaults.orientation),
     units: normalizeEnum(options.units, PRINT_UNITS, defaults.units),
+    desiredCardSize: normalizePositiveNumberString(options.desiredCardSize) || defaults.desiredCardSize,
     customPageWidth: normalizePositiveNumberString(options.customPageWidth),
     customPageHeight: normalizePositiveNumberString(options.customPageHeight),
     marginTop: normalizeNonNegativeNumberString(options.marginTop, defaults.marginTop),
@@ -153,28 +155,43 @@ export function resolveEffectiveDpi(printOptions) {
 }
 
 export function getRecommendedLayoutId(printOptions) {
-  let bestLayoutId = createDefaultPrintOptions().layoutId;
-  let bestDistance = Number.POSITIVE_INFINITY;
-  let bestCardWidthIn = -1;
+  const normalized = normalizePrintOptions(printOptions);
+  const desiredCardWidthIn = convertToInches(normalized.desiredCardSize, normalized.units) ?? DEFAULT_PRINT_TARGET_CARD_WIDTH_IN;
+  let largestMeetingLayout = null;
+  let fallbackLayout = null;
 
   for (const layoutId of PRINT_LAYOUT_IDS) {
-    const planned = planPrintLayout(1, { ...normalizePrintOptions(printOptions), layoutId });
+    const planned = planPrintLayout(1, { ...normalized, layoutId });
     if (!planned.isValid) {
       continue;
     }
 
-    const distance = Math.abs(planned.expectedCardWidthIn - DEFAULT_PRINT_TARGET_CARD_WIDTH_IN);
+    if (!fallbackLayout || planned.expectedCardWidthIn > fallbackLayout.expectedCardWidthIn) {
+      fallbackLayout = {
+        layoutId,
+        expectedCardWidthIn: planned.expectedCardWidthIn
+      };
+    }
+
+    if (planned.expectedCardWidthIn < desiredCardWidthIn) {
+      continue;
+    }
+
     if (
-      distance < bestDistance
-      || (Math.abs(distance - bestDistance) < 0.0001 && planned.expectedCardWidthIn > bestCardWidthIn)
+      !largestMeetingLayout
+      || planned.cardsPerPage > largestMeetingLayout.cardsPerPage
+      || (planned.cardsPerPage === largestMeetingLayout.cardsPerPage
+        && planned.expectedCardWidthIn > largestMeetingLayout.expectedCardWidthIn)
     ) {
-      bestLayoutId = layoutId;
-      bestDistance = distance;
-      bestCardWidthIn = planned.expectedCardWidthIn;
+      largestMeetingLayout = {
+        layoutId,
+        cardsPerPage: planned.cardsPerPage,
+        expectedCardWidthIn: planned.expectedCardWidthIn
+      };
     }
   }
 
-  return bestLayoutId;
+  return largestMeetingLayout?.layoutId ?? fallbackLayout?.layoutId ?? createDefaultPrintOptions().layoutId;
 }
 
 export function planPrintLayout(cardCount, printOptions, generationOptions = undefined) {
@@ -418,6 +435,9 @@ function trimTrailingZeros(value) {
 function capitalize(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
+
+
+
 
 
 

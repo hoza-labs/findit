@@ -23,7 +23,7 @@ test('given no saved default print options, getDefaultPrintOptions returns the b
   const defaults = getDefaultPrintOptions(createMemoryStorage());
 
   assert.equal(defaults.pageSizeId, 'letter');
-  assert.equal(defaults.layoutId, '4-up');
+  assert.equal(defaults.layoutId, '6-up');
   assert.equal(defaults.qualityPreset, 'inkjet');
 });
 
@@ -33,6 +33,7 @@ test('given saved default print options, saveDefaultPrintOptions normalizes and 
     pageSizeId: 'a4',
     orientation: 'landscape',
     units: 'mm',
+    desiredCardSize: '90',
     customPageWidth: '',
     customPageHeight: '',
     marginTop: '6',
@@ -57,3 +58,4 @@ test('given saved default print options, saveDefaultPrintOptions normalizes and 
   const loaded = getDefaultPrintOptions(storage);
   assert.deepEqual(loaded, saved);
 });
+

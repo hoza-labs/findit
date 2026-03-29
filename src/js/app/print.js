@@ -11,13 +11,16 @@ const printOptionsForm = document.querySelector('#print-options-form');
 const customPageSizeFields = document.querySelector('#custom-page-size-fields');
 const customDpiRow = document.querySelector('#custom-dpi-row');
 const printQualitySummary = document.querySelector('#print-quality-summary');
-const expectedCardWidth = document.querySelector('#expected-card-width');
 const printOptionsMessage = document.querySelector('#print-options-message');
 const printButton = document.querySelector('#print-button');
 const savePrintDefaultsButton = document.querySelector('#save-print-defaults-button');
 const printTipsButton = document.querySelector('#print-tips-button');
 const printTipsDialog = document.querySelector('#print-tips-dialog');
 const printTipsClose = document.querySelector('#print-tips-close');
+const layoutSizeDialog = document.querySelector('#layout-size-dialog');
+const layoutSizeDialogMessage = document.querySelector('#layout-size-dialog-message');
+const layoutSizeDialogOk = document.querySelector('#layout-size-dialog-ok');
+const layoutSizeDialogCancel = document.querySelector('#layout-size-dialog-cancel');
 const printPreview = document.querySelector('#print-preview');
 const printPreviewEmpty = document.querySelector('#print-preview-empty');
 const printPreviewPrev = document.querySelector('#print-preview-prev');
@@ -32,6 +35,8 @@ let previewPageIndex = 0;
 let layoutPlan = null;
 let renderVersion = 0;
 let isRenderingPreview = false;
+let pendingLayoutSizeChange = null;
+const APPROX_HTML_ENTITY = '&#8776;';
 
 function updateHeader() {
   renderDeckStatusLine(deckStatusLine, tempDeck);
@@ -59,12 +64,97 @@ function renderForm() {
   }
 }
 
+function getLayoutSelect() {
+  const layoutSelect = printOptionsForm.elements.namedItem('layoutId');
+  return layoutSelect instanceof HTMLSelectElement ? layoutSelect : null;
+}
+
+function getRawFieldValue(name) {
+  const field = printOptionsForm.elements.namedItem(name);
+  return field && 'value' in field ? String(field.value).trim() : '';
+}
+
+function updateLayoutOptions(printOptions, selectedLayoutId) {
+  const layoutSelect = getLayoutSelect();
+  if (!layoutSelect) {
+    return;
+  }
+
+  const previousValue = selectedLayoutId ?? layoutSelect.value;
+  layoutSelect.innerHTML = '';
+
+  for (const layoutId of ['1-up', '2-up', '4-up', '6-up', '9-up', '12-up']) {
+    const planned = planPrintLayout(1, { ...printOptions, layoutId }, tempDeck.generationOptions);
+    const option = document.createElement('option');
+    option.value = layoutId;
+    if (planned.isValid) {
+      option.innerHTML = `${layoutId} (Max Card Size ${APPROX_HTML_ENTITY} ${formatMeasurement(planned.expectedCardWidthIn, printOptions.units)})`;
+    } else {
+      option.textContent = `${layoutId} (Not available)`;
+    }
+    option.selected = layoutId === previousValue;
+    layoutSelect.appendChild(option);
+  }
+}
+
+function formatInputNumber(value, fractionDigits = 2) {
+  if (!Number.isFinite(value)) {
+    return '';
+  }
+
+  return String(Number.parseFloat(value.toFixed(fractionDigits)));
+}
+
+function closeLayoutSizeDialog() {
+  pendingLayoutSizeChange = null;
+  if (layoutSizeDialog.open) {
+    layoutSizeDialog.close();
+  }
+}
+
+function confirmLayoutSizeDialog() {
+  if (!pendingLayoutSizeChange) {
+    closeLayoutSizeDialog();
+    return;
+  }
+
+  const nextLayoutId = pendingLayoutSizeChange.layoutId;
+  const desiredCardSizeField = printOptionsForm.elements.namedItem('desiredCardSize');
+  if (desiredCardSizeField && 'value' in desiredCardSizeField) {
+    desiredCardSizeField.value = pendingLayoutSizeChange.desiredCardSizeValue;
+  }
+
+  closeLayoutSizeDialog();
+  void refreshPreview({ selectedLayoutId: nextLayoutId, autoRecommend: false });
+}
+
+function cancelLayoutSizeDialog() {
+  const layoutSelect = getLayoutSelect();
+  if (layoutSelect) {
+    layoutSelect.value = tempDeck.printOptions.layoutId;
+  }
+
+  closeLayoutSizeDialog();
+  void refreshPreview();
+}
+
+function openLayoutSizeDialog(layoutId, expectedCardWidth, units) {
+  pendingLayoutSizeChange = {
+    layoutId,
+    desiredCardSizeValue: formatInputNumber(expectedCardWidth)
+  };
+  layoutSizeDialogMessage.textContent = `The ${layoutId} page layout requires a smaller card size of ${formatInputNumber(expectedCardWidth)} ${units}. Do you want to change the Desired Max Card Size to match?`;
+  layoutSizeDialog.showModal();
+  layoutSizeDialogOk.focus();
+}
+
 function getPrintOptionsFromForm() {
   const formData = new FormData(printOptionsForm);
   return normalizePrintOptions({
     pageSizeId: formData.get('pageSizeId'),
     orientation: formData.get('orientation'),
     units: formData.get('units'),
+    desiredCardSize: formData.get('desiredCardSize'),
     customPageWidth: formData.get('customPageWidth'),
     customPageHeight: formData.get('customPageHeight'),
     marginTop: formData.get('marginTop'),
@@ -91,6 +181,11 @@ function updateConditionalFields(printOptions) {
 }
 
 function validateCustomFields(printOptions) {
+  const desiredCardSizeRaw = getRawFieldValue('desiredCardSize');
+  if (!desiredCardSizeRaw || !/^(?:\d+\.?\d*|\.\d+)$/.test(desiredCardSizeRaw) || Number.parseFloat(desiredCardSizeRaw) <= 0) {
+    return 'Desired card size must be a positive number.';
+  }
+
   if (printOptions.pageSizeId === 'custom') {
     if (!printOptions.customPageWidth || !printOptions.customPageHeight) {
       return 'Custom page width and height must both be positive numbers.';
@@ -115,18 +210,30 @@ async function persistPrintOptions(printOptions) {
   updateHeader();
 }
 
-async function refreshPreview() {
+async function refreshPreview(options = {}) {
+  const { selectedLayoutId = null, autoRecommend = true } = options;
   const version = renderVersion += 1;
-  const printOptions = getPrintOptionsFromForm();
-  updateConditionalFields(printOptions);
-  await persistPrintOptions(printOptions);
+  const rawPrintOptions = getPrintOptionsFromForm();
+  const customValidationMessage = validateCustomFields(rawPrintOptions);
+  const resolvedLayoutId = autoRecommend
+    ? getRecommendedLayoutId(rawPrintOptions)
+    : (selectedLayoutId ?? rawPrintOptions.layoutId ?? tempDeck.printOptions.layoutId);
+  const layoutSelect = getLayoutSelect();
+  if (layoutSelect) {
+    layoutSelect.value = resolvedLayoutId;
+  }
 
-  const customValidationMessage = validateCustomFields(printOptions);
-  layoutPlan = customValidationMessage ? null : planPrintLayout(cardEntries.length, printOptions, tempDeck.generationOptions);
+  const printOptions = normalizePrintOptions({
+    ...rawPrintOptions,
+    layoutId: resolvedLayoutId
+  });
+
+  updateConditionalFields(printOptions);
+  updateLayoutOptions(printOptions, resolvedLayoutId);
 
   if (customValidationMessage) {
+    layoutPlan = null;
     printOptionsMessage.textContent = customValidationMessage;
-    expectedCardWidth.textContent = '--';
     printButton.disabled = true;
     printPreview.innerHTML = '';
     printPreviewEmpty.hidden = false;
@@ -137,9 +244,11 @@ async function refreshPreview() {
     return;
   }
 
+  await persistPrintOptions(printOptions);
+  layoutPlan = planPrintLayout(cardEntries.length, printOptions, tempDeck.generationOptions);
+
   if (!layoutPlan.isValid) {
     printOptionsMessage.textContent = layoutPlan.validationMessage;
-    expectedCardWidth.textContent = '--';
     printButton.disabled = true;
     printPreview.innerHTML = '';
     printPreviewEmpty.hidden = false;
@@ -151,7 +260,6 @@ async function refreshPreview() {
   }
 
   printOptionsMessage.textContent = 'Print options are ready. Use the browser print dialog for final printer and paper settings.';
-  expectedCardWidth.textContent = formatMeasurement(layoutPlan.expectedCardWidthIn, printOptions.units);
   printButton.disabled = false;
   printPreviewEmpty.hidden = true;
 
@@ -181,11 +289,10 @@ async function refreshPreview() {
   } finally {
     isRenderingPreview = false;
     if (version !== renderVersion) {
-      await refreshPreview();
+      await refreshPreview(options);
     }
   }
 }
-
 function updatePrintPageStyle(layout) {
   let styleElement = document.querySelector('#dynamic-print-page-style');
   if (!styleElement) {
@@ -202,24 +309,27 @@ function updatePrintPageStyle(layout) {
   styleElement.textContent = `@page { size: ${layout.pageWidthIn}in ${layout.pageHeightIn}in; margin: 0; }`;
 }
 
-printOptionsForm.addEventListener('input', () => {
-  void refreshPreview();
-});
-
-printOptionsForm.addEventListener('change', (event) => {
+printOptionsForm.addEventListener('input', (event) => {
   const target = event.target;
-  if (!(target instanceof HTMLSelectElement)) {
+  if (target instanceof HTMLSelectElement && target.name === 'layoutId') {
     return;
   }
 
-  if (target.name === 'pageSizeId' || target.name === 'orientation') {
-    const layoutSelect = printOptionsForm.elements.namedItem('layoutId');
-    if (layoutSelect instanceof HTMLSelectElement) {
-      const currentOptions = getPrintOptionsFromForm();
-      if (layoutSelect.value === tempDeck.printOptions.layoutId) {
-        layoutSelect.value = getRecommendedLayoutId(currentOptions);
-      }
+  void refreshPreview();
+});
+printOptionsForm.addEventListener('change', (event) => {
+  const target = event.target;
+  if (target instanceof HTMLSelectElement && target.name === 'layoutId') {
+    const printOptions = getPrintOptionsFromForm();
+    const desiredCardSize = Number.parseFloat(printOptions.desiredCardSize);
+    const planned = planPrintLayout(1, { ...printOptions, layoutId: target.value }, tempDeck.generationOptions);
+    if (planned.isValid && Number.isFinite(desiredCardSize) && planned.expectedCardWidth < desiredCardSize) {
+      openLayoutSizeDialog(target.value, planned.expectedCardWidth, printOptions.units);
+      return;
     }
+
+    void refreshPreview({ selectedLayoutId: target.value, autoRecommend: false });
+    return;
   }
 
   void refreshPreview();
@@ -270,6 +380,32 @@ savePrintDefaultsButton.addEventListener('click', () => {
   printOptionsMessage.textContent = 'These print options are now the default for new decks.';
 });
 
+layoutSizeDialogOk.addEventListener('click', () => {
+  confirmLayoutSizeDialog();
+});
+
+layoutSizeDialogCancel.addEventListener('click', () => {
+  cancelLayoutSizeDialog();
+});
+
+layoutSizeDialog.addEventListener('cancel', (event) => {
+  event.preventDefault();
+  cancelLayoutSizeDialog();
+});
+
+layoutSizeDialog.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    confirmLayoutSizeDialog();
+    return;
+  }
+
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    cancelLayoutSizeDialog();
+  }
+});
+
 printTipsButton.addEventListener('click', () => {
   printTipsDialog.showModal();
 });
@@ -301,3 +437,17 @@ updateHeader();
 updateConditionalFields(tempDeck.printOptions);
 updatePrintPageStyle(layoutPlan);
 await refreshPreview();
+
+
+
+
+
+
+
+
+
+
+
+
+
+

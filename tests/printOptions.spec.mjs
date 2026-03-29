@@ -11,7 +11,7 @@ import {
   resolvePageSize
 } from '../src/js/modules/printOptions.js';
 
-test('given default print options, letter portrait resolves to a 4-up layout near four inches wide', () => {
+test('given default print options, letter portrait resolves to a 6-up layout near 3.4 inches wide', () => {
   const options = createDefaultPrintOptions();
   const pageSize = resolvePageSize(options);
   const layoutId = getRecommendedLayoutId(options);
@@ -19,10 +19,10 @@ test('given default print options, letter portrait resolves to a 4-up layout nea
 
   assert.equal(pageSize.widthIn, 8.5);
   assert.equal(pageSize.heightIn, 11);
-  assert.equal(layoutId, '4-up');
+  assert.equal(layoutId, '6-up');
   assert.equal(planned.isValid, true);
-  assert.equal(planned.layoutId, '4-up');
-  assert.ok(Math.abs(planned.expectedCardWidthIn - 3.9375) < 0.0001);
+  assert.equal(planned.layoutId, '6-up');
+  assert.ok(Math.abs(planned.expectedCardWidthIn - 3.4166666667) < 0.0001);
 });
 
 test('given custom page size in millimeters, resolvePageSize honors orientation and units', () => {
@@ -73,13 +73,14 @@ test('given invalid custom values, normalizePrintOptions falls back to safe defa
     pageSizeId: 'custom',
     orientation: 'portrait',
     units: 'in',
+    desiredCardSize: '3.4',
     customPageWidth: '',
     customPageHeight: '',
     marginTop: '0.25',
     marginRight: '0.25',
     marginBottom: '0.25',
     marginLeft: '0.25',
-    layoutId: '4-up',
+    layoutId: '6-up',
     qualityPreset: 'inkjet',
     customDpi: '',
     showCardNumber: true,
@@ -148,6 +149,7 @@ test('formatMeasurement reports values in the active units', () => {
   assert.equal(formatMeasurement(4, 'in'), '4 in');
   assert.equal(formatMeasurement(1, 'mm'), '25.4 mm');
 });
+
 
 
 

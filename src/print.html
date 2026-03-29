@@ -53,6 +53,20 @@
           <div class="card-body">
             <h2 class="h5 mb-3">Print Options</h2>
             <form id="print-options-form" novalidate>
+              <div class="print-form-grid print-form-grid--two">
+                <div>
+                  <label for="desired-card-size" class="form-label">Desired card size</label>
+                  <input id="desired-card-size" name="desiredCardSize" type="text" class="form-control" inputmode="decimal" />
+                </div>
+                <div>
+                  <label for="print-units" class="form-label">Units</label>
+                  <select id="print-units" name="units" class="form-select">
+                    <option value="in">inches</option>
+                    <option value="mm">mm</option>
+                  </select>
+                </div>
+              </div>
+
               <div class="print-form-row">
                 <label for="print-page-size" class="form-label">Page Size</label>
                 <select id="print-page-size" name="pageSizeId" class="form-select">
@@ -66,21 +80,12 @@
                 </select>
               </div>
 
-              <div class="print-form-grid print-form-grid--two">
-                <div>
-                  <label for="print-orientation" class="form-label">Orientation</label>
-                  <select id="print-orientation" name="orientation" class="form-select">
-                    <option value="portrait">Portrait</option>
-                    <option value="landscape">Landscape</option>
-                  </select>
-                </div>
-                <div>
-                  <label for="print-units" class="form-label">Units</label>
-                  <select id="print-units" name="units" class="form-select">
-                    <option value="in">inches</option>
-                    <option value="mm">mm</option>
-                  </select>
-                </div>
+              <div class="print-form-row">
+                <label for="print-orientation" class="form-label">Orientation</label>
+                <select id="print-orientation" name="orientation" class="form-select">
+                  <option value="portrait">Portrait</option>
+                  <option value="landscape">Landscape</option>
+                </select>
               </div>
 
               <div id="custom-page-size-fields" class="print-form-grid print-form-grid--two" hidden>
@@ -145,12 +150,6 @@
                 <input id="custom-dpi" name="customDpi" type="text" class="form-control" inputmode="numeric" />
               </div>
 
-              <div class="print-readout card bg-light-subtle border-0 mb-3">
-                <div class="card-body py-3">
-                  <p class="mb-1 fw-semibold">Expected card width</p>
-                  <p id="expected-card-width" class="mb-0 text-muted">--</p>
-                </div>
-              </div>
 
               <details class="print-advanced mb-3">
                 <summary class="fw-semibold">Advanced</summary>
@@ -210,6 +209,17 @@
       </div>
     </main>
 
+
+    <dialog id="layout-size-dialog" class="print-layout-dialog">
+      <div class="print-layout-dialog-body">
+        <p id="layout-size-dialog-message" class="mb-3"></p>
+        <div class="d-flex justify-content-end gap-2">
+          <button id="layout-size-dialog-cancel" type="button" class="btn btn-outline-secondary">Cancel</button>
+          <button id="layout-size-dialog-ok" type="button" class="btn btn-primary">OK</button>
+        </div>
+      </div>
+    </dialog>
+
     <dialog id="print-tips-dialog" class="print-tips-dialog">
       <div class="print-tips-dialog-body">
         <h2 class="h5 mb-3">Tips for printing</h2>
@@ -233,4 +243,7 @@
     <script type="module" src="./js/app/menuDismiss.js"></script>
   </body>
 </html>
+
+
+
 

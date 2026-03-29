@@ -33,13 +33,14 @@ test('given empty temp deck, play and print options are initialized with default
     pageSizeId: 'letter',
     orientation: 'portrait',
     units: 'in',
+    desiredCardSize: '3.4',
     customPageWidth: '',
     customPageHeight: '',
     marginTop: '0.25',
     marginRight: '0.25',
     marginBottom: '0.25',
     marginLeft: '0.25',
-    layoutId: '4-up',
+    layoutId: '6-up',
     qualityPreset: 'inkjet',
     customDpi: '',
     showCardNumber: true,
@@ -77,6 +78,7 @@ test('given saved deck with play and print options, temp deck preserves normaliz
       pageSizeId: 'custom',
       orientation: 'landscape',
       units: 'mm',
+      desiredCardSize: '84',
       customPageWidth: ' 210 ',
       customPageHeight: '297.0',
       marginTop: ' 6.5 ',
@@ -116,6 +118,7 @@ test('given saved deck with play and print options, temp deck preserves normaliz
     pageSizeId: 'custom',
     orientation: 'landscape',
     units: 'mm',
+    desiredCardSize: '84',
     customPageWidth: '210',
     customPageHeight: '297',
     marginTop: '6.5',
@@ -172,7 +175,7 @@ test('given legacy handsToPlay option, normalize maps it to lengthOfPlay in hand
     playerNames: ''
   });
   assert.equal(normalized.printOptions.pageSizeId, 'letter');
-  assert.equal(normalized.printOptions.layoutId, '4-up');
+  assert.equal(normalized.printOptions.layoutId, '6-up');
 });
 
 test('given legacy temp deck without play or print options, normalizeTempDeck adds defaults and a new pattern', () => {
@@ -226,6 +229,7 @@ test('given a temp deck, createSavedDeckRecord includes normalized pattern and p
       pageSizeId: 'a4',
       orientation: 'portrait',
       units: 'mm',
+      desiredCardSize: '85',
       customPageWidth: '',
       customPageHeight: '',
       marginTop: '5',
@@ -260,6 +264,7 @@ test('given a temp deck, createSavedDeckRecord includes normalized pattern and p
     pageSizeId: 'a4',
     orientation: 'portrait',
     units: 'mm',
+    desiredCardSize: '85',
     customPageWidth: '',
     customPageHeight: '',
     marginTop: '5',
@@ -276,6 +281,7 @@ test('given a temp deck, createSavedDeckRecord includes normalized pattern and p
     cardOutlineDashStyle: 'dotted'
   });
 });
+
 
 
 
