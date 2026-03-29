@@ -1,4 +1,5 @@
 import { createDefaultGenerationOptions, normalizeGenerationOptions } from './cardGenerationOptions.js';
+import { createRandomPattern, normalizePattern } from './patternSeed.js';
 import { createDefaultPrintOptions, normalizePrintOptions } from './printOptions.js';
 
 const DEFAULT_SYMBOLS_PER_CARD = 4;
@@ -13,6 +14,7 @@ const DEFAULT_PLAY_OPTIONS = Object.freeze({
 export function createEmptyTempDeck(options = {}) {
   return {
     deckName: '',
+    pattern: normalizePattern(options.pattern, createRandomPattern(options.random)),
     symbolsPerCard: DEFAULT_SYMBOLS_PER_CARD,
     selectedImageRefs: [],
     generationOptions: createDefaultGenerationOptions(),
@@ -26,6 +28,7 @@ export function createEmptyTempDeck(options = {}) {
 export function createTempDeckFromSavedDeck(deck) {
   return {
     deckName: deck.name,
+    pattern: normalizePattern(deck.pattern, createRandomPattern()),
     symbolsPerCard: deck.symbolsPerCard,
     selectedImageRefs: Array.isArray(deck.imageRefs) ? [...deck.imageRefs] : [],
     generationOptions: normalizeGenerationOptions(deck.generationOptions),
@@ -40,6 +43,7 @@ export function createSavedDeckRecord(tempDeck, name = tempDeck?.deckName ?? '')
   const normalized = normalizeTempDeck(tempDeck);
   return {
     name,
+    pattern: normalized.pattern,
     symbolsPerCard: normalized.symbolsPerCard,
     imageRefs: [...normalized.selectedImageRefs],
     generationOptions: { ...normalized.generationOptions },
@@ -56,6 +60,7 @@ export function normalizeTempDeck(tempDeck) {
 
   return {
     deckName: tempDeck.deckName ?? '',
+    pattern: normalizePattern(tempDeck.pattern, createRandomPattern()),
     symbolsPerCard: Number.isInteger(tempDeck.symbolsPerCard) ? tempDeck.symbolsPerCard : DEFAULT_SYMBOLS_PER_CARD,
     selectedImageRefs: Array.isArray(tempDeck.selectedImageRefs) ? [...tempDeck.selectedImageRefs] : [],
     generationOptions: normalizeGenerationOptions(tempDeck.generationOptions),

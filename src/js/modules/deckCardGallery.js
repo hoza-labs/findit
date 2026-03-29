@@ -1,5 +1,6 @@
-﻿import { drawImagesOnSquareTarget } from './cardCanvasRenderer.js';
+import { drawImagesOnSquareTarget } from './cardCanvasRenderer.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from './deckPlayer.js';
+import { deriveRenderSeed } from './patternSeed.js';
 import { getStandardImageSrc } from './standardImageFiles.js';
 
 export function createDeckCardGalleryRenderer({
@@ -109,7 +110,9 @@ export function createDeckCardGalleryRenderer({
       card.appendChild(cardBody);
       containerElement.appendChild(card);
 
-      await drawImagesOnSquareTarget(target, sources, tempDeck.generationOptions);
+      await drawImagesOnSquareTarget(target, sources, tempDeck.generationOptions, {
+        randomSeed: deriveRenderSeed(tempDeck.pattern, cardIndex + 1)
+      });
     }
   }
 

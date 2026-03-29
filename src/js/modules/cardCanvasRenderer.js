@@ -1,6 +1,7 @@
 import { clampImageMask, imageMaskToPixels } from './imageMasking.js';
 import { normalizeGenerationOptions } from './cardGenerationOptions.js';
 import { getCardLayout } from './cardLayout.js';
+import { createSeededRandom, normalizePattern } from './patternSeed.js';
 
 const BALANCED_MAX_CANVAS_RENDER_SCALE = 3;
 const LARGER_SOURCE_SAMPLING_MAX_CANVAS_RENDER_SCALE = 4;
@@ -43,7 +44,10 @@ export async function drawImagesOnSquareTarget(targetElement, imageSources, opti
 
   const context = canvas.getContext('2d');
   configureCanvasRenderingContext(context, sideLength, renderScale);
-  const renderPlan = planCardRender(normalizedSources, generationOptions);
+  const random = resolvedRenderConfig.randomSeed === null
+    ? Math.random
+    : createSeededRandom(resolvedRenderConfig.randomSeed);
+  const renderPlan = planCardRender(normalizedSources, generationOptions, random);
   const images = await loadImages(normalizedSources);
   applyCardShape(targetElement, generationOptions.cardShape);
   applyCardContainerStyles(targetElement);
@@ -325,6 +329,7 @@ function normalizeRenderConfig(renderConfig) {
     sideLength: Number.isFinite(config.sideLength) && config.sideLength > 0 ? config.sideLength : null,
     cssSize: Number.isFinite(config.cssSize) && config.cssSize > 0 ? config.cssSize : null,
     renderScale: Number.isFinite(config.renderScale) && config.renderScale > 0 ? config.renderScale : null,
+    randomSeed: normalizePattern(config.randomSeed),
     cardNumberText: typeof config.cardNumberText === 'string' && config.cardNumberText.trim() ? config.cardNumberText.trim() : '',
     showCardOutline: Boolean(config.showCardOutline),
     markupColor: typeof config.markupColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(config.markupColor)

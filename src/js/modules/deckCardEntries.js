@@ -1,4 +1,5 @@
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from './deckPlayer.js';
+import { deriveRenderSeed } from './patternSeed.js';
 import { getStandardImageSrc } from './standardImageFiles.js';
 
 export function createDeckCardEntries(tempDeck, userImages = [], webImages = []) {
@@ -59,6 +60,7 @@ export function createDeckCardEntries(tempDeck, userImages = [], webImages = [])
     return {
       cardIndex,
       cardNumber: cardIndex + 1,
+      randomSeed: deriveRenderSeed(tempDeck.pattern, cardIndex + 1),
       sources: getDeckPlayerCardItems(slopeItems, grid, step.s, step.r)
     };
   });

@@ -50,6 +50,7 @@ export function createQuickDeckTempDeck({
   webImageIds = [],
   standardImageIds = [],
   printOptions = undefined,
+  patternRandom = Math.random,
   random = Math.random
 } = {}) {
   const normalizedSymbolsPerCard = normalizeQuickDeckSymbolsPerCard(symbolsPerCard);
@@ -68,7 +69,7 @@ export function createQuickDeckTempDeck({
   const selectedImageRefs = [...userSelections, ...webSelections, ...standardSelections];
   return {
     tempDeck: {
-      ...createEmptyTempDeck({ printOptions }),
+      ...createEmptyTempDeck({ printOptions, random: patternRandom }),
       symbolsPerCard: normalizedSymbolsPerCard,
       selectedImageRefs
     },

@@ -1,5 +1,6 @@
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { loadTempDeckOrDefault, repository } from '../modules/deckFlowCommon.js';
+import { deriveRenderSeed } from '../modules/patternSeed.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
 import {
   getCardsToDrawForHand,
@@ -1688,7 +1689,7 @@ async function renderHand() {
     card.appendChild(cardBody);
     playCardGrid.appendChild(card);
 
-    await drawImagesOnSquareTarget(target, sources, tempDeck.generationOptions);
+    await drawImagesOnSquareTarget(target, sources, tempDeck.generationOptions, { randomSeed: deriveRenderSeed(tempDeck.pattern, cardIndex + 1) });
     if (state.sessionEnded || !state.playRevealCountdownOpen) {
       return;
     }
@@ -1939,6 +1940,7 @@ if (window.visualViewport) {
 
 resetPlayerScores();
 prepareGameStart();
+
 
 
 

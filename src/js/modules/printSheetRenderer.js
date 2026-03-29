@@ -91,6 +91,7 @@ async function populateSheetCards(sheetElement, layoutPlan, page, cardEntries, g
       {
         sideLength: mode === 'print' ? slot.sizeIn * CSS_PIXELS_PER_INCH : null,
         renderScale: mode === 'print' ? effectiveDpi / CSS_PIXELS_PER_INCH : null,
+        randomSeed: cardEntry.randomSeed,
         cardNumberText: printOptions.showCardNumber ? String(cardEntry.cardNumber) : '',
         showCardOutline: printOptions.showCardOutline,
         markupColor: printOptions.markupColor,

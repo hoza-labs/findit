@@ -9,8 +9,9 @@ import {
 } from '../src/js/modules/deckSession.js';
 
 test('given empty temp deck, play and print options are initialized with defaults', () => {
-  const deck = createEmptyTempDeck();
+  const deck = createEmptyTempDeck({ random: () => 0.25 });
 
+  assert.equal(deck.pattern, 1073741824);
   assert.deepEqual(deck.generationOptions, {
     cardShape: 'round',
     imageRotation: 'random',
@@ -48,6 +49,7 @@ test('given empty temp deck, play and print options are initialized with default
 test('given saved deck with play and print options, temp deck preserves normalized options', () => {
   const tempDeck = createTempDeckFromSavedDeck({
     name: 'Demo',
+    pattern: 123456789,
     symbolsPerCard: 4,
     imageRefs: [{ source: 'standard', id: '1.png' }],
     generationOptions: {
@@ -84,6 +86,7 @@ test('given saved deck with play and print options, temp deck preserves normaliz
     }
   });
 
+  assert.equal(tempDeck.pattern, 123456789);
   assert.deepEqual(tempDeck.generationOptions, {
     cardShape: 'square',
     imageRotation: 'none',
@@ -120,6 +123,7 @@ test('given saved deck with play and print options, temp deck preserves normaliz
 
 test('given legacy handsToPlay option, normalize maps it to lengthOfPlay in hands and adds default print options', () => {
   const normalized = normalizeTempDeck({
+    pattern: 99,
     symbolsPerCard: 4,
     selectedImageRefs: [],
     generationOptions: {
@@ -137,6 +141,7 @@ test('given legacy handsToPlay option, normalize maps it to lengthOfPlay in hand
     }
   });
 
+  assert.equal(normalized.pattern, 99);
   assert.deepEqual(normalized.generationOptions, {
     cardShape: 'round',
     imageRotation: 'random',
@@ -154,7 +159,7 @@ test('given legacy handsToPlay option, normalize maps it to lengthOfPlay in hand
   assert.equal(normalized.printOptions.layoutId, '4-up');
 });
 
-test('given legacy temp deck without play or print options, normalizeTempDeck adds defaults', () => {
+test('given legacy temp deck without play or print options, normalizeTempDeck adds defaults and a new pattern', () => {
   const normalized = normalizeTempDeck({
     deckName: 'Legacy',
     symbolsPerCard: 4,
@@ -162,6 +167,8 @@ test('given legacy temp deck without play or print options, normalizeTempDeck ad
     dirty: true
   });
 
+  assert.equal(Number.isInteger(normalized.pattern), true);
+  assert.ok(normalized.pattern >= 0);
   assert.deepEqual(normalized.generationOptions, {
     cardShape: 'round',
     imageRotation: 'random',
@@ -179,10 +186,11 @@ test('given legacy temp deck without play or print options, normalizeTempDeck ad
   assert.equal(normalized.printOptions.qualityPreset, 'inkjet');
 });
 
-test('given a temp deck, createSavedDeckRecord includes normalized print options', () => {
+test('given a temp deck, createSavedDeckRecord includes normalized pattern and print options', () => {
   const savedDeck = createSavedDeckRecord({
-    ...createEmptyTempDeck(),
+    ...createEmptyTempDeck({ random: () => 0.1 }),
     deckName: 'Demo',
+    pattern: 987654321,
     printOptions: {
       pageSizeId: 'a4',
       orientation: 'portrait',
@@ -205,6 +213,7 @@ test('given a temp deck, createSavedDeckRecord includes normalized print options
   });
 
   assert.equal(savedDeck.name, 'Demo');
+  assert.equal(savedDeck.pattern, 987654321);
   assert.deepEqual(savedDeck.printOptions, {
     pageSizeId: 'a4',
     orientation: 'portrait',
