@@ -222,14 +222,16 @@ export function planPrintLayout(cardCount, printOptions, generationOptions = und
     return createInvalidPrintLayout('Margins leave no printable space on the page.', normalized, pageSize, marginsIn);
   }
 
+  const desiredCardWidthIn = convertToInches(normalized.desiredCardSize, normalized.units) ?? DEFAULT_PRINT_TARGET_CARD_WIDTH_IN;
   const candidates = LAYOUT_CANDIDATES[normalized.layoutId] ?? LAYOUT_CANDIDATES['4-up'];
   let bestCandidate = null;
 
   for (const [rows, columns] of candidates) {
-    const cardWidthIn = Math.min(
+    const maxCardWidthIn = Math.min(
       (printableWidthIn - PRINT_GAP_IN * (columns - 1)) / columns,
       (printableHeightIn - PRINT_GAP_IN * (rows - 1)) / rows
     );
+    const cardWidthIn = Math.min(maxCardWidthIn, desiredCardWidthIn);
 
     if (!Number.isFinite(cardWidthIn) || cardWidthIn <= 0) {
       continue;
@@ -238,12 +240,17 @@ export function planPrintLayout(cardCount, printOptions, generationOptions = und
     const gridWidthIn = columns * cardWidthIn + PRINT_GAP_IN * (columns - 1);
     const gridHeightIn = rows * cardWidthIn + PRINT_GAP_IN * (rows - 1);
 
-    if (!bestCandidate || cardWidthIn > bestCandidate.cardWidthIn) {
+    if (
+      !bestCandidate
+      || maxCardWidthIn > bestCandidate.maxCardWidthIn
+      || (maxCardWidthIn === bestCandidate.maxCardWidthIn && cardWidthIn > bestCandidate.cardWidthIn)
+    ) {
       bestCandidate = {
         rows,
         columns,
         cardsPerPage: rows * columns,
         cardWidthIn,
+        maxCardWidthIn,
         gridWidthIn,
         gridHeightIn
       };
@@ -306,6 +313,8 @@ export function planPrintLayout(cardCount, printOptions, generationOptions = und
     cardsPerPage: bestCandidate.cardsPerPage,
     expectedCardWidthIn: bestCandidate.cardWidthIn,
     expectedCardWidth: convertInchesToUnits(bestCandidate.cardWidthIn, normalized.units),
+    maxCardWidthIn: bestCandidate.maxCardWidthIn,
+    maxCardWidth: convertInchesToUnits(bestCandidate.maxCardWidthIn, normalized.units),
     units: normalized.units,
     pageCount,
     pages
@@ -349,6 +358,8 @@ function createInvalidPrintLayout(validationMessage, printOptions, pageSize, mar
     cardsPerPage: 0,
     expectedCardWidthIn: null,
     expectedCardWidth: null,
+    maxCardWidthIn: null,
+    maxCardWidth: null,
     units: printOptions.units,
     pageCount: 0,
     pages: []

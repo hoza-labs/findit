@@ -88,7 +88,7 @@ function updateLayoutOptions(printOptions, selectedLayoutId) {
     const option = document.createElement('option');
     option.value = layoutId;
     if (planned.isValid) {
-      option.innerHTML = `${layoutId} (Max Card Size ${APPROX_HTML_ENTITY} ${formatMeasurement(planned.expectedCardWidthIn, printOptions.units)})`;
+      option.innerHTML = `${layoutId} (Max Card Size ${APPROX_HTML_ENTITY} ${formatMeasurement(planned.maxCardWidthIn, printOptions.units)})`;
     } else {
       option.textContent = `${layoutId} (Not available)`;
     }
@@ -143,7 +143,7 @@ function openLayoutSizeDialog(layoutId, expectedCardWidth, units) {
     layoutId,
     desiredCardSizeValue: formatInputNumber(expectedCardWidth)
   };
-  layoutSizeDialogMessage.textContent = `The ${layoutId} page layout requires a smaller card size of ${formatInputNumber(expectedCardWidth)} ${units}. Do you want to change the Desired Max Card Size to match?`;
+  layoutSizeDialogMessage.textContent = `The ${layoutId} page layout requires a smaller card size of ${formatInputNumber(expectedCardWidth)} ${units}. Do you want to change the Desired Card Size to match?`;
   layoutSizeDialog.showModal();
   layoutSizeDialogOk.focus();
 }
@@ -184,6 +184,12 @@ function validateCustomFields(printOptions) {
   const desiredCardSizeRaw = getRawFieldValue('desiredCardSize');
   if (!desiredCardSizeRaw || !/^(?:\d+\.?\d*|\.\d+)$/.test(desiredCardSizeRaw) || Number.parseFloat(desiredCardSizeRaw) <= 0) {
     return 'Desired card size must be a positive number.';
+  }
+
+  const desiredCardSize = Number.parseFloat(desiredCardSizeRaw);
+  const minimumDesiredCardSize = printOptions.units === 'mm' ? 25 : 1;
+  if (desiredCardSize < minimumDesiredCardSize) {
+    return `Desired card size must be at least ${minimumDesiredCardSize} ${printOptions.units}.`;
   }
 
   if (printOptions.pageSizeId === 'custom') {

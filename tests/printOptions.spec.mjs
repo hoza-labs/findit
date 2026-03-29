@@ -11,7 +11,7 @@ import {
   resolvePageSize
 } from '../src/js/modules/printOptions.js';
 
-test('given default print options, letter portrait resolves to a 6-up layout near 3.4 inches wide', () => {
+test('given default print options, letter portrait resolves to a 6-up layout capped at 3.4 inches wide', () => {
   const options = createDefaultPrintOptions();
   const pageSize = resolvePageSize(options);
   const layoutId = getRecommendedLayoutId(options);
@@ -22,7 +22,7 @@ test('given default print options, letter portrait resolves to a 6-up layout nea
   assert.equal(layoutId, '6-up');
   assert.equal(planned.isValid, true);
   assert.equal(planned.layoutId, '6-up');
-  assert.ok(Math.abs(planned.expectedCardWidthIn - 3.4166666667) < 0.0001);
+  assert.equal(planned.expectedCardWidthIn, 3.4);
 });
 
 test('given custom page size in millimeters, resolvePageSize honors orientation and units', () => {
@@ -97,14 +97,57 @@ test('given legacy cardOutlineColor, normalizePrintOptions maps it to markupColo
   assert.equal(normalized.markupColor, '#abcdef');
 });
 
-test('given different layouts, 6-up yields a smaller expected card width than 4-up', () => {
-  const fourUp = planPrintLayout(13, { ...createDefaultPrintOptions(), layoutId: '4-up' });
-  const sixUp = planPrintLayout(13, { ...createDefaultPrintOptions(), layoutId: '6-up' });
+test('given a large desired card size, 6-up yields a smaller max card width than 4-up', () => {
+  const fourUp = planPrintLayout(13, { ...createDefaultPrintOptions(), layoutId: '4-up', desiredCardSize: '10' });
+  const sixUp = planPrintLayout(13, { ...createDefaultPrintOptions(), layoutId: '6-up', desiredCardSize: '10' });
 
   assert.equal(fourUp.isValid, true);
   assert.equal(sixUp.isValid, true);
   assert.ok(sixUp.expectedCardWidthIn < fourUp.expectedCardWidthIn);
 });
+
+test('given a desired card size smaller than the layout maximum, planPrintLayout caps the rendered card width', () => {
+  const planned = planPrintLayout(13, {
+    ...createDefaultPrintOptions(),
+    layoutId: '4-up',
+    desiredCardSize: '2.5'
+  });
+
+  assert.equal(planned.isValid, true);
+  assert.equal(planned.expectedCardWidthIn, 2.5);
+});
+
+test('given a desired card size smaller than the layout maximum, planPrintLayout still reports the uncapped max card width', () => {
+  const planned = planPrintLayout(13, {
+    ...createDefaultPrintOptions(),
+    layoutId: '4-up',
+    desiredCardSize: '2.5'
+  });
+
+  assert.equal(planned.isValid, true);
+  assert.ok(planned.maxCardWidthIn > planned.expectedCardWidthIn);
+});
+
+test('given portrait 6-up layout, max card width stays the same when desired card size changes', () => {
+  const largerDesired = planPrintLayout(13, {
+    ...createDefaultPrintOptions(),
+    layoutId: '6-up',
+    orientation: 'portrait',
+    desiredCardSize: '10'
+  });
+  const smallerDesired = planPrintLayout(13, {
+    ...createDefaultPrintOptions(),
+    layoutId: '6-up',
+    orientation: 'portrait',
+    desiredCardSize: '2.5'
+  });
+
+  assert.equal(largerDesired.isValid, true);
+  assert.equal(smallerDesired.isValid, true);
+  assert.ok(Math.abs(largerDesired.maxCardWidthIn - 3.4166666667) < 0.0001);
+  assert.ok(Math.abs(smallerDesired.maxCardWidthIn - 3.4166666667) < 0.0001);
+});
+
 
 test('given enough cards for multiple pages, planPrintLayout paginates them all in card order', () => {
   const planned = planPrintLayout(13, { ...createDefaultPrintOptions(), layoutId: '4-up' });
