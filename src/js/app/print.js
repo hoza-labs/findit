@@ -37,8 +37,6 @@ let renderVersion = 0;
 let isRenderingPreview = false;
 let pendingLayoutSizeChange = null;
 const APPROX_HTML_ENTITY = '&#8776;';
-const IS_CHROMIUM_PRINT = /(?:Chrome|Chromium|Edg)\//u.test(navigator.userAgent);
-document.body.classList.toggle('is-chromium-print', IS_CHROMIUM_PRINT);
 
 function updateHeader() {
   renderDeckStatusLine(deckStatusLine, tempDeck);
@@ -334,10 +332,6 @@ function updatePrintPageStyle(layout) {
     document.head.appendChild(styleElement);
   }
 
-  const isLandscape = Boolean(layout?.isValid && layout.pageWidthIn > layout.pageHeightIn);
-  document.body.classList.toggle('is-print-orientation-landscape', isLandscape);
-  document.body.classList.toggle('is-print-orientation-portrait', Boolean(layout?.isValid && !isLandscape));
-
   if (!layout?.isValid) {
     styleElement.textContent = '';
     return;
@@ -403,8 +397,7 @@ printButton.addEventListener('click', () => {
       layoutPlan,
       cardEntries,
       generationOptions: tempDeck.generationOptions,
-      printOptions,
-      pageContentOffsetTopIn: IS_CHROMIUM_PRINT && printOptions.orientation === 'landscape' ? 1 : 0
+      printOptions
     });
     printOptionsMessage.textContent = 'Opening the browser print dialog...';
     window.print();

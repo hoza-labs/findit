@@ -134,17 +134,10 @@
     background: #fff;
     margin: 0 !important;
     padding: 0 !important;
-    height: auto !important;
-    min-height: 0 !important;
-    overflow: visible !important;
   }
 
   body.has-top-bar {
     padding-top: 0 !important;
-  }
-
-  body > :not(.print-sheet-output) {
-    display: none !important;
   }
 
   .top-next-bar,
@@ -156,9 +149,6 @@
 
   .print-sheet-output {
     display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
     margin: 0 !important;
     padding: 0 !important;
   }
@@ -186,6 +176,5 @@
     box-shadow: none;
     overflow: hidden;
   }
-
 }
 
