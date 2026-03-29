@@ -331,13 +331,19 @@ export function convertInchesToUnits(valueInInches, units = 'in') {
     : valueInInches;
 }
 
-export function formatMeasurement(valueInInches, units = 'in', fractionDigits = 2) {
+export function formatMeasurement(valueInInches, units = 'in', fractionDigits = 2, options = {}) {
   const convertedValue = convertInchesToUnits(valueInInches, units);
   if (!Number.isFinite(convertedValue)) {
     return '';
   }
 
-  return `${trimTrailingZeros(convertedValue.toFixed(fractionDigits))} ${units}`;
+  const roundingMode = options.roundingMode ?? 'round';
+  const scale = 10 ** fractionDigits;
+  const adjustedValue = roundingMode === 'truncate'
+    ? truncateDecimal(convertedValue, scale)
+    : convertedValue;
+
+  return `${trimTrailingZeros(adjustedValue.toFixed(fractionDigits))} ${units}`;
 }
 
 function createInvalidPrintLayout(validationMessage, printOptions, pageSize, marginsIn) {
@@ -437,6 +443,16 @@ function normalizeColor(value, fallback) {
   return typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value.trim())
     ? value.trim().toLowerCase()
     : fallback;
+}
+
+function truncateDecimal(value, scale) {
+  if (!Number.isFinite(value) || !Number.isFinite(scale) || scale <= 0) {
+    return value;
+  }
+
+  return value >= 0
+    ? Math.floor(value * scale) / scale
+    : Math.ceil(value * scale) / scale;
 }
 
 function trimTrailingZeros(value) {

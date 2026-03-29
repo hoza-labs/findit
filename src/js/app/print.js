@@ -88,7 +88,7 @@ function updateLayoutOptions(printOptions, selectedLayoutId) {
     const option = document.createElement('option');
     option.value = layoutId;
     if (planned.isValid) {
-      option.innerHTML = `${layoutId} (Max Card Size ${APPROX_HTML_ENTITY} ${formatMeasurement(planned.maxCardWidthIn, printOptions.units)})`;
+      option.innerHTML = `${layoutId} (Max Card Size ${APPROX_HTML_ENTITY} ${formatMeasurement(planned.maxCardWidthIn, printOptions.units, printOptions.units === 'mm' ? 0 : 2, { roundingMode: 'truncate' })})`;
     } else {
       option.textContent = `${layoutId} (Not available)`;
     }
@@ -103,6 +103,19 @@ function formatInputNumber(value, fractionDigits = 2) {
   }
 
   return String(Number.parseFloat(value.toFixed(fractionDigits)));
+}
+
+function formatLayoutSizeValue(valueInInches, units) {
+  const measurement = formatMeasurement(
+    valueInInches,
+    units,
+    units === 'mm' ? 0 : 2,
+    { roundingMode: 'truncate' }
+  );
+
+  return measurement.endsWith(` ${units}`)
+    ? measurement.slice(0, -(` ${units}`).length)
+    : measurement;
 }
 
 function closeLayoutSizeDialog() {
@@ -139,11 +152,12 @@ function cancelLayoutSizeDialog() {
 }
 
 function openLayoutSizeDialog(layoutId, expectedCardWidth, units) {
+  const formattedCardSize = formatLayoutSizeValue(expectedCardWidth, units);
   pendingLayoutSizeChange = {
     layoutId,
-    desiredCardSizeValue: formatInputNumber(expectedCardWidth)
+    desiredCardSizeValue: formattedCardSize
   };
-  layoutSizeDialogMessage.textContent = `The ${layoutId} page layout requires a smaller card size of ${formatInputNumber(expectedCardWidth)} ${units}. Do you want to change the Desired Card Size to match?`;
+  layoutSizeDialogMessage.textContent = `The ${layoutId} page layout requires a smaller card size of ${formattedCardSize} ${units}. Do you want to change the Desired Card Size to match?`;
   layoutSizeDialog.showModal();
   layoutSizeDialogOk.focus();
 }

@@ -193,6 +193,11 @@ test('formatMeasurement reports values in the active units', () => {
   assert.equal(formatMeasurement(1, 'mm'), '25.4 mm');
 });
 
+test('formatMeasurement can truncate values without rounding them up', () => {
+  assert.equal(formatMeasurement(3.419 / 25.4, 'mm', 0, { roundingMode: 'truncate' }), '3 mm');
+  assert.equal(formatMeasurement(3.4199, 'in', 2, { roundingMode: 'truncate' }), '3.41 in');
+});
+
 
 
 
