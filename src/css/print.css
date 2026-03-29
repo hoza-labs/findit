@@ -129,9 +129,15 @@
 }
 
 @media print {
+  html,
   body {
     background: #fff;
-    padding-top: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.has-top-bar {
+    padding-top: 0 !important;
   }
 
   .top-next-bar,
@@ -143,19 +149,23 @@
 
   .print-sheet-output {
     display: block;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .print-sheet-output .print-sheet-page {
-    width: calc(var(--print-sheet-width-in) * 1in);
-    height: calc(var(--print-sheet-height-in) * 1in);
+    box-sizing: border-box;
+    width: calc(var(--print-sheet-width-in) * 1in - 0.01in);
+    height: calc(var(--print-sheet-height-in) * 1in - 0.01in);
     margin: 0;
-    break-after: page;
-    page-break-after: always;
-  }
-
-  .print-sheet-output .print-sheet-page:last-child {
+    overflow: hidden;
     break-after: auto;
     page-break-after: auto;
+  }
+
+  .print-sheet-output .print-sheet-page + .print-sheet-page {
+    break-before: page;
+    page-break-before: always;
   }
 
   .print-sheet-output .print-sheet-surface {
@@ -164,6 +174,7 @@
     aspect-ratio: auto;
     border: none;
     box-shadow: none;
+    overflow: hidden;
   }
 }
 
