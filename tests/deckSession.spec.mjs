@@ -21,6 +21,10 @@ test('given empty temp deck, play and print options are initialized with default
   assert.deepEqual(deck.playOptions, {
     cardsToShowCounts: '2',
     countdownSeconds: '',
+    drumrollSeconds: '3',
+    chaos: 'rotate-cards',
+    rotateCards: true,
+    reshuffleImagesEveryTime: false,
     lengthOfPlay: '',
     lengthOfPlayUnits: 'hands',
     playerNames: 'one, two'
@@ -61,6 +65,10 @@ test('given saved deck with play and print options, temp deck preserves normaliz
     playOptions: {
       cardsToShowCounts: ' 2, 4, 3 ',
       countdownSeconds: '05',
+      drumrollSeconds: '04',
+      chaos: 'reshuffle-images',
+      rotateCards: true,
+      reshuffleImagesEveryTime: false,
       lengthOfPlay: '1.5',
       lengthOfPlayUnits: 'minutes',
       playerNames: ' Alice, Bob , , Carol '
@@ -96,6 +104,10 @@ test('given saved deck with play and print options, temp deck preserves normaliz
   assert.deepEqual(tempDeck.playOptions, {
     cardsToShowCounts: '2, 4, 3',
     countdownSeconds: '5',
+    drumrollSeconds: '4',
+    chaos: 'reshuffle-images',
+    rotateCards: false,
+    reshuffleImagesEveryTime: true,
     lengthOfPlay: '1.5',
     lengthOfPlayUnits: 'minutes',
     playerNames: 'Alice, Bob, Carol'
@@ -151,6 +163,10 @@ test('given legacy handsToPlay option, normalize maps it to lengthOfPlay in hand
   assert.deepEqual(normalized.playOptions, {
     cardsToShowCounts: '',
     countdownSeconds: '',
+    drumrollSeconds: '3',
+    chaos: 'rotate-cards',
+    rotateCards: true,
+    reshuffleImagesEveryTime: false,
     lengthOfPlay: '3',
     lengthOfPlayUnits: 'hands',
     playerNames: ''
@@ -178,6 +194,10 @@ test('given legacy temp deck without play or print options, normalizeTempDeck ad
   assert.deepEqual(normalized.playOptions, {
     cardsToShowCounts: '2',
     countdownSeconds: '',
+    drumrollSeconds: '3',
+    chaos: 'rotate-cards',
+    rotateCards: true,
+    reshuffleImagesEveryTime: false,
     lengthOfPlay: '',
     lengthOfPlayUnits: 'hands',
     playerNames: 'one, two'
@@ -191,6 +211,17 @@ test('given a temp deck, createSavedDeckRecord includes normalized pattern and p
     ...createEmptyTempDeck({ random: () => 0.1 }),
     deckName: 'Demo',
     pattern: 987654321,
+    playOptions: {
+      cardsToShowCounts: '3, 5',
+      countdownSeconds: '7',
+      drumrollSeconds: '',
+      chaos: 'none',
+      rotateCards: true,
+      reshuffleImagesEveryTime: true,
+      lengthOfPlay: '2',
+      lengthOfPlayUnits: 'decks',
+      playerNames: 'A, B'
+    },
     printOptions: {
       pageSizeId: 'a4',
       orientation: 'portrait',
@@ -214,6 +245,17 @@ test('given a temp deck, createSavedDeckRecord includes normalized pattern and p
 
   assert.equal(savedDeck.name, 'Demo');
   assert.equal(savedDeck.pattern, 987654321);
+  assert.deepEqual(savedDeck.playOptions, {
+    cardsToShowCounts: '3, 5',
+    countdownSeconds: '7',
+    drumrollSeconds: '',
+    chaos: 'none',
+    rotateCards: false,
+    reshuffleImagesEveryTime: false,
+    lengthOfPlay: '2',
+    lengthOfPlayUnits: 'decks',
+    playerNames: 'A, B'
+  });
   assert.deepEqual(savedDeck.printOptions, {
     pageSizeId: 'a4',
     orientation: 'portrait',

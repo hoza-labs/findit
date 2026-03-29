@@ -51,7 +51,7 @@ export async function drawImagesOnSquareTarget(targetElement, imageSources, opti
   const images = await loadImages(normalizedSources);
   applyCardShape(targetElement, generationOptions.cardShape);
   applyCardContainerStyles(targetElement);
-  applyCardTransform(canvas, renderPlan.cardRotation, renderPlan.cardFlip);
+  applyCardTransform(canvas, renderPlan.cardRotation + resolvedRenderConfig.additionalRotation, renderPlan.cardFlip);
 
   for (const plannedItem of renderPlan.items) {
     drawImageAtPlacement(
@@ -329,6 +329,7 @@ function normalizeRenderConfig(renderConfig) {
     sideLength: Number.isFinite(config.sideLength) && config.sideLength > 0 ? config.sideLength : null,
     cssSize: Number.isFinite(config.cssSize) && config.cssSize > 0 ? config.cssSize : null,
     renderScale: Number.isFinite(config.renderScale) && config.renderScale > 0 ? config.renderScale : null,
+    additionalRotation: Number.isFinite(config.additionalRotation) ? config.additionalRotation : 0,
     randomSeed: normalizePattern(config.randomSeed),
     cardNumberText: typeof config.cardNumberText === 'string' && config.cardNumberText.trim() ? config.cardNumberText.trim() : '',
     showCardOutline: Boolean(config.showCardOutline),
@@ -340,3 +341,5 @@ function normalizeRenderConfig(renderConfig) {
       : 'solid'
   };
 }
+
+
