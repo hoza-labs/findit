@@ -75,9 +75,8 @@ function getPrintOptionsFromForm() {
     qualityPreset: formData.get('qualityPreset'),
     customDpi: formData.get('customDpi'),
     showCardNumber: formData.get('showCardNumber') === 'on',
-    cardNumberPosition: formData.get('cardNumberPosition'),
     showCardOutline: formData.get('showCardOutline') === 'on',
-    cardOutlineColor: formData.get('cardOutlineColor'),
+    markupColor: formData.get('markupColor'),
     cardOutlineDashStyle: formData.get('cardOutlineDashStyle')
   });
 }

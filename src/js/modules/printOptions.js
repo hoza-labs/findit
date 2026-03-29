@@ -51,7 +51,7 @@ export function createDefaultPrintOptions() {
     showCardNumber: false,
     cardNumberPosition: 'bottom-right',
     showCardOutline: false,
-    cardOutlineColor: '#000000',
+    markupColor: '#000000',
     cardOutlineDashStyle: 'solid'
   };
 }
@@ -76,7 +76,7 @@ export function normalizePrintOptions(rawOptions) {
     showCardNumber: Boolean(options.showCardNumber),
     cardNumberPosition: normalizeEnum(options.cardNumberPosition, CARD_NUMBER_POSITIONS, defaults.cardNumberPosition),
     showCardOutline: Boolean(options.showCardOutline),
-    cardOutlineColor: normalizeColor(options.cardOutlineColor, defaults.cardOutlineColor),
+    markupColor: normalizeColor(options.markupColor ?? options.cardOutlineColor, defaults.markupColor),
     cardOutlineDashStyle: normalizeEnum(options.cardOutlineDashStyle, CARD_OUTLINE_DASH_STYLES, defaults.cardOutlineDashStyle)
   };
 }

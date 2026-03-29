@@ -91,10 +91,9 @@ async function populateSheetCards(sheetElement, layoutPlan, page, cardEntries, g
       {
         sideLength: mode === 'print' ? slot.sizeIn * CSS_PIXELS_PER_INCH : null,
         renderScale: mode === 'print' ? effectiveDpi / CSS_PIXELS_PER_INCH : null,
-        cardNumberText: printOptions.showCardNumber ? `#${cardEntry.cardNumber}` : '',
-        cardNumberPosition: printOptions.cardNumberPosition,
+        cardNumberText: printOptions.showCardNumber ? String(cardEntry.cardNumber) : '',
         showCardOutline: printOptions.showCardOutline,
-        cardOutlineColor: printOptions.cardOutlineColor,
+        markupColor: printOptions.markupColor,
         cardOutlineDashStyle: printOptions.cardOutlineDashStyle
       }
     );

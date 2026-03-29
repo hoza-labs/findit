@@ -46,7 +46,8 @@ export async function drawImagesOnSquareTarget(targetElement, imageSources, opti
   const renderPlan = planCardRender(normalizedSources, generationOptions);
   const images = await loadImages(normalizedSources);
   applyCardShape(targetElement, generationOptions.cardShape);
-  applyCardTransform(targetElement, renderPlan.cardRotation, renderPlan.cardFlip);
+  applyCardContainerStyles(targetElement);
+  applyCardTransform(canvas, renderPlan.cardRotation, renderPlan.cardFlip);
 
   for (const plannedItem of renderPlan.items) {
     drawImageAtPlacement(
@@ -58,14 +59,14 @@ export async function drawImagesOnSquareTarget(targetElement, imageSources, opti
   }
 
   if (resolvedRenderConfig.showCardOutline) {
-    drawCardOutline(context, sideLength, generationOptions.cardShape, resolvedRenderConfig.cardOutlineColor, resolvedRenderConfig.cardOutlineDashStyle);
-  }
-
-  if (resolvedRenderConfig.cardNumberText) {
-    drawCardNumber(context, sideLength, resolvedRenderConfig.cardNumberText, resolvedRenderConfig.cardNumberPosition);
+    drawCardOutline(context, sideLength, generationOptions.cardShape, resolvedRenderConfig.markupColor, resolvedRenderConfig.cardOutlineDashStyle);
   }
 
   targetElement.appendChild(canvas);
+
+  if (resolvedRenderConfig.cardNumberText) {
+    targetElement.appendChild(createCardNumberOverlay(sideLength, resolvedRenderConfig.cardNumberText, resolvedRenderConfig.markupColor));
+  }
 }
 
 export function planCardRender(imageSources, options = undefined, random = Math.random) {
@@ -264,21 +265,24 @@ function drawCardOutline(context, sideLength, cardShape, color, dashStyle) {
   context.restore();
 }
 
-function drawCardNumber(context, sideLength, cardNumberText, position) {
-  const padding = Math.max(8, sideLength * 0.04);
-  const fontSize = Math.max(10, Math.round(sideLength * 0.055));
-  context.save();
-  context.font = `${fontSize}px Georgia, serif`;
-  context.textBaseline = position.startsWith('bottom') ? 'bottom' : 'top';
-  context.textAlign = position.endsWith('right') ? 'right' : 'left';
-  context.lineWidth = Math.max(2, fontSize * 0.22);
-  context.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-  context.fillStyle = 'rgba(0, 0, 0, 0.82)';
-  const x = position.endsWith('right') ? sideLength - padding : padding;
-  const y = position.startsWith('bottom') ? sideLength - padding : padding;
-  context.strokeText(cardNumberText, x, y);
-  context.fillText(cardNumberText, x, y);
-  context.restore();
+function createCardNumberOverlay(sideLength, cardNumberText, color) {
+  const overlay = document.createElement('span');
+  overlay.className = 'card-number-overlay';
+  overlay.textContent = cardNumberText;
+  overlay.style.position = 'absolute';
+  overlay.style.left = '0';
+  overlay.style.bottom = '0';
+  overlay.style.margin = '0';
+  overlay.style.padding = '0';
+  overlay.style.lineHeight = '1';
+  overlay.style.pointerEvents = 'none';
+  overlay.style.color = color;
+  overlay.style.fontFamily = 'Georgia, serif';
+  overlay.style.fontWeight = '600';
+  overlay.style.fontSize = `${Math.max(12, Math.round(sideLength * 0.07))}px`;
+  overlay.style.zIndex = '2';
+  overlay.style.transform = 'none';
+  return overlay;
 }
 
 function normalizeImageSource(candidate) {
@@ -296,6 +300,11 @@ function normalizeImageSource(candidate) {
 function applyCardShape(targetElement, cardShape) {
   targetElement.classList.remove('is-round-card', 'is-square-card');
   targetElement.classList.add(cardShape === 'round' ? 'is-round-card' : 'is-square-card');
+}
+
+function applyCardContainerStyles(targetElement) {
+  targetElement.style.position = 'relative';
+  targetElement.style.overflow = 'visible';
 }
 
 function applyCardTransform(targetElement, rotation, flipX) {
@@ -317,12 +326,9 @@ function normalizeRenderConfig(renderConfig) {
     cssSize: Number.isFinite(config.cssSize) && config.cssSize > 0 ? config.cssSize : null,
     renderScale: Number.isFinite(config.renderScale) && config.renderScale > 0 ? config.renderScale : null,
     cardNumberText: typeof config.cardNumberText === 'string' && config.cardNumberText.trim() ? config.cardNumberText.trim() : '',
-    cardNumberPosition: ['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(config.cardNumberPosition)
-      ? config.cardNumberPosition
-      : 'bottom-right',
     showCardOutline: Boolean(config.showCardOutline),
-    cardOutlineColor: typeof config.cardOutlineColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(config.cardOutlineColor)
-      ? config.cardOutlineColor.toLowerCase()
+    markupColor: typeof config.markupColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(config.markupColor)
+      ? config.markupColor.toLowerCase()
       : '#000000',
     cardOutlineDashStyle: ['solid', 'dashed', 'dotted'].includes(config.cardOutlineDashStyle)
       ? config.cardOutlineDashStyle

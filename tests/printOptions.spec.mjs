@@ -65,7 +65,7 @@ test('given invalid custom values, normalizePrintOptions falls back to safe defa
     showCardNumber: 1,
     cardNumberPosition: 'center',
     showCardOutline: 'yes',
-    cardOutlineColor: 'blue',
+    markupColor: 'blue',
     cardOutlineDashStyle: 'dot-dash'
   });
 
@@ -85,9 +85,15 @@ test('given invalid custom values, normalizePrintOptions falls back to safe defa
     showCardNumber: true,
     cardNumberPosition: 'bottom-right',
     showCardOutline: true,
-    cardOutlineColor: '#000000',
+    markupColor: '#000000',
     cardOutlineDashStyle: 'solid'
   });
+});
+
+test('given legacy cardOutlineColor, normalizePrintOptions maps it to markupColor', () => {
+  const normalized = normalizePrintOptions({ cardOutlineColor: '#ABCDEF' });
+
+  assert.equal(normalized.markupColor, '#abcdef');
 });
 
 test('given different layouts, 6-up yields a smaller expected card width than 4-up', () => {

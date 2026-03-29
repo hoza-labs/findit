@@ -40,7 +40,7 @@ test('given empty temp deck, play and print options are initialized with default
     showCardNumber: false,
     cardNumberPosition: 'bottom-right',
     showCardOutline: false,
-    cardOutlineColor: '#000000',
+    markupColor: '#000000',
     cardOutlineDashStyle: 'solid'
   });
 });
@@ -79,7 +79,7 @@ test('given saved deck with play and print options, temp deck preserves normaliz
       showCardNumber: true,
       cardNumberPosition: 'top-left',
       showCardOutline: true,
-      cardOutlineColor: '#FF00AA',
+      markupColor: '#FF00AA',
       cardOutlineDashStyle: 'dashed'
     }
   });
@@ -113,7 +113,7 @@ test('given saved deck with play and print options, temp deck preserves normaliz
     showCardNumber: true,
     cardNumberPosition: 'top-left',
     showCardOutline: true,
-    cardOutlineColor: '#ff00aa',
+    markupColor: '#ff00aa',
     cardOutlineDashStyle: 'dashed'
   });
 });
@@ -199,7 +199,7 @@ test('given a temp deck, createSavedDeckRecord includes normalized print options
       showCardNumber: true,
       cardNumberPosition: 'top-right',
       showCardOutline: true,
-      cardOutlineColor: '#123456',
+      markupColor: '#123456',
       cardOutlineDashStyle: 'dotted'
     }
   });
@@ -221,7 +221,7 @@ test('given a temp deck, createSavedDeckRecord includes normalized print options
     showCardNumber: true,
     cardNumberPosition: 'top-right',
     showCardOutline: true,
-    cardOutlineColor: '#123456',
+    markupColor: '#123456',
     cardOutlineDashStyle: 'dotted'
   });
 });

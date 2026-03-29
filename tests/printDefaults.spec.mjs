@@ -45,13 +45,13 @@ test('given saved default print options, saveDefaultPrintOptions normalizes and 
     showCardNumber: true,
     cardNumberPosition: 'top-left',
     showCardOutline: true,
-    cardOutlineColor: '#abcdef',
+    markupColor: '#abcdef',
     cardOutlineDashStyle: 'dashed'
   }, storage);
 
   assert.equal(saved.pageSizeId, 'a4');
   assert.equal(saved.layoutId, '6-up');
-  assert.equal(saved.cardOutlineColor, '#abcdef');
+  assert.equal(saved.markupColor, '#abcdef');
   assert.ok(storage.getItem(DEFAULT_PRINT_OPTIONS_STORAGE_KEY));
 
   const loaded = getDefaultPrintOptions(storage);
