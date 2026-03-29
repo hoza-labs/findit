@@ -173,11 +173,6 @@
     page-break-after: auto;
   }
 
-  body.is-chromium-print.is-print-orientation-landscape .print-sheet-output .print-sheet-page {
-    position: relative;
-    top: -1in;
-  }
-
   .print-sheet-output .print-sheet-page + .print-sheet-page {
     break-before: page;
     page-break-before: always;
@@ -191,5 +186,6 @@
     box-shadow: none;
     overflow: hidden;
   }
+
 }
 

@@ -403,7 +403,8 @@ printButton.addEventListener('click', () => {
       layoutPlan,
       cardEntries,
       generationOptions: tempDeck.generationOptions,
-      printOptions
+      printOptions,
+      pageContentOffsetTopIn: IS_CHROMIUM_PRINT && printOptions.orientation === 'landscape' ? 1 : 0
     });
     printOptionsMessage.textContent = 'Opening the browser print dialog...';
     window.print();

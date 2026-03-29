@@ -27,7 +27,8 @@ export async function renderPrintableSheets({
   layoutPlan,
   cardEntries,
   generationOptions,
-  printOptions
+  printOptions,
+  pageContentOffsetTopIn = 0
 }) {
   if (!containerElement) {
     return;
@@ -39,13 +40,13 @@ export async function renderPrintableSheets({
   }
 
   for (const page of layoutPlan.pages) {
-    const sheet = createSheetElement(layoutPlan, page, 'print');
+    const sheet = createSheetElement(layoutPlan, page, 'print', pageContentOffsetTopIn);
     containerElement.appendChild(sheet);
     await populateSheetCards(sheet, layoutPlan, page, cardEntries, generationOptions, printOptions, 'print');
   }
 }
 
-function createSheetElement(layoutPlan, page, mode) {
+function createSheetElement(layoutPlan, page, mode, contentOffsetTopIn = 0) {
   const sheet = document.createElement('section');
   sheet.className = `print-sheet-page print-sheet-page--${mode}`;
   sheet.style.setProperty('--print-sheet-width-in', String(layoutPlan.pageWidthIn));
@@ -59,8 +60,9 @@ function createSheetElement(layoutPlan, page, mode) {
   for (const slot of page.slots) {
     const cardSlot = document.createElement('div');
     cardSlot.className = 'print-sheet-card-slot';
+    const adjustedTopIn = slot.topIn - contentOffsetTopIn;
     cardSlot.style.left = `${(slot.leftIn / layoutPlan.pageWidthIn) * 100}%`;
-    cardSlot.style.top = `${(slot.topIn / layoutPlan.pageHeightIn) * 100}%`;
+    cardSlot.style.top = `${(adjustedTopIn / layoutPlan.pageHeightIn) * 100}%`;
     cardSlot.style.width = `${(slot.sizeIn / layoutPlan.pageWidthIn) * 100}%`;
     cardSlot.style.height = `${(slot.sizeIn / layoutPlan.pageHeightIn) * 100}%`;
 
