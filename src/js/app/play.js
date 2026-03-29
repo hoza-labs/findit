@@ -404,6 +404,8 @@ function activateHandForLivePlay(settings = getHandSettings(), players = getPlay
     return;
   }
 
+  setPlayActionButtonsDisabled(false);
+
   if (settings.lengthOfPlayUnits === 'minutes' && settings.lengthOfPlay) {
     handStatus.textContent = getMinuteHandStatus(settings, state.currentCardsShownCount);
     updatePlayStatusLine();
@@ -2012,6 +2014,7 @@ if (window.visualViewport) {
 
 resetPlayerScores();
 prepareGameStart();
+
 
 
 
