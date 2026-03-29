@@ -1,5 +1,6 @@
 import { drawImagesOnSquareTarget } from '../modules/cardCanvasRenderer.js';
 import { loadTempDeckOrDefault, repository } from '../modules/deckFlowCommon.js';
+import { createRandomPattern, deriveRenderSeed } from '../modules/patternSeed.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
 import {
   getCardsToDrawForHand,
@@ -237,8 +238,32 @@ function restartPlayRevealNumberAnimation() {
   playRevealNumber.classList.add('is-animating');
 }
 
-function renderPlayRevealStep(forceAnimation = false) {
-  const frame = readPlayRevealStep(state.playRevealRemainingMs);
+function getPlayRevealSequence(settings = getHandSettings()) {
+  if (!Number.isInteger(settings.drumrollSeconds) || settings.drumrollSeconds <= 0) {
+    return [];
+  }
+
+  return Array.from({ length: settings.drumrollSeconds }, (_, index) => String(settings.drumrollSeconds - index));
+}
+
+function getPlayRevealFrame(sequence = getPlayRevealSequence()) {
+  if (sequence.length === 0) {
+    return {
+      complete: true,
+      label: '',
+      stepIndex: 0
+    };
+  }
+
+  return readPlayRevealStep(state.playRevealRemainingMs, sequence);
+}
+
+function hasDrumroll(settings = getHandSettings()) {
+  return getPlayRevealSequence(settings).length > 0;
+}
+
+function renderPlayRevealStep(forceAnimation = false, sequence = getPlayRevealSequence()) {
+  const frame = getPlayRevealFrame(sequence);
   if (frame.complete) {
     clearPlayRevealNumber();
     return frame;
@@ -254,12 +279,12 @@ function renderPlayRevealStep(forceAnimation = false) {
   return frame;
 }
 
-function getPlayRevealStatusText() {
+function getPlayRevealStatusText(sequence = getPlayRevealSequence()) {
   if (!state.handReadyForLivePlay) {
     return 'Get ready...';
   }
 
-  const frame = readPlayRevealStep(state.playRevealRemainingMs);
+  const frame = getPlayRevealFrame(sequence);
   if (frame.complete) {
     return '';
   }
@@ -301,15 +326,22 @@ function beginPlayReveal(context = 'start') {
   setPlayActionButtonsDisabled(true);
 }
 
-function startPlayRevealCountdown() {
+function startPlayRevealCountdown(settings = getHandSettings()) {
   if (!state.playRevealCountdownOpen || state.playRevealCountdownComplete || !state.handReadyForLivePlay) {
     return;
   }
 
+  const sequence = getPlayRevealSequence(settings);
+  if (sequence.length === 0) {
+    state.playRevealCountdownComplete = true;
+    activateHandAfterPlayReveal(settings, getPlayerNames());
+    return;
+  }
+
   stopPlayRevealTimer();
-  const runId = startPlayRevealState(getPlayRevealTotalDurationMs());
-  renderPlayRevealStep(true);
-  countdownStatus.textContent = getPlayRevealStatusText();
+  const runId = startPlayRevealState(getPlayRevealTotalDurationMs(sequence));
+  renderPlayRevealStep(true, sequence);
+  countdownStatus.textContent = getPlayRevealStatusText(sequence);
   updatePlayStatusLine();
 
   playRevealTimerId = window.setInterval(() => {
@@ -323,12 +355,12 @@ function startPlayRevealCountdown() {
       stopPlayRevealTimer();
       state.playRevealCountdownComplete = true;
       clearPlayRevealNumber();
-      activateHandAfterPlayReveal();
+      activateHandAfterPlayReveal(settings, getPlayerNames());
       return;
     }
 
-    renderPlayRevealStep();
-    countdownStatus.textContent = getPlayRevealStatusText();
+    renderPlayRevealStep(false, sequence);
+    countdownStatus.textContent = getPlayRevealStatusText(sequence);
     updatePlayStatusLine();
   }, 50);
 }
@@ -350,33 +382,30 @@ function resumePlayRevealCountdown() {
     return;
   }
 
+  const settings = getHandSettings();
+  const sequence = getPlayRevealSequence(settings);
   beginPlayRevealTimingWindow();
 
   if (state.playRevealCountdownComplete) {
-    activateHandAfterPlayReveal();
+    activateHandAfterPlayReveal(settings, getPlayerNames());
     return;
   }
 
-  countdownStatus.textContent = getPlayRevealStatusText();
+  countdownStatus.textContent = getPlayRevealStatusText(sequence);
   updatePlayStatusLine();
 
   if (state.handReadyForLivePlay) {
-    startPlayRevealCountdown();
+    startPlayRevealCountdown(settings);
   }
 }
 
-function activateHandAfterPlayReveal() {
-  if (!state.playRevealCountdownOpen || !state.playRevealCountdownComplete || !state.handReadyForLivePlay) {
-    return;
-  }
-
-  closePlayRevealOverlay();
+function activateHandForLivePlay(settings = getHandSettings(), players = getPlayerNames()) {
   if (state.sessionEnded || state.playStartDialogOpen || state.claimDialogOpen || state.confirmationDialogOpen || state.currentCardsShownCount === 0) {
     return;
   }
 
-  const settings = getHandSettings();
-  const players = getPlayerNames();
+  setPlayActionButtonsDisabled(false);
+
   if (settings.lengthOfPlayUnits === 'minutes' && settings.lengthOfPlay) {
     handStatus.textContent = getMinuteHandStatus(settings, state.currentCardsShownCount);
     updatePlayStatusLine();
@@ -390,6 +419,15 @@ function activateHandAfterPlayReveal() {
   startCountdown(settings);
 }
 
+function activateHandAfterPlayReveal(settings = getHandSettings(), players = getPlayerNames()) {
+  if (!state.playRevealCountdownOpen || !state.playRevealCountdownComplete || !state.handReadyForLivePlay) {
+    return;
+  }
+
+  closePlayRevealOverlay();
+  activateHandForLivePlay(settings, players);
+}
+
 function resumePlayAfterClaimCancel() {
   cancelClaimHandPoints();
   closeClaimDialog({ resumeCountdown: false, restoreButtons: false });
@@ -398,9 +436,15 @@ function resumePlayAfterClaimCancel() {
     return;
   }
 
+  const settings = getHandSettings();
+  if (!hasDrumroll(settings)) {
+    activateHandForLivePlay(settings, getPlayerNames());
+    return;
+  }
+
   beginPlayReveal('resume');
   state.handReadyForLivePlay = true;
-  startPlayRevealCountdown();
+  startPlayRevealCountdown(settings);
 }
 
 function stopMinuteLimitTimer() {
@@ -698,13 +742,21 @@ function getHandSettings() {
   const cardCount = getDeckPlayerCardCount(tempDeck.symbolsPerCard);
   const cardsToShowCounts = parseCardCountList(tempDeck.playOptions?.cardsToShowCounts, cardCount);
   const countdownSeconds = parsePositiveWholeNumberInput(tempDeck.playOptions?.countdownSeconds ?? '') ?? 0;
+  const drumrollSeconds = parsePositiveWholeNumberInput(tempDeck.playOptions?.drumrollSeconds ?? '') ?? 0;
   const lengthOfPlay = parsePositiveNumberInput(tempDeck.playOptions?.lengthOfPlay ?? '');
   const lengthOfPlayUnits = tempDeck.playOptions?.lengthOfPlayUnits ?? 'hands';
+  const rotateCards = Boolean(tempDeck.playOptions?.rotateCards);
+  const reshuffleImagesEveryTime = Boolean(tempDeck.playOptions?.reshuffleImagesEveryTime);
+  const chaos = tempDeck.playOptions?.chaos ?? 'rotate-cards';
 
   return {
     cardCount,
     cardsToShowCounts: cardsToShowCounts.length > 0 ? cardsToShowCounts : [Math.min(2, cardCount)],
     countdownSeconds,
+    drumrollSeconds,
+    chaos,
+    rotateCards,
+    reshuffleImagesEveryTime,
     lengthOfPlay,
     lengthOfPlayUnits
   };
@@ -720,6 +772,22 @@ function getMinimumAllowedCardsToShow(settings) {
 
 function getRandomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function getRandomCardRotation() {
+  return Math.random() * Math.PI * 2;
+}
+
+function getRandomPatternForRender() {
+  return createRandomPattern();
+}
+
+function getPlayCardRenderConfig(settings, cardIndex) {
+  const pattern = settings.reshuffleImagesEveryTime ? getRandomPatternForRender() : tempDeck.pattern;
+  return {
+    randomSeed: deriveRenderSeed(pattern, cardIndex + 1),
+    additionalRotation: settings.rotateCards ? getRandomCardRotation() : 0
+  };
 }
 
 function updateHeader(players, settings) {
@@ -1663,7 +1731,10 @@ async function renderHand() {
     return;
   }
 
-  beginPlayReveal('start');
+  const shouldUseDrumroll = hasDrumroll(settings);
+  if (shouldUseDrumroll) {
+    beginPlayReveal('start');
+  }
   updatePlayCardGridSize(cardIndices.length);
   const pattern = getPatternSources();
   handStatus.textContent = getCurrentHandStatus(settings, cardIndices.length, state.hatState);
@@ -1688,15 +1759,19 @@ async function renderHand() {
     card.appendChild(cardBody);
     playCardGrid.appendChild(card);
 
-    await drawImagesOnSquareTarget(target, sources, tempDeck.generationOptions);
-    if (state.sessionEnded || !state.playRevealCountdownOpen) {
+    await drawImagesOnSquareTarget(target, sources, tempDeck.generationOptions, getPlayCardRenderConfig(settings, cardIndex));
+    if (state.sessionEnded || (shouldUseDrumroll && !state.playRevealCountdownOpen)) {
       return;
     }
   }
 
   state.pendingHandCount = true;
   state.handReadyForLivePlay = true;
-  startPlayRevealCountdown();
+  if (shouldUseDrumroll) {
+    startPlayRevealCountdown(settings);
+  } else {
+    activateHandForLivePlay(settings, players);
+  }
 }
 
 function showEmptyState(message) {
@@ -1939,6 +2014,10 @@ if (window.visualViewport) {
 
 resetPlayerScores();
 prepareGameStart();
+
+
+
+
 
 
 

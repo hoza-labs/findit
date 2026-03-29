@@ -5,6 +5,7 @@ import { getCurrentBuildPageHref, renderBuildHeaderAndSubnav } from '../modules/
 import { createDeckCardGalleryRenderer } from '../modules/deckCardGallery.js';
 import { getDeckPlayerCardCount, getDeckPlayerCardItems, getDeckPlayerSlopeComponents, getDeckPlayerStepAt } from '../modules/deckPlayer.js';
 import { describeImageRef, removeImageRefAtIndex } from '../modules/imageRefs.js';
+import { deriveRenderSeed } from '../modules/patternSeed.js';
 import { getLastImagePageHref } from '../modules/imagePageNavigation.js';
 import { getStandardImageSrc } from '../modules/standardImageFiles.js';
 
@@ -360,7 +361,7 @@ function clearActivePatternItems() {
   }
 }
 
-async function renderDeckPlayerCard(slopeItems, grid, s, r) {
+async function renderDeckPlayerCard(slopeItems, grid, s, r, cardNumber) {
   if (!previewSampleCardTarget) {
     return;
   }
@@ -375,7 +376,8 @@ async function renderDeckPlayerCard(slopeItems, grid, s, r) {
   await drawImagesOnSquareTarget(
     previewSampleCardTarget,
     selectedItems.map((item) => item.source),
-    tempDeck.generationOptions
+    tempDeck.generationOptions,
+    { randomSeed: deriveRenderSeed(tempDeck.pattern, cardNumber) }
   );
 }
 
@@ -407,7 +409,7 @@ async function renderDeckPlayerAt(index) {
 
   const step = getDeckPlayerStepAt(tempDeck.symbolsPerCard, deckPlayerIndex);
   const { slopeItems, grid } = getDeckPlayerPatternItems();
-  await renderDeckPlayerCard(slopeItems, grid, step.s, step.r);
+  await renderDeckPlayerCard(slopeItems, grid, step.s, step.r, deckPlayerIndex + 1);
   if (deckPlayerStatus) {
     deckPlayerStatus.textContent = getDeckPlayerStatusText(step, deckPlayerIndex + 1, cardCount);
   }
@@ -662,5 +664,7 @@ window.addEventListener('beforeunload', () => {
 
 setDeckPlayerExpanded(false);
 await renderSelectedImages();
+
+
 
 

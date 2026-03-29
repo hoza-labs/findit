@@ -7,6 +7,7 @@ import {
   planCardRender,
   planCardRenderItems
 } from '../src/js/modules/cardCanvasRenderer.js';
+import { createSeededRandom } from '../src/js/modules/patternSeed.js';
 
 test('given a masked image, placement centers the saved mask and scales it to the inscribed circle', () => {
   const placement = calculateMaskedImagePlacement({
@@ -93,6 +94,22 @@ test('given non-random rotation, the whole card is not rotated', () => {
 
   assert.equal(planned.cardRotation, 0);
   assert.equal(planned.cardFlip, false);
+});
+
+test('given the same seeded random, planCardRender stays stable', () => {
+  const options = { cardShape: 'round', imageRotation: 'random', imageSize: 'various' };
+  const left = planCardRender(['a.png', 'b.png', 'c.png', 'd.png'], options, createSeededRandom(123456));
+  const right = planCardRender(['a.png', 'b.png', 'c.png', 'd.png'], options, createSeededRandom(123456));
+
+  assert.deepEqual(right, left);
+});
+
+test('given different seeded random values, planCardRender changes randomized output', () => {
+  const options = { cardShape: 'round', imageRotation: 'random', imageSize: 'various' };
+  const left = planCardRender(['a.png', 'b.png', 'c.png', 'd.png'], options, createSeededRandom(123456));
+  const right = planCardRender(['a.png', 'b.png', 'c.png', 'd.png'], options, createSeededRandom(654321));
+
+  assert.notDeepEqual(right, left);
 });
 
 function sequenceRandom(values) {

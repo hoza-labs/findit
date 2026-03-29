@@ -1,4 +1,4 @@
-﻿import { createEmptyTempDeck } from './deckSession.js';
+import { createEmptyTempDeck } from './deckSession.js';
 import { createImageRef } from './imageRefs.js';
 import { getAllowedSymbolsPerCard } from './stepOnePreview.js';
 
@@ -49,6 +49,8 @@ export function createQuickDeckTempDeck({
   userImageIds = [],
   webImageIds = [],
   standardImageIds = [],
+  printOptions = undefined,
+  patternRandom = Math.random,
   random = Math.random
 } = {}) {
   const normalizedSymbolsPerCard = normalizeQuickDeckSymbolsPerCard(symbolsPerCard);
@@ -67,7 +69,7 @@ export function createQuickDeckTempDeck({
   const selectedImageRefs = [...userSelections, ...webSelections, ...standardSelections];
   return {
     tempDeck: {
-      ...createEmptyTempDeck(),
+      ...createEmptyTempDeck({ printOptions, random: patternRandom }),
       symbolsPerCard: normalizedSymbolsPerCard,
       selectedImageRefs
     },

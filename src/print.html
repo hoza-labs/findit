@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FindIt | Print</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
+    <link rel="stylesheet" href="./css/main.css" />
+    <link rel="stylesheet" href="./css/print.css" />
+  </head>
+  <body class="has-top-bar">
+    <nav class="top-next-bar navbar navbar-expand navbar-dark bg-primary fixed-top">
+      <div class="container-fluid">
+        <div class="top-page-links">
+          <a href="./index.html" class="nav-link fw-semibold">Home</a>
+          <a href="./basic-info.html" class="nav-link fw-semibold">Basic Info</a>
+          <a href="./standard-images.html" class="nav-link fw-semibold" data-select-images-link>Select Images</a>
+          <a href="./deck-preview.html" data-build-link class="nav-link fw-semibold">Build</a>
+          <a href="./play.html" class="nav-link fw-semibold">Play!</a>
+          <a href="./print.html" class="nav-link fw-semibold is-current" aria-current="page">Print</a>
+          <a href="./save.html" class="nav-link fw-semibold">Save&hellip;</a>
+        </div>
+        <details class="top-page-menu-mobile">
+          <summary aria-label="Open page navigation">
+            <span class="top-page-menu-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+          </summary>
+          <ul class="top-page-menu-list">
+            <li><a href="./index.html" class="top-page-menu-link">Home</a></li>
+            <li><a href="./basic-info.html" class="top-page-menu-link">Basic Info</a></li>
+            <li><a href="./standard-images.html" class="top-page-menu-link" data-select-images-link>Select Images</a></li>
+            <li><a href="./deck-preview.html" data-build-link class="top-page-menu-link">Build</a></li>
+            <li><a href="./play.html" class="top-page-menu-link">Play!</a></li>
+            <li><a href="./print.html" class="top-page-menu-link" aria-current="page">Print</a></li>
+            <li><a href="./save.html" class="top-page-menu-link">Save&hellip;</a></li>
+          </ul>
+        </details>
+        <div class="top-nav-step-links">
+          <a href="./play.html" class="btn btn-sm btn-outline-light">Prev</a>
+          <a href="./save.html" class="btn btn-sm btn-light top-nav-next-link">Next</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="container-fluid preview-page-shell py-4">
+      <h1 class="display-6 mb-2">Print</h1>
+      <p class="mb-2">Print your deck for max fun! Consider photo prints or get the cards laminated.</p>
+      <p id="deck-status-line" class="text-muted mb-0">Current deck: (new untitled deck) (no changes yet)</p>
+    </header>
+
+    <main class="container-fluid preview-page-shell pb-5">
+      <div class="print-page-layout">
+        <section class="card shadow-sm">
+          <div class="card-body">
+            <h2 class="h5 mb-3">Print Options</h2>
+            <form id="print-options-form" novalidate>
+              <div class="print-form-grid print-form-grid--two">
+                <div>
+                  <label for="desired-card-size" class="form-label">Desired card size</label>
+                  <input id="desired-card-size" name="desiredCardSize" type="text" class="form-control" inputmode="decimal" />
+                </div>
+                <div>
+                  <label for="print-units" class="form-label">Units</label>
+                  <select id="print-units" name="units" class="form-select">
+                    <option value="in">inches</option>
+                    <option value="mm">mm</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="print-form-row">
+                <label for="print-page-size" class="form-label">Page Size</label>
+                <select id="print-page-size" name="pageSizeId" class="form-select">
+                  <option value="letter">US Letter (8.5 x 11 in)</option>
+                  <option value="legal">US Legal (8.5 x 14 in)</option>
+                  <option value="tabloid">US Tabloid (11 x 17 in)</option>
+                  <option value="a3">A3 (297 x 420 mm)</option>
+                  <option value="a4">A4 (210 x 297 mm)</option>
+                  <option value="a5">A5 (148 x 210 mm)</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+
+              <div class="print-form-row">
+                <label for="print-orientation" class="form-label">Orientation</label>
+                <select id="print-orientation" name="orientation" class="form-select">
+                  <option value="portrait">Portrait</option>
+                  <option value="landscape">Landscape</option>
+                </select>
+              </div>
+
+              <div id="custom-page-size-fields" class="print-form-grid print-form-grid--two" hidden>
+                <div>
+                  <label for="custom-page-width" class="form-label">Page Width</label>
+                  <input id="custom-page-width" name="customPageWidth" type="text" class="form-control" inputmode="decimal" />
+                </div>
+                <div>
+                  <label for="custom-page-height" class="form-label">Page Height</label>
+                  <input id="custom-page-height" name="customPageHeight" type="text" class="form-control" inputmode="decimal" />
+                </div>
+              </div>
+
+              <fieldset class="print-fieldset">
+                <legend class="form-label">Margins</legend>
+                <div class="print-form-grid print-form-grid--two">
+                  <div>
+                    <label for="print-margin-top" class="form-label">Top</label>
+                    <input id="print-margin-top" name="marginTop" type="text" class="form-control" inputmode="decimal" />
+                  </div>
+                  <div>
+                    <label for="print-margin-right" class="form-label">Right</label>
+                    <input id="print-margin-right" name="marginRight" type="text" class="form-control" inputmode="decimal" />
+                  </div>
+                  <div>
+                    <label for="print-margin-bottom" class="form-label">Bottom</label>
+                    <input id="print-margin-bottom" name="marginBottom" type="text" class="form-control" inputmode="decimal" />
+                  </div>
+                  <div>
+                    <label for="print-margin-left" class="form-label">Left</label>
+                    <input id="print-margin-left" name="marginLeft" type="text" class="form-control" inputmode="decimal" />
+                  </div>
+                </div>
+              </fieldset>
+
+              <div class="print-form-row">
+                <label for="print-layout" class="form-label">Page Layout</label>
+                <select id="print-layout" name="layoutId" class="form-select">
+                  <option value="1-up">1-up</option>
+                  <option value="2-up">2-up</option>
+                  <option value="4-up">4-up</option>
+                  <option value="6-up">6-up</option>
+                  <option value="9-up">9-up</option>
+                  <option value="12-up">12-up</option>
+                </select>
+              </div>
+
+              <div class="print-form-row">
+                <label for="print-quality" class="form-label">Print Quality</label>
+                <select id="print-quality" name="qualityPreset" class="form-select">
+                  <option value="inkjet">Inkjet - Normal (300 dpi)</option>
+                  <option value="laser">Inkjet - Best (600 dpi)</option>
+                  <option value="photo">Photo (1200 dpi)</option>
+                  <option value="professional">Professional (2400 dpi)</option>
+                  <option value="custom">Custom</option>
+                </select>
+                <p id="print-quality-summary" class="text-muted small mb-0 mt-2"></p>
+              </div>
+
+              <div id="custom-dpi-row" class="print-form-row" hidden>
+                <label for="custom-dpi" class="form-label">Custom DPI</label>
+                <input id="custom-dpi" name="customDpi" type="text" class="form-control" inputmode="numeric" />
+              </div>
+
+
+              <details class="print-advanced mb-3">
+                <summary class="fw-semibold">Advanced</summary>
+                <div class="print-advanced-body">
+                  <div class="form-check mb-3">
+                    <input id="show-card-number" name="showCardNumber" type="checkbox" class="form-check-input" />
+                    <label for="show-card-number" class="form-check-label">Overlay card numbers</label>
+                  </div>
+                  <div class="form-check mb-3">
+                    <input id="show-card-outline" name="showCardOutline" type="checkbox" class="form-check-input" />
+                    <label for="show-card-outline" class="form-check-label">Show card outline</label>
+                  </div>
+                  <div class="print-form-grid print-form-grid--two">
+                    <div>
+                      <label for="markup-color" class="form-label">Markup Color</label>
+                      <input id="markup-color" name="markupColor" type="color" class="form-control form-control-color" />
+                    </div>
+                    <div>
+                      <label for="card-outline-dash-style" class="form-label">Dash style</label>
+                      <select id="card-outline-dash-style" name="cardOutlineDashStyle" class="form-select">
+                        <option value="solid">Solid</option>
+                        <option value="dashed">Dashed</option>
+                        <option value="dotted">Dotted</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </details>
+
+              <div class="d-flex flex-wrap gap-2 align-items-center">
+                <button id="print-button" type="button" class="btn btn-primary">Print...</button>
+                <button id="save-print-defaults-button" type="button" class="btn btn-outline-primary">Make these defaults for new decks</button>
+                <button id="print-tips-button" type="button" class="btn btn-outline-secondary">Tips for printing</button>
+              </div>
+              <p id="print-options-message" class="text-muted mb-0 mt-3" aria-live="polite"></p>
+            </form>
+          </div>
+        </section>
+
+        <section class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+              <div>
+                <h2 class="h5 mb-1">Live Preview</h2>
+                <p class="mb-0 text-muted">Preview the printable sheets before opening the browser print dialog.</p>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <button id="print-preview-prev" type="button" class="btn btn-sm btn-outline-secondary">Prev page</button>
+                <span id="print-preview-page-label" class="text-muted small">Page 1 of 1</span>
+                <button id="print-preview-next" type="button" class="btn btn-sm btn-outline-secondary">Next page</button>
+              </div>
+            </div>
+            <div id="print-preview-empty" class="alert alert-warning" hidden></div>
+            <div id="print-preview" class="print-preview"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+
+    <dialog id="layout-size-dialog" class="print-layout-dialog">
+      <div class="print-layout-dialog-body">
+        <p id="layout-size-dialog-message" class="mb-3"></p>
+        <div class="d-flex justify-content-end gap-2">
+          <button id="layout-size-dialog-cancel" type="button" class="btn btn-outline-secondary">Cancel</button>
+          <button id="layout-size-dialog-ok" type="button" class="btn btn-primary">OK</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="print-tips-dialog" class="print-tips-dialog">
+      <div class="print-tips-dialog-body">
+        <h2 class="h5 mb-3">Tips for printing</h2>
+        <ul class="mb-3">
+          <li>Use Actual size or 100% scaling when the print dialog offers it.</li>
+          <li>Saving to PDF first is a great way to proof margins, card size, and page count.</li>
+          <li>Photo paper can make colors pop, and lamination helps cards survive a lot of games.</li>
+          <li>Your browser and printer still control paper source, paper type, duplex, and final hardware quality.</li>
+        </ul>
+        <div class="d-flex justify-content-end">
+          <button id="print-tips-close" type="button" class="btn btn-primary">Close</button>
+        </div>
+      </div>
+    </dialog>
+
+    <div id="print-sheet-output" class="print-sheet-output" aria-hidden="true"></div>
+
+    <script type="module" src="./js/app/print.js"></script>
+    <script type="module" src="./js/app/selectImagesNav.js"></script>
+    <script type="module" src="./js/app/buildPageNav.js"></script>
+    <script type="module" src="./js/app/menuDismiss.js"></script>
+  </body>
+</html>
+
+
+
+

@@ -1,6 +1,7 @@
-﻿import { getLastBuildPageHref } from '../modules/buildPageNavigation.js';
-import { createEmptyTempDeck, createTempDeckFromSavedDeck, markSaved } from '../modules/deckSession.js';
+import { getLastBuildPageHref } from '../modules/buildPageNavigation.js';
+import { createEmptyTempDeck, createSavedDeckRecord, createTempDeckFromSavedDeck, markSaved } from '../modules/deckSession.js';
 import { loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
+import { getDefaultPrintOptions } from '../modules/printDefaults.js';
 import { createDeckCardGalleryRenderer } from '../modules/deckCardGallery.js';
 import { getDeckPlayerCardCount } from '../modules/deckPlayer.js';
 import { createQuickDeckTempDeck } from '../modules/quickDeck.js';
@@ -57,7 +58,7 @@ async function continueAfterSaveIntent() {
   }
 
   if (afterAction === 'new') {
-    await repository.saveTempDeck(createEmptyTempDeck());
+    await repository.saveTempDeck(createEmptyTempDeck({ printOptions: getDefaultPrintOptions() }));
     window.location.href = './basic-info.html';
     return;
   }
@@ -72,7 +73,8 @@ async function continueAfterSaveIntent() {
       symbolsPerCard: afterQuickN,
       userImageIds: userImagesForQuickDeck.map((image) => image.id),
       webImageIds: webImagesForQuickDeck.map((image) => image.id),
-      standardImageIds
+      standardImageIds,
+      printOptions: getDefaultPrintOptions()
     });
     await repository.saveTempDeck(result.tempDeck);
     window.location.href = getLastBuildPageHref();
@@ -100,14 +102,7 @@ async function saveDeckWithName(name, confirmReplace) {
     }
   }
 
-  await repository.saveDeck({
-    name,
-    symbolsPerCard: tempDeck.symbolsPerCard,
-    imageRefs: [...tempDeck.selectedImageRefs],
-    generationOptions: { ...tempDeck.generationOptions },
-    playOptions: { ...tempDeck.playOptions },
-    updatedAt: new Date().toISOString()
-  });
+  await repository.saveDeck(createSavedDeckRecord(tempDeck, name));
 
   tempDeck = markSaved({ ...tempDeck, deckName: name });
   await saveTempDeck(tempDeck);

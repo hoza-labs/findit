@@ -1,11 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createEmptyTempDeck, createTempDeckFromSavedDeck, normalizeTempDeck } from '../src/js/modules/deckSession.js';
+import {
+  createEmptyTempDeck,
+  createSavedDeckRecord,
+  createTempDeckFromSavedDeck,
+  normalizeTempDeck
+} from '../src/js/modules/deckSession.js';
 
-test('given empty temp deck, play options are initialized with defaults', () => {
-  const deck = createEmptyTempDeck();
+test('given empty temp deck, play and print options are initialized with defaults', () => {
+  const deck = createEmptyTempDeck({ random: () => 0.25 });
 
+  assert.equal(deck.pattern, 1073741824);
   assert.deepEqual(deck.generationOptions, {
     cardShape: 'round',
     imageRotation: 'random',
@@ -15,15 +21,40 @@ test('given empty temp deck, play options are initialized with defaults', () => 
   assert.deepEqual(deck.playOptions, {
     cardsToShowCounts: '2',
     countdownSeconds: '',
+    drumrollSeconds: '3',
+    chaos: 'rotate-cards',
+    rotateCards: true,
+    reshuffleImagesEveryTime: false,
     lengthOfPlay: '',
     lengthOfPlayUnits: 'hands',
     playerNames: 'one, two'
   });
+  assert.deepEqual(deck.printOptions, {
+    pageSizeId: 'letter',
+    orientation: 'portrait',
+    units: 'in',
+    desiredCardSize: '3.4',
+    customPageWidth: '',
+    customPageHeight: '',
+    marginTop: '0.25',
+    marginRight: '0.25',
+    marginBottom: '0.25',
+    marginLeft: '0.25',
+    layoutId: '6-up',
+    qualityPreset: 'inkjet',
+    customDpi: '',
+    showCardNumber: true,
+    cardNumberPosition: 'bottom-right',
+    showCardOutline: true,
+    markupColor: '#e2e2e2',
+    cardOutlineDashStyle: 'dotted'
+  });
 });
 
-test('given saved deck with play options, temp deck preserves normalized play options', () => {
+test('given saved deck with play and print options, temp deck preserves normalized options', () => {
   const tempDeck = createTempDeckFromSavedDeck({
     name: 'Demo',
+    pattern: 123456789,
     symbolsPerCard: 4,
     imageRefs: [{ source: 'standard', id: '1.png' }],
     generationOptions: {
@@ -35,12 +66,37 @@ test('given saved deck with play options, temp deck preserves normalized play op
     playOptions: {
       cardsToShowCounts: ' 2, 4, 3 ',
       countdownSeconds: '05',
+      drumrollSeconds: '04',
+      chaos: 'reshuffle-images',
+      rotateCards: true,
+      reshuffleImagesEveryTime: false,
       lengthOfPlay: '1.5',
       lengthOfPlayUnits: 'minutes',
       playerNames: ' Alice, Bob , , Carol '
+    },
+    printOptions: {
+      pageSizeId: 'custom',
+      orientation: 'landscape',
+      units: 'mm',
+      desiredCardSize: '84',
+      customPageWidth: ' 210 ',
+      customPageHeight: '297.0',
+      marginTop: ' 6.5 ',
+      marginRight: '7',
+      marginBottom: '8.0',
+      marginLeft: ' 9 ',
+      layoutId: '6-up',
+      qualityPreset: 'custom',
+      customDpi: '0600',
+      showCardNumber: true,
+      cardNumberPosition: 'top-left',
+      showCardOutline: true,
+      markupColor: '#FF00AA',
+      cardOutlineDashStyle: 'dashed'
     }
   });
 
+  assert.equal(tempDeck.pattern, 123456789);
   assert.deepEqual(tempDeck.generationOptions, {
     cardShape: 'square',
     imageRotation: 'none',
@@ -50,14 +106,39 @@ test('given saved deck with play options, temp deck preserves normalized play op
   assert.deepEqual(tempDeck.playOptions, {
     cardsToShowCounts: '2, 4, 3',
     countdownSeconds: '5',
+    drumrollSeconds: '4',
+    chaos: 'reshuffle-images',
+    rotateCards: false,
+    reshuffleImagesEveryTime: true,
     lengthOfPlay: '1.5',
     lengthOfPlayUnits: 'minutes',
     playerNames: 'Alice, Bob, Carol'
   });
+  assert.deepEqual(tempDeck.printOptions, {
+    pageSizeId: 'custom',
+    orientation: 'landscape',
+    units: 'mm',
+    desiredCardSize: '84',
+    customPageWidth: '210',
+    customPageHeight: '297',
+    marginTop: '6.5',
+    marginRight: '7',
+    marginBottom: '8',
+    marginLeft: '9',
+    layoutId: '6-up',
+    qualityPreset: 'custom',
+    customDpi: '600',
+    showCardNumber: true,
+    cardNumberPosition: 'top-left',
+    showCardOutline: true,
+    markupColor: '#ff00aa',
+    cardOutlineDashStyle: 'dashed'
+  });
 });
 
-test('given legacy handsToPlay option, normalize maps it to lengthOfPlay in hands', () => {
+test('given legacy handsToPlay option, normalize maps it to lengthOfPlay in hands and adds default print options', () => {
   const normalized = normalizeTempDeck({
+    pattern: 99,
     symbolsPerCard: 4,
     selectedImageRefs: [],
     generationOptions: {
@@ -75,6 +156,7 @@ test('given legacy handsToPlay option, normalize maps it to lengthOfPlay in hand
     }
   });
 
+  assert.equal(normalized.pattern, 99);
   assert.deepEqual(normalized.generationOptions, {
     cardShape: 'round',
     imageRotation: 'random',
@@ -84,13 +166,19 @@ test('given legacy handsToPlay option, normalize maps it to lengthOfPlay in hand
   assert.deepEqual(normalized.playOptions, {
     cardsToShowCounts: '',
     countdownSeconds: '',
+    drumrollSeconds: '3',
+    chaos: 'rotate-cards',
+    rotateCards: true,
+    reshuffleImagesEveryTime: false,
     lengthOfPlay: '3',
     lengthOfPlayUnits: 'hands',
     playerNames: ''
   });
+  assert.equal(normalized.printOptions.pageSizeId, 'letter');
+  assert.equal(normalized.printOptions.layoutId, '6-up');
 });
 
-test('given legacy temp deck without play options, normalizeTempDeck adds defaults', () => {
+test('given legacy temp deck without play or print options, normalizeTempDeck adds defaults and a new pattern', () => {
   const normalized = normalizeTempDeck({
     deckName: 'Legacy',
     symbolsPerCard: 4,
@@ -98,6 +186,8 @@ test('given legacy temp deck without play options, normalizeTempDeck adds defaul
     dirty: true
   });
 
+  assert.equal(Number.isInteger(normalized.pattern), true);
+  assert.ok(normalized.pattern >= 0);
   assert.deepEqual(normalized.generationOptions, {
     cardShape: 'round',
     imageRotation: 'random',
@@ -107,8 +197,92 @@ test('given legacy temp deck without play options, normalizeTempDeck adds defaul
   assert.deepEqual(normalized.playOptions, {
     cardsToShowCounts: '2',
     countdownSeconds: '',
+    drumrollSeconds: '3',
+    chaos: 'rotate-cards',
+    rotateCards: true,
+    reshuffleImagesEveryTime: false,
     lengthOfPlay: '',
     lengthOfPlayUnits: 'hands',
     playerNames: 'one, two'
   });
+  assert.equal(normalized.printOptions.pageSizeId, 'letter');
+  assert.equal(normalized.printOptions.qualityPreset, 'inkjet');
 });
+
+test('given a temp deck, createSavedDeckRecord includes normalized pattern and print options', () => {
+  const savedDeck = createSavedDeckRecord({
+    ...createEmptyTempDeck({ random: () => 0.1 }),
+    deckName: 'Demo',
+    pattern: 987654321,
+    playOptions: {
+      cardsToShowCounts: '3, 5',
+      countdownSeconds: '7',
+      drumrollSeconds: '',
+      chaos: 'none',
+      rotateCards: true,
+      reshuffleImagesEveryTime: true,
+      lengthOfPlay: '2',
+      lengthOfPlayUnits: 'decks',
+      playerNames: 'A, B'
+    },
+    printOptions: {
+      pageSizeId: 'a4',
+      orientation: 'portrait',
+      units: 'mm',
+      desiredCardSize: '85',
+      customPageWidth: '',
+      customPageHeight: '',
+      marginTop: '5',
+      marginRight: '5',
+      marginBottom: '5',
+      marginLeft: '5',
+      layoutId: '6-up',
+      qualityPreset: 'laser',
+      customDpi: '',
+      showCardNumber: true,
+      cardNumberPosition: 'top-right',
+      showCardOutline: true,
+      markupColor: '#123456',
+      cardOutlineDashStyle: 'dotted'
+    }
+  });
+
+  assert.equal(savedDeck.name, 'Demo');
+  assert.equal(savedDeck.pattern, 987654321);
+  assert.deepEqual(savedDeck.playOptions, {
+    cardsToShowCounts: '3, 5',
+    countdownSeconds: '7',
+    drumrollSeconds: '',
+    chaos: 'none',
+    rotateCards: false,
+    reshuffleImagesEveryTime: false,
+    lengthOfPlay: '2',
+    lengthOfPlayUnits: 'decks',
+    playerNames: 'A, B'
+  });
+  assert.deepEqual(savedDeck.printOptions, {
+    pageSizeId: 'a4',
+    orientation: 'portrait',
+    units: 'mm',
+    desiredCardSize: '85',
+    customPageWidth: '',
+    customPageHeight: '',
+    marginTop: '5',
+    marginRight: '5',
+    marginBottom: '5',
+    marginLeft: '5',
+    layoutId: '6-up',
+    qualityPreset: 'laser',
+    customDpi: '',
+    showCardNumber: true,
+    cardNumberPosition: 'top-right',
+    showCardOutline: true,
+    markupColor: '#123456',
+    cardOutlineDashStyle: 'dotted'
+  });
+});
+
+
+
+
+

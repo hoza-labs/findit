@@ -8,6 +8,7 @@ const deckStatusLine = document.querySelector('#deck-status-line');
 const playOptionsForm = document.querySelector('#play-options-form');
 const playButton = document.querySelector('#play-button');
 const playOptionsMessage = document.querySelector('#play-options-message');
+const chaosSelect = document.querySelector('#chaos-select');
 const readyMessageHtml = 'Play options are ready and we\'ll help you keep score. You\'ll have to invent your own rules or (better yet!) support the fine folks who invented <a href="https://www.spotitgame.com/" target="_blank" rel="noopener noreferrer">Spot It!</a>';
 
 let tempDeck = await loadTempDeckOrDefault();
@@ -37,6 +38,8 @@ function getPlayOptionsFromForm() {
   return normalizePlayOptions({
     cardsToShowCounts: formData.get('cardsToShowCounts'),
     countdownSeconds: formData.get('countdownSeconds'),
+    drumrollSeconds: formData.get('drumrollSeconds'),
+    chaos: formData.get('chaos'),
     lengthOfPlay: formData.get('lengthOfPlay'),
     lengthOfPlayUnits: formData.get('lengthOfPlayUnits'),
     playerNames: formData.get('playerNames')
@@ -47,6 +50,7 @@ function getPlayOptionsValidationMessage(playOptions) {
   const deckCardCount = getDeckPlayerCardCount(tempDeck.symbolsPerCard);
   const countsRaw = getFieldValue('cardsToShowCounts');
   const countdownRaw = getFieldValue('countdownSeconds');
+  const drumrollRaw = getFieldValue('drumrollSeconds');
   const lengthRaw = getFieldValue('lengthOfPlay');
   const lengthUnits = playOptions.lengthOfPlayUnits;
   const counts = playOptions.cardsToShowCounts
@@ -68,13 +72,17 @@ function getPlayOptionsValidationMessage(playOptions) {
     return 'Countdown in seconds must be a valid number.';
   }
 
+  if (drumrollRaw && !isValidPositiveWholeNumberInput(drumrollRaw)) {
+    return 'Drumroll seconds must be a valid number.';
+  }
+
   if (lengthRaw) {
     if (lengthUnits === 'minutes' && !isValidPositiveNumberInput(lengthRaw)) {
       return 'Length of play must be a valid number.';
     }
 
     if ((lengthUnits === 'hands' || lengthUnits === 'decks') && !isValidPositiveWholeNumberInput(lengthRaw)) {
-      return `Length of play must be a positive whole number of hands or decks; fractional minutes are allowed.`;
+      return 'Length of play must be a positive whole number of hands or decks; fractional minutes are allowed.';
     }
   }
 
@@ -92,6 +100,10 @@ function getPlayOptionsValidationMessage(playOptions) {
 
   if (countdownRaw && playOptions.countdownSeconds === '') {
     return 'Countdown in seconds must be at least 1.';
+  }
+
+  if (drumrollRaw && playOptions.drumrollSeconds === '') {
+    return 'Drumroll seconds must be at least 1.';
   }
 
   return '';
@@ -131,6 +143,10 @@ playOptionsForm.addEventListener('input', () => {
   void persistPlayOptions();
 });
 
+chaosSelect.addEventListener('change', () => {
+  void persistPlayOptions();
+});
+
 playButton.addEventListener('click', () => {
   void (async () => {
     const { validationMessage } = await persistPlayOptions();
@@ -147,3 +163,5 @@ updateHeader();
 const initialValidationMessage = getPlayOptionsValidationMessage(tempDeck.playOptions);
 renderPlayOptionsMessage(initialValidationMessage || readyMessageHtml, { allowHtml: !initialValidationMessage });
 playButton.disabled = Boolean(initialValidationMessage);
+
+

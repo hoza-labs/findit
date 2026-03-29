@@ -1,4 +1,4 @@
-﻿import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
@@ -53,19 +53,21 @@ test('given a quick deck size, getQuickDeckImageCount returns the required image
   assert.equal(getQuickDeckImageCount(6), 31);
 });
 
-test('given enough images across sources, createQuickDeckTempDeck fills from user then web then standard', () => {
+test('given enough images across sources, createQuickDeckTempDeck fills from user then web then standard and creates a pattern', () => {
   const result = createQuickDeckTempDeck({
     symbolsPerCard: 6,
     userImageIds: ['u1', 'u2'],
     webImageIds: ['w1', 'w2', 'w3'],
     standardImageIds: Array.from({ length: 40 }, (_, index) => `image-${index + 1}.png`),
-    random: () => 0.25
+    random: () => 0.25,
+    patternRandom: () => 0.5
   });
 
   assert.equal(result.requiredImageCount, 31);
   assert.equal(result.selectedImageCount, 31);
   assert.equal(result.isComplete, true);
   assert.equal(result.tempDeck.symbolsPerCard, 6);
+  assert.equal(result.tempDeck.pattern, 2147483648);
   assert.equal(result.tempDeck.selectedImageRefs.length, 31);
   assert.deepEqual(result.tempDeck.selectedImageRefs.slice(0, 2).map((ref) => ref.source), ['user', 'user']);
   assert.deepEqual(result.tempDeck.selectedImageRefs.slice(2, 5).map((ref) => ref.source), ['web', 'web', 'web']);
@@ -83,5 +85,6 @@ test('given too few images overall, createQuickDeckTempDeck returns an incomplet
   assert.equal(result.requiredImageCount, 57);
   assert.equal(result.selectedImageCount, 5);
   assert.equal(result.isComplete, false);
+  assert.equal(Number.isInteger(result.tempDeck.pattern), true);
   assert.deepEqual(result.tempDeck.selectedImageRefs.map((ref) => ref.source), ['user', 'web', 'web', 'standard', 'standard']);
 });
