@@ -22,7 +22,7 @@ const DPI_PRESET_VALUES = Object.freeze({
   inkjet: 300,
   laser: 600,
   photo: 1200,
-  professional: 300
+  professional: 2400
 });
 
 const LAYOUT_CANDIDATES = Object.freeze({
@@ -48,11 +48,11 @@ export function createDefaultPrintOptions() {
     layoutId: '4-up',
     qualityPreset: 'inkjet',
     customDpi: '',
-    showCardNumber: false,
+    showCardNumber: true,
     cardNumberPosition: 'bottom-right',
-    showCardOutline: false,
-    markupColor: '#000000',
-    cardOutlineDashStyle: 'solid'
+    showCardOutline: true,
+    markupColor: '#e2e2e2',
+    cardOutlineDashStyle: 'dotted'
   };
 }
 
@@ -181,10 +181,10 @@ export function planPrintLayout(cardCount, printOptions, generationOptions = und
   const normalized = normalizePrintOptions(printOptions);
   const pageSize = resolvePageSize(normalized);
   const marginsIn = {
-    top: convertToInches(normalized.marginTop, normalized.units),
-    right: convertToInches(normalized.marginRight, normalized.units),
-    bottom: convertToInches(normalized.marginBottom, normalized.units),
-    left: convertToInches(normalized.marginLeft, normalized.units)
+    top: convertToInches(normalized.marginTop, normalized.units, true),
+    right: convertToInches(normalized.marginRight, normalized.units, true),
+    bottom: convertToInches(normalized.marginBottom, normalized.units, true),
+    left: convertToInches(normalized.marginLeft, normalized.units, true)
   };
 
   if (!Number.isInteger(cardCount) || cardCount <= 0) {
@@ -338,9 +338,9 @@ function createInvalidPrintLayout(validationMessage, printOptions, pageSize, mar
   };
 }
 
-function convertToInches(value, units) {
+function convertToInches(value, units, allowZero = false) {
   const parsedValue = typeof value === 'number' ? value : Number.parseFloat(String(value ?? ''));
-  if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+  if (!Number.isFinite(parsedValue) || parsedValue < 0 || (!allowZero && parsedValue === 0)) {
     return null;
   }
 
@@ -418,3 +418,9 @@ function trimTrailingZeros(value) {
 function capitalize(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
+
+
+
+
+
+

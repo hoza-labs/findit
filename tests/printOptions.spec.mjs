@@ -44,7 +44,7 @@ test('given print quality presets, resolveEffectiveDpi returns the expected dpi'
   assert.equal(resolveEffectiveDpi({ qualityPreset: 'inkjet' }), 300);
   assert.equal(resolveEffectiveDpi({ qualityPreset: 'laser' }), 600);
   assert.equal(resolveEffectiveDpi({ qualityPreset: 'photo' }), 1200);
-  assert.equal(resolveEffectiveDpi({ qualityPreset: 'professional' }), 300);
+  assert.equal(resolveEffectiveDpi({ qualityPreset: 'professional' }), 2400);
   assert.equal(resolveEffectiveDpi({ qualityPreset: 'custom', customDpi: '450' }), 450);
   assert.equal(resolveEffectiveDpi({ qualityPreset: 'custom', customDpi: '' }), null);
 });
@@ -85,8 +85,8 @@ test('given invalid custom values, normalizePrintOptions falls back to safe defa
     showCardNumber: true,
     cardNumberPosition: 'bottom-right',
     showCardOutline: true,
-    markupColor: '#000000',
-    cardOutlineDashStyle: 'solid'
+    markupColor: '#e2e2e2',
+    cardOutlineDashStyle: 'dotted'
   });
 });
 
@@ -115,6 +115,22 @@ test('given enough cards for multiple pages, planPrintLayout paginates them all 
   assert.equal(planned.pages[3].slots[0].cardNumber, 13);
 });
 
+
+test('given zero margins, planPrintLayout still returns a valid layout', () => {
+  const planned = planPrintLayout(13, {
+    ...createDefaultPrintOptions(),
+    marginTop: '0',
+    marginRight: '0',
+    marginBottom: '0',
+    marginLeft: '0'
+  });
+
+  assert.equal(planned.isValid, true);
+  assert.equal(planned.marginsIn.top, 0);
+  assert.equal(planned.marginsIn.right, 0);
+  assert.equal(planned.marginsIn.bottom, 0);
+  assert.equal(planned.marginsIn.left, 0);
+});
 test('given impossible margins, planPrintLayout returns a validation error instead of a broken layout', () => {
   const planned = planPrintLayout(13, {
     ...createDefaultPrintOptions(),
@@ -132,3 +148,7 @@ test('formatMeasurement reports values in the active units', () => {
   assert.equal(formatMeasurement(4, 'in'), '4 in');
   assert.equal(formatMeasurement(1, 'mm'), '25.4 mm');
 });
+
+
+
+

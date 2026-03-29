@@ -42,11 +42,11 @@ test('given empty temp deck, play and print options are initialized with default
     layoutId: '4-up',
     qualityPreset: 'inkjet',
     customDpi: '',
-    showCardNumber: false,
+    showCardNumber: true,
     cardNumberPosition: 'bottom-right',
-    showCardOutline: false,
-    markupColor: '#000000',
-    cardOutlineDashStyle: 'solid'
+    showCardOutline: true,
+    markupColor: '#e2e2e2',
+    cardOutlineDashStyle: 'dotted'
   });
 });
 
@@ -276,3 +276,7 @@ test('given a temp deck, createSavedDeckRecord includes normalized pattern and p
     cardOutlineDashStyle: 'dotted'
   });
 });
+
+
+
+
