@@ -37,6 +37,8 @@ let renderVersion = 0;
 let isRenderingPreview = false;
 let pendingLayoutSizeChange = null;
 const APPROX_HTML_ENTITY = '&#8776;';
+const IS_CHROMIUM_PRINT = /(?:Chrome|Chromium|Edg)\//u.test(navigator.userAgent);
+document.body.classList.toggle('is-chromium-print', IS_CHROMIUM_PRINT);
 
 function updateHeader() {
   renderDeckStatusLine(deckStatusLine, tempDeck);
@@ -331,6 +333,10 @@ function updatePrintPageStyle(layout) {
     styleElement.id = 'dynamic-print-page-style';
     document.head.appendChild(styleElement);
   }
+
+  const isLandscape = Boolean(layout?.isValid && layout.pageWidthIn > layout.pageHeightIn);
+  document.body.classList.toggle('is-print-orientation-landscape', isLandscape);
+  document.body.classList.toggle('is-print-orientation-portrait', Boolean(layout?.isValid && !isLandscape));
 
   if (!layout?.isValid) {
     styleElement.textContent = '';
