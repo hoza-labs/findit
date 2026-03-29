@@ -1,4 +1,4 @@
-import { createEmptyTempDeck, createTempDeckFromSavedDeck } from '../modules/deckSession.js';
+import { createEmptyTempDeck, createTempDeckFromSavedDeck, normalizeSavedDeckRecord } from '../modules/deckSession.js';
 import { renderDeckHeaderAndTitle, renderDeckStatusLine } from '../modules/deckFlowCommon.js';
 import { getDefaultPrintOptions } from '../modules/printDefaults.js';
 import { createIndexedDbRepository } from '../modules/indexedDbRepository.js';
@@ -59,7 +59,12 @@ async function openExistingDeck(name) {
     return;
   }
 
-  await repository.saveTempDeck(createTempDeckFromSavedDeck(deck));
+  const normalizedDeck = normalizeSavedDeckRecord(deck);
+  if (JSON.stringify(normalizedDeck) !== JSON.stringify(deck)) {
+    await repository.saveDeck(normalizedDeck);
+  }
+
+  await repository.saveTempDeck(createTempDeckFromSavedDeck(normalizedDeck));
   window.location.href = './basic-info.html';
 }
 

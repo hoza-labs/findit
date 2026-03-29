@@ -5,6 +5,7 @@ import {
   createEmptyTempDeck,
   createSavedDeckRecord,
   createTempDeckFromSavedDeck,
+  normalizeSavedDeckRecord,
   normalizeTempDeck
 } from '../src/js/modules/deckSession.js';
 
@@ -286,3 +287,81 @@ test('given a temp deck, createSavedDeckRecord includes normalized pattern and p
 
 
 
+
+
+test('given legacy saved deck without pattern or print options, normalizeSavedDeckRecord fills defaults for persistence', () => {
+  const normalized = normalizeSavedDeckRecord({
+    name: 'Legacy',
+    symbolsPerCard: 4,
+    imageRefs: [],
+    playOptions: {
+      handsToPlay: '3'
+    }
+  });
+
+  assert.equal(normalized.name, 'Legacy');
+  assert.equal(Number.isInteger(normalized.pattern), true);
+  assert.ok(normalized.pattern >= 0);
+  assert.deepEqual(normalized.playOptions, {
+    cardsToShowCounts: '',
+    countdownSeconds: '',
+    drumrollSeconds: '3',
+    chaos: 'rotate-cards',
+    rotateCards: true,
+    reshuffleImagesEveryTime: false,
+    lengthOfPlay: '3',
+    lengthOfPlayUnits: 'hands',
+    playerNames: ''
+  });
+  assert.equal(normalized.printOptions.pageSizeId, 'letter');
+  assert.equal(normalized.printOptions.layoutId, '6-up');
+});
+
+test('given saved deck with modern fields, normalizeSavedDeckRecord preserves the existing updatedAt value', () => {
+  const normalized = normalizeSavedDeckRecord({
+    name: 'Demo',
+    pattern: 123,
+    symbolsPerCard: 4,
+    imageRefs: [{ source: 'standard', id: '1.png' }],
+    generationOptions: {
+      cardShape: 'square',
+      imageRotation: 'none',
+      imageSize: 'uniform',
+      sourceSamplingBias: 'prefer-larger-source-sampling'
+    },
+    playOptions: {
+      cardsToShowCounts: '2',
+      countdownSeconds: '',
+      drumrollSeconds: '3',
+      chaos: 'rotate-cards',
+      rotateCards: true,
+      reshuffleImagesEveryTime: false,
+      lengthOfPlay: '',
+      lengthOfPlayUnits: 'hands',
+      playerNames: 'one, two'
+    },
+    printOptions: {
+      pageSizeId: 'letter',
+      orientation: 'portrait',
+      units: 'in',
+      desiredCardSize: '3.4',
+      customPageWidth: '',
+      customPageHeight: '',
+      marginTop: '0.25',
+      marginRight: '0.25',
+      marginBottom: '0.25',
+      marginLeft: '0.25',
+      layoutId: '6-up',
+      qualityPreset: 'inkjet',
+      customDpi: '',
+      showCardNumber: true,
+      cardNumberPosition: 'bottom-right',
+      showCardOutline: true,
+      markupColor: '#e2e2e2',
+      cardOutlineDashStyle: 'dotted'
+    },
+    updatedAt: '2026-03-01T12:00:00.000Z'
+  });
+
+  assert.equal(normalized.updatedAt, '2026-03-01T12:00:00.000Z');
+});

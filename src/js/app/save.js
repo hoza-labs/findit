@@ -1,5 +1,5 @@
 import { getLastBuildPageHref } from '../modules/buildPageNavigation.js';
-import { createEmptyTempDeck, createSavedDeckRecord, createTempDeckFromSavedDeck, markSaved } from '../modules/deckSession.js';
+import { createEmptyTempDeck, createSavedDeckRecord, createTempDeckFromSavedDeck, markSaved, normalizeSavedDeckRecord } from '../modules/deckSession.js';
 import { loadTempDeckOrDefault, renderDeckHeaderAndTitle, renderDeckStatusLine, repository, saveTempDeck } from '../modules/deckFlowCommon.js';
 import { getDefaultPrintOptions } from '../modules/printDefaults.js';
 import { createDeckCardGalleryRenderer } from '../modules/deckCardGallery.js';
@@ -84,7 +84,11 @@ async function continueAfterSaveIntent() {
   if (afterAction === 'open' && afterName) {
     const deck = await repository.getDeck(afterName);
     if (deck) {
-      await repository.saveTempDeck(createTempDeckFromSavedDeck(deck));
+      const normalizedDeck = normalizeSavedDeckRecord(deck);
+      if (JSON.stringify(normalizedDeck) !== JSON.stringify(deck)) {
+        await repository.saveDeck(normalizedDeck);
+      }
+      await repository.saveTempDeck(createTempDeckFromSavedDeck(normalizedDeck));
       window.location.href = './basic-info.html';
       return;
     }

@@ -58,6 +58,21 @@ export function createSavedDeckRecord(tempDeck, name = tempDeck?.deckName ?? '')
   };
 }
 
+export function normalizeSavedDeckRecord(deck) {
+  const normalizedTempDeck = createTempDeckFromSavedDeck(deck ?? {});
+
+  return {
+    name: typeof deck?.name === 'string' ? deck.name : '',
+    pattern: normalizedTempDeck.pattern,
+    symbolsPerCard: normalizedTempDeck.symbolsPerCard,
+    imageRefs: [...normalizedTempDeck.selectedImageRefs],
+    generationOptions: { ...normalizedTempDeck.generationOptions },
+    playOptions: { ...normalizedTempDeck.playOptions },
+    printOptions: { ...normalizedTempDeck.printOptions },
+    updatedAt: deck?.updatedAt ?? new Date().toISOString()
+  };
+}
+
 export function normalizeTempDeck(tempDeck) {
   if (!tempDeck) {
     return createEmptyTempDeck();
