@@ -88,7 +88,7 @@ function updateLayoutOptions(printOptions, selectedLayoutId) {
     const option = document.createElement('option');
     option.value = layoutId;
     if (planned.isValid) {
-      option.innerHTML = `${layoutId} (Max Card Size ${APPROX_HTML_ENTITY} ${formatMeasurement(planned.maxCardWidthIn, printOptions.units, printOptions.units === 'mm' ? 0 : 2, { roundingMode: 'truncate' })})`;
+      option.innerHTML = `${layoutId} (Max Card Size ${APPROX_HTML_ENTITY} ${formatLayoutMeasurement(planned.maxCardWidthIn, printOptions.units)})`;
     } else {
       option.textContent = `${layoutId} (Not available)`;
     }
@@ -105,7 +105,7 @@ function formatInputNumber(value, fractionDigits = 2) {
   return String(Number.parseFloat(value.toFixed(fractionDigits)));
 }
 
-function formatLayoutSizeValue(valueInInches, units) {
+function formatLayoutMeasurement(valueInInches, units) {
   const measurement = formatMeasurement(
     valueInInches,
     units,
@@ -113,9 +113,19 @@ function formatLayoutSizeValue(valueInInches, units) {
     { roundingMode: 'truncate' }
   );
 
+  return units === 'in'
+    ? measurement.replace(/ in$/u, ' inches')
+    : measurement;
+}
+
+function formatLayoutSizeValue(valueInInches, units) {
+  const measurement = formatLayoutMeasurement(valueInInches, units);
+
   return measurement.endsWith(` ${units}`)
     ? measurement.slice(0, -(` ${units}`).length)
-    : measurement;
+    : measurement.endsWith(' inches')
+      ? measurement.slice(0, -' inches'.length)
+      : measurement;
 }
 
 function closeLayoutSizeDialog() {
@@ -153,11 +163,12 @@ function cancelLayoutSizeDialog() {
 
 function openLayoutSizeDialog(layoutId, expectedCardWidth, units) {
   const formattedCardSize = formatLayoutSizeValue(expectedCardWidth, units);
+  const displayUnits = units === 'in' ? 'inches' : units;
   pendingLayoutSizeChange = {
     layoutId,
     desiredCardSizeValue: formattedCardSize
   };
-  layoutSizeDialogMessage.textContent = `The ${layoutId} page layout requires a smaller card size of ${formattedCardSize} ${units}. Do you want to change the Desired Card Size to match?`;
+  layoutSizeDialogMessage.textContent = `The ${layoutId} page layout requires a smaller card size of ${formattedCardSize} ${displayUnits}. Do you want to change the Desired Card Size to match?`;
   layoutSizeDialog.showModal();
   layoutSizeDialogOk.focus();
 }
