@@ -2,14 +2,20 @@ import { createEmptyTempDeck, normalizeTempDeck } from './deckSession.js';
 import { drawImagesOnSquareTarget } from './cardCanvasRenderer.js';
 import { NEUTRAL_PREVIEW_GENERATION_OPTIONS } from './cardGenerationOptions.js';
 import { createIndexedDbRepository } from './indexedDbRepository.js';
+import { getDefaultPrintOptions } from './printDefaults.js';
 
 export const repository = createIndexedDbRepository();
 
 export async function loadTempDeckOrDefault() {
   const temp = await repository.getTempDeck();
-  const normalized = normalizeTempDeck(temp);
-
   if (!temp) {
+    const empty = createEmptyTempDeck({ printOptions: getDefaultPrintOptions() });
+    await repository.saveTempDeck(empty);
+    return empty;
+  }
+
+  const normalized = normalizeTempDeck(temp);
+  if (JSON.stringify(normalized) !== JSON.stringify(temp)) {
     await repository.saveTempDeck(normalized);
   }
 
@@ -21,7 +27,7 @@ export async function saveTempDeck(tempDeck) {
 }
 
 export async function resetTempDeck() {
-  const empty = createEmptyTempDeck();
+  const empty = createEmptyTempDeck({ printOptions: getDefaultPrintOptions() });
   await repository.saveTempDeck(empty);
   return empty;
 }

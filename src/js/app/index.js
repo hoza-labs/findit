@@ -1,5 +1,6 @@
-﻿import { createEmptyTempDeck, createTempDeckFromSavedDeck } from '../modules/deckSession.js';
+import { createEmptyTempDeck, createTempDeckFromSavedDeck } from '../modules/deckSession.js';
 import { renderDeckHeaderAndTitle, renderDeckStatusLine } from '../modules/deckFlowCommon.js';
+import { getDefaultPrintOptions } from '../modules/printDefaults.js';
 import { createIndexedDbRepository } from '../modules/indexedDbRepository.js';
 import {
   createQuickDeckTempDeck,
@@ -30,7 +31,7 @@ const deleteDeckCancelButton = document.querySelector('#delete-deck-cancel');
 const deleteDeckConfirmButton = document.querySelector('#delete-deck-confirm');
 
 async function openNewDeck() {
-  await repository.saveTempDeck(createEmptyTempDeck());
+  await repository.saveTempDeck(createEmptyTempDeck({ printOptions: getDefaultPrintOptions() }));
   window.location.href = './basic-info.html';
 }
 
@@ -357,7 +358,7 @@ quickDeckButton.addEventListener('click', () => {
 });
 
 const tempDeck = await repository.getTempDeck();
-const normalizedTempDeck = tempDeck ?? createEmptyTempDeck();
+const normalizedTempDeck = tempDeck ?? createEmptyTempDeck({ printOptions: getDefaultPrintOptions() });
 renderDeckStatusLine(deckStatusLine, normalizedTempDeck);
 renderDeckHeaderAndTitle({ headingElement: pageHeading, pageLabel: 'Home', tempDeck: normalizedTempDeck });
 homeNextLink.hidden = !normalizedTempDeck.dirty;

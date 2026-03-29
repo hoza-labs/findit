@@ -1,4 +1,5 @@
 import { createDefaultGenerationOptions, normalizeGenerationOptions } from './cardGenerationOptions.js';
+import { createDefaultPrintOptions, normalizePrintOptions } from './printOptions.js';
 
 const DEFAULT_SYMBOLS_PER_CARD = 4;
 const DEFAULT_PLAY_OPTIONS = Object.freeze({
@@ -9,13 +10,14 @@ const DEFAULT_PLAY_OPTIONS = Object.freeze({
   playerNames: 'one, two'
 });
 
-export function createEmptyTempDeck() {
+export function createEmptyTempDeck(options = {}) {
   return {
     deckName: '',
     symbolsPerCard: DEFAULT_SYMBOLS_PER_CARD,
     selectedImageRefs: [],
     generationOptions: createDefaultGenerationOptions(),
     playOptions: createDefaultPlayOptions(),
+    printOptions: normalizePrintOptions(options.printOptions ?? createDefaultPrintOptions()),
     dirty: false,
     updatedAt: new Date().toISOString()
   };
@@ -28,7 +30,21 @@ export function createTempDeckFromSavedDeck(deck) {
     selectedImageRefs: Array.isArray(deck.imageRefs) ? [...deck.imageRefs] : [],
     generationOptions: normalizeGenerationOptions(deck.generationOptions),
     playOptions: normalizePlayOptions(deck.playOptions),
+    printOptions: normalizePrintOptions(deck.printOptions),
     dirty: false,
+    updatedAt: new Date().toISOString()
+  };
+}
+
+export function createSavedDeckRecord(tempDeck, name = tempDeck?.deckName ?? '') {
+  const normalized = normalizeTempDeck(tempDeck);
+  return {
+    name,
+    symbolsPerCard: normalized.symbolsPerCard,
+    imageRefs: [...normalized.selectedImageRefs],
+    generationOptions: { ...normalized.generationOptions },
+    playOptions: { ...normalized.playOptions },
+    printOptions: { ...normalized.printOptions },
     updatedAt: new Date().toISOString()
   };
 }
@@ -44,6 +60,7 @@ export function normalizeTempDeck(tempDeck) {
     selectedImageRefs: Array.isArray(tempDeck.selectedImageRefs) ? [...tempDeck.selectedImageRefs] : [],
     generationOptions: normalizeGenerationOptions(tempDeck.generationOptions),
     playOptions: normalizePlayOptions(tempDeck.playOptions),
+    printOptions: normalizePrintOptions(tempDeck.printOptions),
     dirty: Boolean(tempDeck.dirty),
     updatedAt: tempDeck.updatedAt ?? new Date().toISOString()
   };

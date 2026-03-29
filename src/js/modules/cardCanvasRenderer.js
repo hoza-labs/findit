@@ -5,8 +5,13 @@ import { getCardLayout } from './cardLayout.js';
 const BALANCED_MAX_CANVAS_RENDER_SCALE = 3;
 const LARGER_SOURCE_SAMPLING_MAX_CANVAS_RENDER_SCALE = 4;
 const LARGER_SOURCE_SAMPLING_SCALE_MULTIPLIER = 1.5;
+const DASH_PATTERNS = Object.freeze({
+  solid: [],
+  dashed: [10, 6],
+  dotted: [2, 5]
+});
 
-export async function drawImagesOnSquareTarget(targetElement, imageSources, options = undefined) {
+export async function drawImagesOnSquareTarget(targetElement, imageSources, options = undefined, renderConfig = undefined) {
   if (!targetElement) {
     throw new Error('targetElement is required.');
   }
@@ -22,13 +27,16 @@ export async function drawImagesOnSquareTarget(targetElement, imageSources, opti
 
   const generationOptions = normalizeGenerationOptions(options);
   const normalizedSources = imageSources.map(normalizeImageSource);
-  const sideLength = getTargetSideLength(targetElement);
-  const renderScale = getCanvasRenderScale(generationOptions.sourceSamplingBias);
+  const resolvedRenderConfig = normalizeRenderConfig(renderConfig);
+  const sideLength = getTargetSideLength(targetElement, resolvedRenderConfig.sideLength);
+  const renderScale = Number.isFinite(resolvedRenderConfig.renderScale) && resolvedRenderConfig.renderScale > 0
+    ? resolvedRenderConfig.renderScale
+    : getCanvasRenderScale(generationOptions.sourceSamplingBias);
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(sideLength * renderScale);
   canvas.height = Math.round(sideLength * renderScale);
-  canvas.style.width = '100%';
-  canvas.style.height = '100%';
+  canvas.style.width = resolvedRenderConfig.cssSize ? `${resolvedRenderConfig.cssSize}px` : '100%';
+  canvas.style.height = resolvedRenderConfig.cssSize ? `${resolvedRenderConfig.cssSize}px` : '100%';
   canvas.style.display = 'block';
   canvas.style.borderRadius = generationOptions.cardShape === 'round' ? '50%' : '0';
   canvas.style.imageRendering = 'auto';
@@ -47,6 +55,14 @@ export async function drawImagesOnSquareTarget(targetElement, imageSources, opti
       plannedItem.layoutItem,
       sideLength
     );
+  }
+
+  if (resolvedRenderConfig.showCardOutline) {
+    drawCardOutline(context, sideLength, generationOptions.cardShape, resolvedRenderConfig.cardOutlineColor, resolvedRenderConfig.cardOutlineDashStyle);
+  }
+
+  if (resolvedRenderConfig.cardNumberText) {
+    drawCardNumber(context, sideLength, resolvedRenderConfig.cardNumberText, resolvedRenderConfig.cardNumberPosition);
   }
 
   targetElement.appendChild(canvas);
@@ -138,7 +154,11 @@ export function getCanvasRenderScale(sourceSamplingBias = 'balanced', devicePixe
   return Math.max(1, Math.min(BALANCED_MAX_CANVAS_RENDER_SCALE, resolvedDevicePixelRatio));
 }
 
-function getTargetSideLength(targetElement) {
+function getTargetSideLength(targetElement, preferredSideLength = null) {
+  if (Number.isFinite(preferredSideLength) && preferredSideLength > 0) {
+    return preferredSideLength;
+  }
+
   const rect = targetElement.getBoundingClientRect();
   const side = Math.floor(Math.min(rect.width || 400, rect.height || 400));
   return Math.max(24, side);
@@ -227,6 +247,40 @@ function drawImageAtPlacement(context, imageEntry, layoutItem, sideLength) {
   context.restore();
 }
 
+function drawCardOutline(context, sideLength, cardShape, color, dashStyle) {
+  const inset = Math.max(2, sideLength * 0.01);
+  const size = sideLength - inset * 2;
+  context.save();
+  context.strokeStyle = color;
+  context.lineWidth = Math.max(1.25, sideLength * 0.01);
+  context.setLineDash((DASH_PATTERNS[dashStyle] ?? []).map((value) => value * Math.max(1, sideLength / 200)));
+  if (cardShape === 'round') {
+    context.beginPath();
+    context.arc(sideLength / 2, sideLength / 2, size / 2, 0, Math.PI * 2);
+    context.stroke();
+  } else {
+    context.strokeRect(inset, inset, size, size);
+  }
+  context.restore();
+}
+
+function drawCardNumber(context, sideLength, cardNumberText, position) {
+  const padding = Math.max(8, sideLength * 0.04);
+  const fontSize = Math.max(10, Math.round(sideLength * 0.055));
+  context.save();
+  context.font = `${fontSize}px Georgia, serif`;
+  context.textBaseline = position.startsWith('bottom') ? 'bottom' : 'top';
+  context.textAlign = position.endsWith('right') ? 'right' : 'left';
+  context.lineWidth = Math.max(2, fontSize * 0.22);
+  context.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+  context.fillStyle = 'rgba(0, 0, 0, 0.82)';
+  const x = position.endsWith('right') ? sideLength - padding : padding;
+  const y = position.startsWith('bottom') ? sideLength - padding : padding;
+  context.strokeText(cardNumberText, x, y);
+  context.fillText(cardNumberText, x, y);
+  context.restore();
+}
+
 function normalizeImageSource(candidate) {
   if (typeof candidate === 'string') {
     return { src: candidate, mask: undefined };
@@ -254,4 +308,24 @@ function applyCardTransform(targetElement, rotation, flipX) {
     transforms.push('scaleX(-1)');
   }
   targetElement.style.transform = transforms.join(' ');
+}
+
+function normalizeRenderConfig(renderConfig) {
+  const config = renderConfig && typeof renderConfig === 'object' ? renderConfig : {};
+  return {
+    sideLength: Number.isFinite(config.sideLength) && config.sideLength > 0 ? config.sideLength : null,
+    cssSize: Number.isFinite(config.cssSize) && config.cssSize > 0 ? config.cssSize : null,
+    renderScale: Number.isFinite(config.renderScale) && config.renderScale > 0 ? config.renderScale : null,
+    cardNumberText: typeof config.cardNumberText === 'string' && config.cardNumberText.trim() ? config.cardNumberText.trim() : '',
+    cardNumberPosition: ['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(config.cardNumberPosition)
+      ? config.cardNumberPosition
+      : 'bottom-right',
+    showCardOutline: Boolean(config.showCardOutline),
+    cardOutlineColor: typeof config.cardOutlineColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(config.cardOutlineColor)
+      ? config.cardOutlineColor.toLowerCase()
+      : '#000000',
+    cardOutlineDashStyle: ['solid', 'dashed', 'dotted'].includes(config.cardOutlineDashStyle)
+      ? config.cardOutlineDashStyle
+      : 'solid'
+  };
 }

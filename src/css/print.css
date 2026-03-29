@@ -1,0 +1,165 @@
+.print-page-layout {
+  display: grid;
+  grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.print-form-row + .print-form-row,
+.print-form-row + .print-fieldset,
+.print-form-grid + .print-form-row,
+.print-fieldset + .print-form-row,
+.print-readout,
+.print-advanced {
+  margin-top: 1rem;
+}
+
+.print-form-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.print-form-grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.print-fieldset {
+  border: 1px solid var(--card-border);
+  border-radius: 0.5rem;
+  padding: 0.85rem;
+  margin: 0;
+}
+
+.print-fieldset > legend {
+  float: none;
+  width: auto;
+  margin: 0 0 0.6rem;
+  padding: 0 0.25rem;
+  font-size: 1rem;
+}
+
+.print-readout p:last-child {
+  font-size: 1.05rem;
+}
+
+.print-advanced {
+  border: 1px solid var(--card-border);
+  border-radius: 0.5rem;
+  padding: 0.85rem;
+}
+
+.print-advanced summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.print-advanced summary::-webkit-details-marker {
+  display: none;
+}
+
+.print-advanced-body {
+  margin-top: 0.85rem;
+}
+
+.print-preview {
+  min-height: 18rem;
+}
+
+.print-sheet-page {
+  width: min(100%, 46rem);
+  margin: 0 auto;
+}
+
+.print-sheet-surface {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--print-sheet-page-aspect);
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+}
+
+.print-sheet-card-slot {
+  position: absolute;
+}
+
+.print-sheet-card-target {
+  width: 100%;
+  height: 100%;
+}
+
+.print-sheet-card-target canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.print-sheet-output {
+  display: none;
+}
+
+.print-tips-dialog {
+  max-width: 38rem;
+  width: min(38rem, calc(100vw - 2rem));
+  border: 1px solid var(--card-border);
+  border-radius: 0.75rem;
+  padding: 0;
+}
+
+.print-tips-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.print-tips-dialog-body {
+  padding: 1.25rem;
+}
+
+@media (max-width: 992px) {
+  .print-page-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .print-form-grid--two {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+    padding-top: 0;
+  }
+
+  .top-next-bar,
+  header,
+  main,
+  dialog {
+    display: none !important;
+  }
+
+  .print-sheet-output {
+    display: block;
+  }
+
+  .print-sheet-output .print-sheet-page {
+    width: calc(var(--print-sheet-width-in) * 1in);
+    height: calc(var(--print-sheet-height-in) * 1in);
+    margin: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .print-sheet-output .print-sheet-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .print-sheet-output .print-sheet-surface {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    border: none;
+    box-shadow: none;
+  }
+}
