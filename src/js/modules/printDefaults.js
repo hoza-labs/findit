@@ -16,7 +16,10 @@ export function getDefaultPrintOptions(storage = globalThis.localStorage) {
 }
 
 export function saveDefaultPrintOptions(printOptions, storage = globalThis.localStorage) {
-  const normalized = normalizePrintOptions(printOptions);
+  const normalized = normalizePrintOptions({
+    ...getDefaultPrintOptions(storage),
+    ...(printOptions && typeof printOptions === 'object' ? printOptions : {})
+  });
   storage?.setItem?.(DEFAULT_PRINT_OPTIONS_STORAGE_KEY, JSON.stringify(normalized));
   return normalized;
 }

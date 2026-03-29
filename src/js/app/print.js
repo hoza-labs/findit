@@ -406,9 +406,15 @@ printButton.addEventListener('click', () => {
 });
 
 savePrintDefaultsButton.addEventListener('click', () => {
-  const printOptions = getPrintOptionsFromForm();
-  saveDefaultPrintOptions(printOptions);
-  printOptionsMessage.textContent = 'These print options are now the default for new decks.';
+  void (async () => {
+    await refreshPreview();
+    const savedDefaults = saveDefaultPrintOptions(tempDeck.printOptions);
+    tempDeck = {
+      ...tempDeck,
+      printOptions: savedDefaults
+    };
+    printOptionsMessage.textContent = 'These print options are now the default for new decks.';
+  })();
 });
 
 layoutSizeDialogOk.addEventListener('click', () => {

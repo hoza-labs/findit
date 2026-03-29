@@ -46,7 +46,8 @@ async function openQuickDeck(symbolsPerCard = getQuickDeckSymbolsPerCard()) {
     symbolsPerCard,
     userImageIds: userImages.map((image) => image.id),
     webImageIds: webImages.map((image) => image.id),
-    standardImageIds
+    standardImageIds,
+    printOptions: getDefaultPrintOptions()
   });
 
   await repository.saveTempDeck(result.tempDeck);

@@ -88,3 +88,23 @@ test('given too few images overall, createQuickDeckTempDeck returns an incomplet
   assert.equal(Number.isInteger(result.tempDeck.pattern), true);
   assert.deepEqual(result.tempDeck.selectedImageRefs.map((ref) => ref.source), ['user', 'web', 'web', 'standard', 'standard']);
 });
+
+
+test('given custom print defaults, createQuickDeckTempDeck carries them into the new temp deck', () => {
+  const result = createQuickDeckTempDeck({
+    symbolsPerCard: 6,
+    standardImageIds: Array.from({ length: 40 }, (_, index) => `image-${index + 1}.png`),
+    printOptions: {
+      marginTop: '0.33',
+      marginRight: '0.33',
+      marginBottom: '0.33',
+      marginLeft: '0.33'
+    },
+    patternRandom: () => 0.5
+  });
+
+  assert.equal(result.tempDeck.printOptions.marginTop, '0.33');
+  assert.equal(result.tempDeck.printOptions.marginRight, '0.33');
+  assert.equal(result.tempDeck.printOptions.marginBottom, '0.33');
+  assert.equal(result.tempDeck.printOptions.marginLeft, '0.33');
+});
