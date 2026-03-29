@@ -161,8 +161,8 @@ function cancelLayoutSizeDialog() {
   void refreshPreview();
 }
 
-function openLayoutSizeDialog(layoutId, expectedCardWidth, units) {
-  const formattedCardSize = formatLayoutSizeValue(expectedCardWidth, units);
+function openLayoutSizeDialog(layoutId, expectedCardWidthIn, units) {
+  const formattedCardSize = formatLayoutSizeValue(expectedCardWidthIn, units);
   const displayUnits = units === 'in' ? 'inches' : units;
   pendingLayoutSizeChange = {
     layoutId,
@@ -355,7 +355,7 @@ printOptionsForm.addEventListener('change', (event) => {
     const desiredCardSize = Number.parseFloat(printOptions.desiredCardSize);
     const planned = planPrintLayout(1, { ...printOptions, layoutId: target.value }, tempDeck.generationOptions);
     if (planned.isValid && Number.isFinite(desiredCardSize) && planned.expectedCardWidth < desiredCardSize) {
-      openLayoutSizeDialog(target.value, planned.expectedCardWidth, printOptions.units);
+      openLayoutSizeDialog(target.value, planned.expectedCardWidthIn, printOptions.units);
       return;
     }
 
