@@ -20,35 +20,39 @@ test('given a deck magic page number, getDeckMagicPageHref returns the matching 
   assert.equal(getDeckMagicPageHref(8), './deck-magic-8.html');
 });
 
-test('given deck magic page one, the footer hides the first-page link and links to page two', () => {
+test('given deck magic page one, the footer hides the back link and links to page two', () => {
   const pageInfo = getDeckMagicPageInfo(1);
 
   assert.equal(pageInfo.pageTitle, DECK_MAGIC_PAGE_TITLES[0]);
   assert.equal(pageInfo.bodyParagraphs[0], 'Secret wisdom coming soon - stay tuned!');
-  assert.equal(pageInfo.firstPageHref, './deck-magic-1.html');
-  assert.equal(pageInfo.showFirstPageLink, false);
+  assert.equal(pageInfo.previousHref, null);
+  assert.equal(pageInfo.showPreviousLink, false);
   assert.equal(pageInfo.currentPageLabel, '1');
   assert.equal(pageInfo.nextHref, './deck-magic-2.html');
+  assert.equal(pageInfo.nextLabel, 'Continue');
   assert.equal(pageInfo.showNextPageLink, true);
 });
 
-test('given deck magic page four, the footer shows first page and links to page five', () => {
+test('given deck magic page four, the footer links back to page three and forward to page five', () => {
   const pageInfo = getDeckMagicPageInfo(4);
 
   assert.equal(pageInfo.pageTitle, DECK_MAGIC_PAGE_TITLES[3]);
-  assert.equal(pageInfo.firstPageHref, './deck-magic-1.html');
-  assert.equal(pageInfo.showFirstPageLink, true);
+  assert.equal(pageInfo.previousHref, './deck-magic-3.html');
+  assert.equal(pageInfo.previousLabel, 'Back');
+  assert.equal(pageInfo.showPreviousLink, true);
   assert.equal(pageInfo.currentPageLabel, '4');
   assert.equal(pageInfo.nextHref, './deck-magic-5.html');
+  assert.equal(pageInfo.nextLabel, 'Continue');
   assert.equal(pageInfo.showNextPageLink, true);
 });
 
-test('given deck magic page eight, the next page link is hidden by returning null', () => {
+test('given deck magic page eight, the back link goes to page seven and the next link is hidden', () => {
   const pageInfo = getDeckMagicPageInfo(8);
 
   assert.equal(pageInfo.pageTitle, DECK_MAGIC_PAGE_TITLES[7]);
-  assert.equal(pageInfo.firstPageHref, './deck-magic-1.html');
-  assert.equal(pageInfo.showFirstPageLink, true);
+  assert.equal(pageInfo.previousHref, './deck-magic-7.html');
+  assert.equal(pageInfo.previousLabel, 'Back');
+  assert.equal(pageInfo.showPreviousLink, true);
   assert.equal(pageInfo.currentPageLabel, '8');
   assert.equal(pageInfo.nextHref, null);
   assert.equal(pageInfo.showNextPageLink, false);

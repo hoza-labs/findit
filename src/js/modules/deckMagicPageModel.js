@@ -32,6 +32,7 @@ export function getDeckMagicIntroText() {
 export function getDeckMagicPageInfo(pageNumber) {
   const normalizedPageNumber = normalizeDeckMagicPageNumber(pageNumber);
   const pageTitle = DECK_MAGIC_PAGE_TITLES[normalizedPageNumber - 1];
+  const previousHref = normalizedPageNumber > 1 ? getDeckMagicPageHref(normalizedPageNumber - 1) : null;
   const nextHref = normalizedPageNumber < DECK_MAGIC_PAGE_COUNT ? getDeckMagicPageHref(normalizedPageNumber + 1) : null;
   const pageMenuItems = DECK_MAGIC_PAGE_TITLES.map((menuTitle, index) => {
     const menuPageNumber = index + 1;
@@ -49,9 +50,11 @@ export function getDeckMagicPageInfo(pageNumber) {
     currentPageLabel: `${normalizedPageNumber}`,
     introText: getDeckMagicIntroText(),
     bodyParagraphs: [SECRET_WISDOM_MESSAGE],
-    firstPageHref: getDeckMagicPageHref(1),
-    showFirstPageLink: normalizedPageNumber > 1,
+    previousHref,
+    previousLabel: 'Back',
+    showPreviousLink: previousHref !== null,
     nextHref,
+    nextLabel: 'Continue',
     showNextPageLink: nextHref !== null,
     pageMenuItems
   };

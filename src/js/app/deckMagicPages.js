@@ -8,7 +8,7 @@ const deckStatusLine = document.querySelector('#deck-status-line');
 const buildPageSubnav = document.querySelector('#build-page-subnav');
 const buildPageIntro = document.querySelector('#build-page-intro');
 const deckMagicContent = document.querySelector('#deck-magic-content');
-const deckMagicFirstPage = document.querySelector('#deck-magic-first-page');
+const deckMagicPreviousPage = document.querySelector('#deck-magic-first-page');
 const deckMagicPageMenu = document.querySelector('#deck-magic-page-menu');
 const deckMagicPageMenuButton = document.querySelector('#deck-magic-page-menu-button');
 const deckMagicPageMenuList = document.querySelector('#deck-magic-page-menu-list');
@@ -30,7 +30,13 @@ function renderDeckMagicPageMenu(pageInfo) {
     return;
   }
 
-  deckMagicPageMenuButton.textContent = pageInfo.currentPageLabel;
+  const pageNumberElement = deckMagicPageMenuButton.querySelector('.deck-magic-page-menu-number');
+  if (pageNumberElement) {
+    pageNumberElement.textContent = pageInfo.currentPageLabel;
+  } else {
+    deckMagicPageMenuButton.textContent = pageInfo.currentPageLabel;
+  }
+
   deckMagicPageMenuList.replaceChildren(
     ...pageInfo.pageMenuItems.map((menuItem) => {
       const listItem = document.createElement('li');
@@ -76,9 +82,15 @@ if (deckMagicContent) {
   );
 }
 
-if (deckMagicFirstPage) {
-  deckMagicFirstPage.href = pageInfo.firstPageHref;
-  deckMagicFirstPage.hidden = !pageInfo.showFirstPageLink;
+if (deckMagicPreviousPage) {
+  if (pageInfo.showPreviousLink) {
+    deckMagicPreviousPage.href = pageInfo.previousHref;
+    deckMagicPreviousPage.textContent = pageInfo.previousLabel;
+    deckMagicPreviousPage.hidden = false;
+  } else {
+    deckMagicPreviousPage.hidden = true;
+    deckMagicPreviousPage.removeAttribute('href');
+  }
 }
 
 renderDeckMagicPageMenu(pageInfo);
@@ -90,6 +102,7 @@ if (deckMagicPageMenu) {
 if (deckMagicNextPage) {
   if (pageInfo.showNextPageLink) {
     deckMagicNextPage.href = pageInfo.nextHref;
+    deckMagicNextPage.textContent = pageInfo.nextLabel;
     deckMagicNextPage.hidden = false;
   } else {
     deckMagicNextPage.hidden = true;

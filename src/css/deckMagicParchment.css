@@ -172,9 +172,32 @@
 }
 
 .deck-magic-page-menu-summary {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.2rem 0.65rem 0.1rem;
   cursor: pointer;
   user-select: none;
+}
+
+.deck-magic-page-menu-number {
+  display: inline-block;
+  min-width: 1ch;
+  font-size: clamp(1rem, 2.1vw, 1.22rem);
+  line-height: 1;
+}
+
+.deck-magic-page-menu-flourish {
+  width: clamp(2.6rem, 8vw, 4rem);
+  height: auto;
+  flex: 0 0 auto;
+  opacity: 0.95;
+  filter: drop-shadow(0 1px 0 rgba(255, 251, 239, 0.45));
+}
+
+.deck-magic-page-menu-flourish--left {
+  transform: scaleX(-1);
 }
 
 .deck-magic-page-menu-list {
