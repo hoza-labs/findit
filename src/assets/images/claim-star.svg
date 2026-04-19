@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="Gold star">
+  <path
+    d="M16 2.6l3.92 8.08 8.9 1.2-6.48 6.2 1.6 8.84L16 22.62 8.06 26.92l1.6-8.84-6.48-6.2 8.9-1.2L16 2.6z"
+    fill="#f8c43a"
+    stroke="#b77900"
+    stroke-width="1.35"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M16 5.84l2.88 5.92 6.52.88-4.74 4.54 1.16 6.48L16 20.52l-5.82 3.14 1.16-6.48-4.74-4.54 6.52-.88L16 5.84z"
+    fill="#ffd95c"
+  />
+  <path
+    d="M12.4 11.4l2.78-5.72 1.18 2.42c-1.46 1.54-2.58 3.34-3.34 5.42l-5.02.68 2.18-2.1 2.22-.7z"
+    fill="#fff3a0"
+    opacity="0.78"
+  />
+</svg>

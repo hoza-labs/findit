@@ -2,37 +2,66 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  CLAIM_HAND_POINT_ICON_STAR,
+  CLAIM_HAND_POINT_ICON_TOMATO,
   formatClaimHandPoints,
+  getClaimHandPointsDisplay,
   formatClaimHandPointsSummary
 } from '../src/js/modules/playClaimScoreDisplay.js';
 
-const star = String.fromCodePoint(0x2B50);
-const tomato = String.fromCodePoint(0x1F345);
-
 test('given zero points, claim hand display is empty', () => {
-  assert.equal(formatClaimHandPoints(0), '');
+  assert.equal(getClaimHandPointsDisplay(0), null);
 });
 
-test('given one to five positive points, claim hand display shows one star per point', () => {
-  assert.equal(formatClaimHandPoints(1), star);
-  assert.equal(formatClaimHandPoints(5), star.repeat(5));
+test('given one to five positive points, claim hand display shows one star icon per point', () => {
+  assert.deepEqual(getClaimHandPointsDisplay(1), {
+    icon: CLAIM_HAND_POINT_ICON_STAR,
+    iconCount: 1,
+    countLabel: ''
+  });
+  assert.deepEqual(getClaimHandPointsDisplay(5), {
+    icon: CLAIM_HAND_POINT_ICON_STAR,
+    iconCount: 5,
+    countLabel: ''
+  });
 });
 
 test('given more than five positive points, claim hand display shows compact star count', () => {
-  assert.equal(formatClaimHandPoints(6), star + 'x6');
+  assert.deepEqual(getClaimHandPointsDisplay(6), {
+    icon: CLAIM_HAND_POINT_ICON_STAR,
+    iconCount: 1,
+    countLabel: 'x6'
+  });
 });
 
-test('given one to five negative points, claim hand display shows one tomato per point', () => {
-  assert.equal(formatClaimHandPoints(-1), tomato);
-  assert.equal(formatClaimHandPoints(-5), tomato.repeat(5));
+test('given one to five negative points, claim hand display shows one tomato icon per point', () => {
+  assert.deepEqual(getClaimHandPointsDisplay(-1), {
+    icon: CLAIM_HAND_POINT_ICON_TOMATO,
+    iconCount: 1,
+    countLabel: ''
+  });
+  assert.deepEqual(getClaimHandPointsDisplay(-5), {
+    icon: CLAIM_HAND_POINT_ICON_TOMATO,
+    iconCount: 5,
+    countLabel: ''
+  });
 });
 
 test('given fewer than negative five points, claim hand display shows compact tomato count', () => {
-  assert.equal(formatClaimHandPoints(-6), tomato + 'x6');
+  assert.deepEqual(getClaimHandPointsDisplay(-6), {
+    icon: CLAIM_HAND_POINT_ICON_TOMATO,
+    iconCount: 1,
+    countLabel: 'x6'
+  });
 });
 
 test('given a non-integer value, claim hand display is empty', () => {
-  assert.equal(formatClaimHandPoints(1.5), '');
+  assert.equal(getClaimHandPointsDisplay(1.5), null);
+});
+
+test('given points, claim hand text fallback does not require emoji glyphs', () => {
+  assert.equal(formatClaimHandPoints(2), 'star x2');
+  assert.equal(formatClaimHandPoints(-6), 'tomato x6');
 });
 
 test('given positive points, claim hand summary explains points added to the player score', () => {

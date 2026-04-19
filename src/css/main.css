@@ -1674,13 +1674,28 @@ body.has-top-bar.play-page {
 }
 
 .claim-player-score-icons {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.12rem;
   margin-left: 0.5rem;
   white-space: nowrap;
-  font-size: 1.05rem;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
   vertical-align: baseline;
+}
+
+.claim-player-score-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+  display: block;
+}
+
+.claim-player-score-count {
+  margin-left: 0.05rem;
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 
@@ -1873,7 +1888,6 @@ body.has-top-bar.play-page {
   color: #0a58ca;
   font-weight: 600;
 }
-
 
 
 

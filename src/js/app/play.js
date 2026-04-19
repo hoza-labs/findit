@@ -24,7 +24,9 @@ import {
   isClaimDialogActionKeyEnabled
 } from '../modules/playClaimShortcut.js';
 import {
-  formatClaimHandPoints,
+  CLAIM_HAND_POINT_ICON_STAR,
+  CLAIM_HAND_POINT_ICON_TOMATO,
+  getClaimHandPointsDisplay,
   formatClaimHandPointsSummary
 } from '../modules/playClaimScoreDisplay.js';
 import { stepClaimHandPoints } from '../modules/playClaimHandPoints.js';
@@ -79,6 +81,10 @@ const confirmationDialogOkButton = document.querySelector('#confirmation-dialog-
 const tempDeck = await loadTempDeckOrDefault();
 const userImages = await repository.listUserImages();
 const webImages = await repository.listWebImages();
+const claimHandPointIconSrc = {
+  [CLAIM_HAND_POINT_ICON_STAR]: './assets/images/claim-star.svg',
+  [CLAIM_HAND_POINT_ICON_TOMATO]: './assets/images/claim-tomato.svg'
+};
 
 let objectUrls = [];
 let countdownTimerId = null;
@@ -613,6 +619,23 @@ function renderClaimDialogSummaries() {
   }
 }
 
+function renderClaimHandPointsDisplay(targetElement, display) {
+  for (let index = 0; index < display.iconCount; index += 1) {
+    const icon = document.createElement('img');
+    icon.className = 'claim-player-score-icon';
+    icon.src = claimHandPointIconSrc[display.icon];
+    icon.alt = '';
+    targetElement.appendChild(icon);
+  }
+
+  if (display.countLabel) {
+    const count = document.createElement('span');
+    count.className = 'claim-player-score-count';
+    count.textContent = display.countLabel;
+    targetElement.appendChild(count);
+  }
+}
+
 function renderClaimPlayerList() {
   claimPlayerList.innerHTML = '';
   claimDialogSummaries.innerHTML = '';
@@ -655,12 +678,12 @@ function renderClaimPlayerList() {
     content.appendChild(identity);
 
     const handPoints = state.claimHandPoints[index] ?? 0;
-    const scoreIconsText = formatClaimHandPoints(handPoints);
-    if (scoreIconsText) {
+    const scoreIconsDisplay = getClaimHandPointsDisplay(handPoints);
+    if (scoreIconsDisplay !== null) {
       const scoreIcons = document.createElement('span');
       scoreIcons.className = 'claim-player-score-icons';
-      scoreIcons.textContent = scoreIconsText;
       scoreIcons.setAttribute('aria-label', 'Points for this hand: ' + String(handPoints));
+      renderClaimHandPointsDisplay(scoreIcons, scoreIconsDisplay);
       content.appendChild(scoreIcons);
     }
 
@@ -2014,7 +2037,6 @@ if (window.visualViewport) {
 
 resetPlayerScores();
 prepareGameStart();
-
 
 
 
