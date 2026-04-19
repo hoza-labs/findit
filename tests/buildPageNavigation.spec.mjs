@@ -20,6 +20,9 @@ function createMemoryStorage() {
     },
     setItem(key, value) {
       map.set(key, value);
+    },
+    removeItem(key) {
+      map.delete(key);
     }
   };
 }
@@ -55,6 +58,36 @@ test('given a non-deck-magic build page in deck magic storage, getLastDeckMagicP
   assert.equal(getLastDeckMagicPageHref(storage), './deck-magic-1.html');
 });
 
+test('given a deck magic page visited within an hour, getLastDeckMagicPageHref returns the saved page', () => {
+  const storage = createMemoryStorage();
+  const now = 1_000_000;
+  storage.setItem('findit:last-deck-magic-page', './deck-magic-8.html');
+  storage.setItem('findit:last-deck-magic-visited-at', String(now - 60 * 60 * 1000));
+
+  assert.equal(getLastDeckMagicPageHref(storage, now), './deck-magic-8.html');
+});
+
+test('given a deck magic page visited more than an hour ago, getLastDeckMagicPageHref falls back to page one', () => {
+  const storage = createMemoryStorage();
+  const now = 1_000_000;
+  storage.setItem('findit:last-deck-magic-page', './deck-magic-8.html');
+  storage.setItem('findit:last-deck-magic-visited-at', String(now - 60 * 60 * 1000 - 1));
+
+  assert.equal(getLastDeckMagicPageHref(storage, now), './deck-magic-1.html');
+  assert.equal(storage.getItem('findit:last-deck-magic-page'), null);
+});
+
+test('given the last build page is a stale deck magic page, getLastBuildPageHref falls back to deck magic page one', () => {
+  const storage = createMemoryStorage();
+  const now = 1_000_000;
+  storage.setItem('findit:last-build-page', './deck-magic-6.html');
+  storage.setItem('findit:last-deck-magic-page', './deck-magic-6.html');
+  storage.setItem('findit:last-deck-magic-visited-at', String(now - 60 * 60 * 1000 - 1));
+
+  assert.equal(getLastBuildPageHref(storage, now), './deck-magic-1.html');
+  assert.equal(getLastBuildPageHref(storage, now), './deck-magic-1.html');
+});
+
 test('given a current build page, rememberCurrentBuildPage stores and returns it', () => {
   const storage = createMemoryStorage();
   const currentHref = rememberCurrentBuildPage(storage, { pathname: '/app/deck-builder.html' });
@@ -65,11 +98,13 @@ test('given a current build page, rememberCurrentBuildPage stores and returns it
 
 test('given a current deck magic page, rememberCurrentBuildPage stores both exact build page and deck magic page', () => {
   const storage = createMemoryStorage();
-  const currentHref = rememberCurrentBuildPage(storage, { pathname: '/app/deck-magic-7.html' });
+  const now = 1_000_000;
+  const currentHref = rememberCurrentBuildPage(storage, { pathname: '/app/deck-magic-7.html' }, now);
 
   assert.equal(currentHref, './deck-magic-7.html');
-  assert.equal(getLastBuildPageHref(storage), './deck-magic-7.html');
-  assert.equal(getLastDeckMagicPageHref(storage), './deck-magic-7.html');
+  assert.equal(getLastBuildPageHref(storage, now), './deck-magic-7.html');
+  assert.equal(getLastDeckMagicPageHref(storage, now), './deck-magic-7.html');
+  assert.equal(storage.getItem('findit:last-deck-magic-visited-at'), String(now));
 });
 
 test('given a build page href, getBuildPageTabId groups deck magic pages under one tab id', () => {
@@ -90,6 +125,18 @@ test('given saved deck magic history, getBuildPageSubnavEntries resolves the dec
   assert.equal(entries[1].href, './deck-magic-8.html');
   assert.match(entries[1].label, /Deck Magic/);
   assert.equal(entries[2].href, './deck-builder.html');
+});
+
+test('given stale deck magic history, getBuildPageSubnavEntries resolves the deck magic tab to page one', () => {
+  const storage = createMemoryStorage();
+  const now = 1_000_000;
+  storage.setItem('findit:last-deck-magic-page', './deck-magic-8.html');
+  storage.setItem('findit:last-deck-magic-visited-at', String(now - 60 * 60 * 1000 - 1));
+
+  const entries = getBuildPageSubnavEntries(storage, now);
+
+  assert.equal(entries[1].href, './deck-magic-1.html');
+  assert.equal(getLastBuildPageHref(storage, now), './deck-preview.html');
 });
 
 test('given a location, getCurrentBuildPageHref identifies build pages only', () => {

@@ -5,6 +5,8 @@ const LEGACY_BUILD_PAGE_ALIASES = new Map([
 const DECK_MAGIC_PAGE_FILES = Array.from({ length: 8 }, (_, index) => `deck-magic-${index + 1}.html`);
 const BUILD_PAGE_FILES = ['deck-preview.html', ...DECK_MAGIC_PAGE_FILES, 'deck-builder.html'];
 const LAST_DECK_MAGIC_PAGE_STORAGE_KEY = 'findit:last-deck-magic-page';
+const LAST_DECK_MAGIC_VISITED_AT_STORAGE_KEY = 'findit:last-deck-magic-visited-at';
+const DECK_MAGIC_PAGE_MEMORY_DURATION_MS = 60 * 60 * 1000;
 const DECK_MAGIC_DEFAULT_HREF = './deck-magic-1.html';
 const DECK_MAGIC_TAB_ID = 'deck-magic';
 const DECK_PREVIEW_TAB_ID = 'deck-preview';
@@ -52,6 +54,30 @@ function normalizeDeckMagicPageHref(value) {
   return getBuildPageTabIdFromHref(href) === DECK_MAGIC_TAB_ID ? href : null;
 }
 
+function isDeckMagicPageVisitStale(storage, now) {
+  const storedValue = storage?.getItem?.(LAST_DECK_MAGIC_VISITED_AT_STORAGE_KEY);
+  if (storedValue === null || storedValue === undefined) {
+    return false;
+  }
+
+  const visitedAt = Number(storedValue);
+  if (!Number.isFinite(visitedAt)) {
+    return true;
+  }
+
+  return now - visitedAt > DECK_MAGIC_PAGE_MEMORY_DURATION_MS;
+}
+
+function forgetLastDeckMagicPage(storage) {
+  const lastBuildPageHref = normalizeBuildPageHref(storage?.getItem?.(LAST_BUILD_PAGE_STORAGE_KEY));
+  if (getBuildPageTabIdFromHref(lastBuildPageHref) === DECK_MAGIC_TAB_ID) {
+    storage?.setItem?.(LAST_BUILD_PAGE_STORAGE_KEY, DECK_MAGIC_DEFAULT_HREF);
+  }
+
+  storage?.removeItem?.(LAST_DECK_MAGIC_PAGE_STORAGE_KEY);
+  storage?.removeItem?.(LAST_DECK_MAGIC_VISITED_AT_STORAGE_KEY);
+}
+
 export function normalizeBuildPageHref(value) {
   if (typeof value !== 'string') {
     return null;
@@ -87,12 +113,23 @@ export function getCurrentBuildPageHref(locationLike = globalThis.location) {
   return normalizeBuildPageHref(pathname);
 }
 
-export function getLastBuildPageHref(storage = globalThis.localStorage) {
+export function getLastBuildPageHref(storage = globalThis.localStorage, now = Date.now()) {
   const storedValue = storage?.getItem?.(LAST_BUILD_PAGE_STORAGE_KEY);
-  return normalizeBuildPageHref(storedValue) ?? DEFAULT_BUILD_PAGE_HREF;
+  const href = normalizeBuildPageHref(storedValue);
+  if (getBuildPageTabIdFromHref(href) === DECK_MAGIC_TAB_ID && isDeckMagicPageVisitStale(storage, now)) {
+    forgetLastDeckMagicPage(storage);
+    return DECK_MAGIC_DEFAULT_HREF;
+  }
+
+  return href ?? DEFAULT_BUILD_PAGE_HREF;
 }
 
-export function getLastDeckMagicPageHref(storage = globalThis.localStorage) {
+export function getLastDeckMagicPageHref(storage = globalThis.localStorage, now = Date.now()) {
+  if (isDeckMagicPageVisitStale(storage, now)) {
+    forgetLastDeckMagicPage(storage);
+    return DECK_MAGIC_DEFAULT_HREF;
+  }
+
   const storedValue = storage?.getItem?.(LAST_DECK_MAGIC_PAGE_STORAGE_KEY);
   return normalizeDeckMagicPageHref(storedValue) ?? DECK_MAGIC_DEFAULT_HREF;
 }
@@ -101,15 +138,15 @@ export function getBuildPageTabId(href) {
   return getBuildPageTabIdFromHref(normalizeBuildPageHref(href));
 }
 
-export function getBuildPageSubnavEntries(storage = globalThis.localStorage) {
+export function getBuildPageSubnavEntries(storage = globalThis.localStorage, now = Date.now()) {
   return BUILD_PAGE_ENTRIES.map((entry) => ({
     ...entry,
-    href: entry.tabId === DECK_MAGIC_TAB_ID ? getLastDeckMagicPageHref(storage) : entry.href,
+    href: entry.tabId === DECK_MAGIC_TAB_ID ? getLastDeckMagicPageHref(storage, now) : entry.href,
     label: entry.label ?? getDeckMagicTabLabel()
   }));
 }
 
-export function rememberCurrentBuildPage(storage = globalThis.localStorage, locationLike = globalThis.location) {
+export function rememberCurrentBuildPage(storage = globalThis.localStorage, locationLike = globalThis.location, now = Date.now()) {
   const currentHref = getCurrentBuildPageHref(locationLike);
   if (!currentHref) {
     return null;
@@ -118,12 +155,13 @@ export function rememberCurrentBuildPage(storage = globalThis.localStorage, loca
   storage?.setItem?.(LAST_BUILD_PAGE_STORAGE_KEY, currentHref);
   if (getBuildPageTabIdFromHref(currentHref) === DECK_MAGIC_TAB_ID) {
     storage?.setItem?.(LAST_DECK_MAGIC_PAGE_STORAGE_KEY, currentHref);
+    storage?.setItem?.(LAST_DECK_MAGIC_VISITED_AT_STORAGE_KEY, String(now));
   }
   return currentHref;
 }
 
-export function applyBuildLinks(root = document, storage = globalThis.localStorage) {
-  const href = getLastBuildPageHref(storage);
+export function applyBuildLinks(root = document, storage = globalThis.localStorage, now = Date.now()) {
+  const href = getLastBuildPageHref(storage, now);
   root?.querySelectorAll?.('[data-build-link]').forEach((link) => {
     link.setAttribute('href', href);
   });
